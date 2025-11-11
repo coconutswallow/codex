@@ -1,0 +1,3 @@
+collections:
+  maps:
+    output: true # This creates a separate page for each map
