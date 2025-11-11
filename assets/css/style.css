@@ -116,17 +116,16 @@
 
 /* The <code> block */
 .copy-wrapper .copy-target {
-  flex-grow: 1; /* Makes the code block fill the space */
+  flex-grow: 1;
   background-color: #f4f4f4;
   padding: 8px 10px;
-  border-radius: 4px 0 0 4px; /* Rounded on the left */
+  border-radius: 4px 0 0 4px;
   font-family: monospace;
   font-size: 0.9em;
   color: #333;
-  /* Prevent long URLs from breaking the layout */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  
+  /* 👇 This line allows long URLs to wrap */
+  word-break: break-all;
 }
 
 /* The new copy button */
@@ -144,16 +143,4 @@
 
 .copy-wrapper .copy-button:hover {
   background-color: #dcdcdc;
-}
-.copy-wrapper .copy-target {
-  flex-grow: 1;
-  background-color: #f4f4f4;
-  padding: 8px 10px;
-  border-radius: 4px 0 0 4px;
-  font-family: monospace;
-  font-size: 0.9em;
-  color: #333;
-  
-  /* 👇 This line allows long URLs to wrap */
-  word-break: break-all;
 }
