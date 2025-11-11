@@ -3,11 +3,10 @@ layout: default
 title: Map Index
 ---
 
-<h2>Maps Index</h2>
+<h1>Maps Index</h1>
 
 <p>
-  Maps that are usable for Avrae maps.  Sources are publicly available maps.
-  <br> Use Browser refresh to reset search.
+  Maps that are usable for Avrae maps.  Sources are publicly available maps.  Use Browser refresh to reset search.
 </p>
 
 <div class="map-search-wrapper">
@@ -56,7 +55,9 @@ title: Map Index
         {% endif %}
 
         <p><strong>Keywords:</strong> {{ map.keywords }}</p>
-      </div> </div> {% endfor %} </div> <script>
+      </div> </div> {% endfor %} </div> 
+      
+<script>
   document.addEventListener('DOMContentLoaded', (event) => {
     
     /* --- Search logic --- */
@@ -68,7 +69,8 @@ title: Map Index
       allMapCards.forEach(card => {
         const cardData = card.dataset.search.toLowerCase();
         if (cardData.includes(filterText)) {
-          card.style.display = 'flex'; WH
+          // This line is now fixed
+          card.style.display = 'flex'; 
         } else {
           card.style.display = 'none';
         }
