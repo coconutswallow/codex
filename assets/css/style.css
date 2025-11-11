@@ -1,0 +1,45 @@
+/* This is the main container for all your cards */
+.map-gallery {
+  max-width: 900px;
+  margin: 0 auto; /* Center the gallery */
+  padding: 20px;
+}
+
+/* This is the card itself */
+.map-card {
+  display: flex;          /* The magic! Puts items side-by-side */
+  align-items: flex-start;  /* Aligns items to the top of the card */
+  gap: 20px;                /* Creates a 20px space between the image and text */
+  
+  /* Nice card styling */
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px; /* Space between cards */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* The link wrapping the image */
+.map-thumbnail-link {
+  flex-shrink: 0; /* Stops the image from shrinking */
+}
+
+/* The thumbnail image */
+.map-thumbnail {
+  width: 150px;
+  height: 150px;
+  object-fit: cover; /* Prevents image from being stretched */
+  border-radius: 5px;
+  display: block; /* Removes any extra space below the image */
+}
+
+/* The text container */
+.map-card-info {
+  flex-grow: 1; /* Allows the text block to fill the remaining space */
+}
+
+/* A little cleanup for the heading */
+.map-card-info h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
