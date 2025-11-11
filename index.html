@@ -9,34 +9,37 @@ title: Map Index
 </div>
 
 
-<div class="map-gallery">
-  {% for map in site.maps %}
-    
-    <div class="map-card" data-search="{{ map.name }} {{ map.creator }} {{ map.keywords }}">
-      
-      <a href="{{ map.image_path | relative_url }}" class="map-thumbnail-link" target="_blank" rel="noopener noreferrer">
-        <img src="{{ map.image_path | relative_url }}" alt="Thumbnail for {{ map.name }}" class="map-thumbnail">
-      </a>
+<div class="map-card-info">
+  <h2>{{ map.name }}</h2>
+  <p><strong>Creator:</strong> {{ map.creator }}</p>
 
-      <div class="map-card-info">
-        <h2>{{ map.name }}</h2>
-        <p><strong>Creator:</strong> {{ map.creator }}</p>
+  <p><strong>Source:</strong>
+    {% if map.source contains 'http' %}
+      <a href="{{ map.source }}" target="_blank" rel="noopener noreferrer">Source</a>
+    {% else %}
+    <a href="{{ map.source | relative_url }}">Source</a>
+    {% endif %}
+  </p>
 
-        <p><strong>Source:</strong>
-          {% if map.source contains 'http' %}
-            <a href="{{ map.source }}" target="_blank" rel="noopener noreferrer">Source</a>
-          {% else %}
-            <a href="{{ map.source | relative_url }}">Source</a>
-          {% endif %}
-        </p>
-        <p><strong>Image URL:</strong></p>
-        <div class="copy-wrapper">
-          <code class="copy-target">{{ map.image_path | absolute_url }}</code>
-          <button class="copy-button" type="button">Copy</button>
-        </div>
-        
-        <p><strong>Keywords:</strong> {{ map.keywords }}</p>
-      </div> </div> {% endfor %}
+  {% if map.dimensions %}
+    p><strong>Dimensions:</strong> {{ map.dimensions }}</p>
+  {% endif %}
+
+  <p><strong>Image URL:</strong></p>
+  <div class="copy-wrapper">
+    <code class="copy-target">{{ map.image_path | absolute_url }}</code>
+    <button class="copy-button" type="button">Copy</button>
+  </div>
+
+  {% if map.avrae_code %}
+    <p><strong>Avrae Map Code:</strong></p>
+      <div class="copy-wrapper">
+        <code class="copy-target">{{ map.avrae_code }}</code>
+        <button class="copy-button" type="button">Copy</button>
+      </div>
+  {% endif %}
+
+  <p><strong>Keywords:</strong> {{ map.keywords }}</p>
 </div>
 
 <script>
