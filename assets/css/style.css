@@ -107,3 +107,41 @@
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   background-color: #fff; /* A solid background color is nice */
 }
+/* Container for the code and button */
+.copy-wrapper {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+/* The <code> block */
+.copy-wrapper .copy-target {
+  flex-grow: 1; /* Makes the code block fill the space */
+  background-color: #f4f4f4;
+  padding: 8px 10px;
+  border-radius: 4px 0 0 4px; /* Rounded on the left */
+  font-family: monospace;
+  font-size: 0.9em;
+  color: #333;
+  /* Prevent long URLs from breaking the layout */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The new copy button */
+.copy-wrapper .copy-button {
+  flex-shrink: 0; /* Prevents button from shrinking */
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-left: none; /* Joins it to the code block */
+  background-color: #eee;
+  border-radius: 0 4px 4px 0; /* Rounded on the right */
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9em;
+}
+
+.copy-wrapper .copy-button:hover {
+  background-color: #dcdcdc;
+}

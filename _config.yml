@@ -1,3 +1,7 @@
+url: "https://coconutswallow.github.io"
+baseurl: "/codex"
+
+# Your collections config
 collections:
   maps:
-    output: true # This creates a separate page for each map
+    output: true
