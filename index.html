@@ -8,93 +8,81 @@ title: Map Index
   <input type="text" id="mapSearchInput" placeholder="Type keywords, name, or creator...">
 </div>
 
+<div class="map-gallery">
 
-<div class="map-card-info">
-  <h2>{{ map.name }}</h2>
-  <p><strong>Creator:</strong> {{ map.creator }}</p>
+  {% for map in site.maps %}
+    
+    <div class="map-card" data-search="{{ map.name }} {{ map.creator }} {{ map.keywords }}">
+      
+      <a href="{{ map.image_path | relative_url }}" class="map-thumbnail-link" target="_blank" rel="noopener noreferrer">
+        <img src="{{ map.image_path | relative_url }}" alt="Thumbnail for {{ map.name }}" class="map-thumbnail">
+      </a>
 
-  <p><strong>Source:</strong>
-    {% if map.source contains 'http' %}
-      <a href="{{ map.source }}" target="_blank" rel="noopener noreferrer">Source</a>
-    {% else %}
-    <a href="{{ map.source | relative_url }}">Source</a>
-    {% endif %}
-  </p>
+      <div class="map-card-info">
+        <h2>{{ map.name }}</h2>
+        <p><strong>Creator:</strong> {{ map.creator }}</p>
 
-  {% if map.dimensions %}
-    p><strong>Dimensions:</strong> {{ map.dimensions }}</p>
-  {% endif %}
+        <p><strong>Source:</strong>
+          {% if map.source contains 'http' %}
+            <a href="{{ map.source }}" target="_blank" rel="noopener noreferrer">Source</a>
+          {% else %}
+          <a href="{{ map.source | relative_url }}">Source</a>
+          {% endif %}
+        </p>
 
-  <p><strong>Image URL:</strong></p>
-  <div class="copy-wrapper">
-    <code class="copy-target">{{ map.image_path | absolute_url }}</code>
-    <button class="copy-button" type="button">Copy</button>
-  </div>
+        {% if map.dimensions %}
+          <p><strong>Dimensions:</strong> {{ map.dimensions }}</p>
+        {% endif %}
 
-  {% if map.avrae_code %}
-    <p><strong>Avrae Map Code:</strong></p>
-      <div class="copy-wrapper">
-        <code class="copy-target">{{ map.avrae_code }}</code>
-        <button class="copy-button" type="button">Copy</button>
-      </div>
-  {% endif %}
+        <p><strong>Image URL:</strong></p>
+        <div class="copy-wrapper">
+          <code class="copy-target">{{ map.image_path | absolute_url }}</code>
+          <button class="copy-button" type="button">Copy</button>
+        </div>
 
-  <p><strong>Keywords:</strong> {{ map.keywords }}</p>
-</div>
+        {% if map.avrae_code %}
+          <p><strong>Avrae Map Code:</strong></p>
+            <div class="copy-wrapper">
+              <code class="copy-target">{{ map.avrae_code }}</code>
+              <button class="copy-button" type="button">Copy</button>
+            </div>
+        {% endif %}
 
-<script>
-  // Wait until the page is fully loaded
+        <p><strong>Keywords:</strong> {{ map.keywords }}</p>
+      </div> </div> {% endfor %} </div> <script>
   document.addEventListener('DOMContentLoaded', (event) => {
     
-    /* --- Your existing search logic --- */
+    /* --- Search logic --- */
     const searchInput = document.getElementById('mapSearchInput');
     const allMapCards = document.querySelectorAll('.map-card');
 
     searchInput.addEventListener('keyup', () => {
-      // ... (all your existing search code is fine)
       const filterText = searchInput.value.toLowerCase().trim();
       allMapCards.forEach(card => {
         const cardData = card.dataset.search.toLowerCase();
         if (cardData.includes(filterText)) {
-          card.style.display = 'flex'; 
+          card.style.display = 'flex'; WH
         } else {
           card.style.display = 'none';
         }
       });
     });
-    /* --- End of existing search logic --- */
 
-
-    /* 👇 ADD THIS NEW BLOCK FOR THE COPY BUTTONS 👇 */
-    
-    // 7. Get all the new copy buttons
+    /* --- Copy button logic --- */
     const allCopyButtons = document.querySelectorAll('.copy-button');
-
-    // 8. Add a click listener to each one
     allCopyButtons.forEach(button => {
       button.addEventListener('click', () => {
-        
-        // Find the <code> element that is right before this button
         const codeElement = button.previousElementSibling;
         const textToCopy = codeElement.innerText;
-
-        // Use the modern Clipboard API to copy the text
         navigator.clipboard.writeText(textToCopy).then(() => {
-          
-          // Give the user visual feedback
           button.innerText = 'Copied!';
-          
-          // Reset the button text after 2 seconds
           setTimeout(() => {
             button.innerText = 'Copy';
           }, 2000);
-
         }).catch(err => {
           console.error('Failed to copy text: ', err);
         });
       });
     });
-    /* --- End of new copy button block --- */
-
   });
 </script>
