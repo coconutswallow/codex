@@ -56,6 +56,14 @@
 }
 
 /* --- Search Bar Styling --- */
+/* --- Intro Text Alignment --- */
+.intro-wrapper {
+  max-width: 900px; /* Same max-width as gallery */
+  margin: 0 auto;   /* Same centering */
+  padding: 0 20px;  /* Same padding as search bar */
+}
+
+/* --- Search Bar Styling --- */
 
 /* This wrapper aligns the search bar with your gallery */
 .map-search-wrapper {
@@ -84,11 +92,6 @@
 }
 
 /* --- Gallery & Card Improvements --- */
-
-/* * You already have .map-gallery and .map-card.
- * This just ensures the padding is set correctly 
- * on the gallery to align with the search bar.
-*/
 
 .map-gallery {
   max-width: 900px;
