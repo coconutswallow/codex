@@ -24,9 +24,9 @@ title: Map Index
 
         <p><strong>Source:</strong>
           {% if map.source contains 'http' %}
-            <a href="{{ map.source }}" target="_blank" rel="noopener noreferrer">{{ map.source }}</a>
+            <a href="{{ map.source }}" target="_blank" rel="noopener noreferrer">Link</a>
           {% else %}
-            <a href="{{ map.source | relative_url }}">{{ map.source }}</a>
+            <a href="{{ map.source }}">Link</a>
           {% endif %}
         </p>
         
