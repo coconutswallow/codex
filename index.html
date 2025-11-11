@@ -22,18 +22,24 @@ title: Map Index
         <h2>{{ map.name }}</h2>
         <p><strong>Creator:</strong> {{ map.creator }}</p>
 
+        <p><strong>Source:</strong>
+          {% if map.source contains 'http' %}
+            <a href="{{ map.source }}" target="_blank" rel="noopener noreferrer">Source</a>
+          {% else %}
+            <a href="{{ map.source | relative_url }}">Source</a>
+          {% endif %}
+        </p>
         <p><strong>Image URL:</strong></p>
         <div class="copy-wrapper">
           <code class="copy-target">{{ map.image_path | absolute_url }}</code>
           <button class="copy-button" type="button">Copy</button>
         </div>
+        
+        <p><strong>Keywords:</strong> {{ map.keywords }}</p>
+      </div>
 
         
         <p><strong>Keywords:</strong> {{ map.keywords }}</p>
-
-        <p><strong>Image URL:</strong> 
-          <code>{{ map.image_path }}</code>
-        </p>
       </div>
 
     </div>
