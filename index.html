@@ -1,0 +1,20 @@
+<div class="map-gallery">
+  {% for map in site.maps %}
+    <div class="map-card">
+      <img src="{{ map.image_path | relative_url }}" alt="Thumbnail for {{ map.name }}" class="map-thumbnail">
+      <h2>{{ map.name }}</h2>
+      <p><strong>Creator:</strong> {{ map.creator }}</p>
+
+      <p><strong>Source:</strong>
+        {% if map.source contains 'http' %}
+          <a href="{{ map.source }}" target="_blank" rel="noopener noreferrer">Link</a>
+        {% else %}
+          <a href="{{ map.source | relative_url }}">Link</a>
+        {% endif %}
+      </p>
+      
+      <p><strong>Keywords:</strong> {{ map.keywords }}</p>
+    </div>
+  {% endfor %}
+</div>}
+</div>
