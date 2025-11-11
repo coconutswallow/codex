@@ -1,6 +1,11 @@
+---
+layout: default # Or whatever your main layout file is
+title: Map Index
+---
+
 <div class="map-gallery">
   {% for map in site.maps %}
-    <div class="map-card">
+    <div class-="map-card">
       <img src="{{ map.image_path | relative_url }}" alt="Thumbnail for {{ map.name }}" class="map-thumbnail">
       <h2>{{ map.name }}</h2>
       <p><strong>Creator:</strong> {{ map.creator }}</p>
@@ -16,5 +21,4 @@
       <p><strong>Keywords:</strong> {{ map.keywords }}</p>
     </div>
   {% endfor %}
-</div>}
 </div>
