@@ -24,20 +24,17 @@ title: Map Index
 
         <p><strong>Source:</strong>
           {% if map.source contains 'http' %}
-            <a href="{{ map.source }}" target="_blank" rel="noopener noreferrer">Link</a>
+            <a href="{{ map.source }}" target="_blank" rel="noopener noreferrer">{{ map.source }}</a>
           {% else %}
-            <a href="{{ map.source | relative_url }}">Link</a>
+            <a href="{{ map.source | relative_url }}">{{ map.source }}</a>
           {% endif %}
         </p>
-        <p><strong>Source:</strong>
-        {% if map.source contains 'http' %}
-          <a href="{{ map.source }}" target="_blank" rel="noopener noreferrer">{{ map.source }}</a>
-        {% else %}
-          <a href="{{ map.source | relative_url }}">{{ map.source }}</a>
-        {% endif %}
-      </p>
-              
+        
         <p><strong>Keywords:</strong> {{ map.keywords }}</p>
+
+        <p><strong>Image URL:</strong> 
+          <code>{{ map.image_path | relative_url }}</code>
+        </p>
       </div>
 
     </div>

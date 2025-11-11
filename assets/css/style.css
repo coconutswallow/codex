@@ -43,3 +43,14 @@
   margin-top: 0;
   margin-bottom: 10px;
 }
+
+/* Style for the code block to make copying easy */
+.map-card-info code {
+  background-color: #f4f4f4; /* Light gray background */
+  padding: 3px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9em;
+  color: #333;
+  word-break: break-all; /* Helps break long paths */
+}
