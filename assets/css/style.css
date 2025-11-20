@@ -1,150 +1,436 @@
-/* This is the main container for all your cards */
-.map-gallery {
-  max-width: 900px;
-  margin: 0 auto; /* Center the gallery */
-  padding: 20px;
-}
+/* ============================================
+   AVRAE MAP LIBRARY - MAIN STYLESHEET
+   Theme: Coconut & Palm
+   ============================================ */
 
-/* This is the card itself */
-.map-card {
-  display: flex;          /* The magic! Puts items side-by-side */
-  align-items: flex-start;  /* Aligns items to the top of the card */
-  gap: 20px;                /* Creates a 20px space between the image and text */
+/* ============================================
+   1. COLOR PALETTE (Design Tokens)
+   ============================================ */
+:root {
+  /* Brand Colors (Coconut Theme) */
+  --palette-brand-main: #4A332A;          /* Deep Coconut Husk (Dark Brown) */
+  --palette-brand-accent: #6B8E23;        /* Palm Leaf (Olive/Fresh Green) */
+  --palette-brand-highlight: #D7C49E;     /* Dried Fiber (Tan/Sand) */
   
-  /* Nice card styling */
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 20px; /* Space between cards */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  /* Discord Brand (Kept standard for familiarity) */
+  --palette-brand-discord: #5865F2;
+  --palette-brand-discord-dark: #4752C4;
+
+  /* Backgrounds - Light Mode */
+  --palette-bg-page-light: #FFFAF4;       /* Coconut Milk (Warm Off-White) */
+  --palette-bg-card-light: #FFFFFF;       /* Pure White */
+  --palette-bg-row-light: #F4EFEA;        /* Light Shell Gray/Beige */
+  --palette-bg-controls-light: #EBE5DE;   /* Controls Background */
+  
+  /* Backgrounds - Dark Mode */
+  --palette-bg-page-dark: #1C1410;        /* Very Dark Brown */
+  --palette-bg-card-dark: #2A1F1A;        /* Dark Husk */
+  --palette-bg-controls-dark: #362924;    /* Lighter Dark Brown */
+
+  /* Text */
+  --palette-text-main-light: #3E2723;     /* Dark Brown Text */
+  --palette-text-muted-light: #6D4C41;    /* Muted Brown */
+  
+  --palette-text-main-dark: #EFEBE9;      /* Off-White Text */
+  --palette-text-muted-dark: #BCAAA4;     /* Muted Tan */
+
+  /* Borders */
+  --palette-border-light: #D7CCC8;        /* Light Brown Border */
+  --palette-border-dark: #4E342E;         /* Dark Brown Border */
+
+  /* Map Viewer Specifics (Always Dark for contrast) */
+  --palette-viewer-bg: #111111;
+  --palette-viewer-border: #444444;
+  --palette-grid-red: rgba(255, 0, 0, 0.6); /* Kept red for visibility */
+  
+  /* System/Status */
+  --palette-success: #6B8E23;             /* Palm Green */
+  --palette-danger: #D32F2F;              /* Alert Red */
+  --palette-white: #ffffff;
 }
 
-/* The link wrapping the image */
-.map-thumbnail-link {
-  flex-shrink: 0; /* Stops the image from shrinking */
+/* ============================================
+   2. THEME APPLICATION (Semantic Tokens)
+   Mapping Palette -> Usage
+   ============================================ */
+:root {
+  /* Core */
+  --color-primary: var(--palette-brand-main);
+  --color-secondary: var(--palette-brand-accent);
+  --color-highlight: var(--palette-brand-highlight);
+  
+  /* Layout */
+  --color-bg-page: var(--palette-bg-page-light);
+  --color-bg-card: var(--palette-bg-card-light);
+  --color-bg-controls: var(--palette-bg-controls-light);
+  
+  /* Text */
+  --color-text: var(--palette-text-main-light);
+  --color-text-muted: var(--palette-text-muted-light);
+  
+  /* Borders */
+  --color-border: var(--palette-border-light);
+  
+  /* Components */
+  --color-btn-text: var(--palette-white);
+  --color-input-bg: var(--palette-white);
+  
+  /* Spacing */
+  --border-radius: 8px; /* Slightly rounder for organic feel */
+  --spacing-md: 20px;
 }
 
-/* The thumbnail image */
-.map-thumbnail {
-  width: 150px;
-  height: 150px;
-  object-fit: cover; /* Prevents image from being stretched */
-  border-radius: 5px;
-  display: block; /* Removes any extra space below the image */
+/* ============================================
+   3. THEME OVERRIDES (Dark Mode Ready)
+   ============================================ */
+[data-theme="dark"] {
+  --color-primary: var(--palette-brand-highlight); /* Tan looks better on dark */
+  --color-secondary: var(--palette-brand-accent);
+  
+  --color-bg-page: var(--palette-bg-page-dark);
+  --color-bg-card: var(--palette-bg-card-dark);
+  --color-bg-controls: var(--palette-bg-controls-dark);
+  
+  --color-text: var(--palette-text-main-dark);
+  --color-text-muted: var(--palette-text-muted-dark);
+  
+  --color-border: var(--palette-border-dark);
+  --color-input-bg: #2A1F1A;
 }
 
-/* The text container */
-.map-card-info {
-  flex-grow: 1; /* Allows the text block to fill the remaining space */
+/* ============================================
+   4. GLOBAL RESETS & BASE STYLES
+   ============================================ */
+body {
+  font-family: 'Nunito', system-ui, sans-serif; /* Rounded font fits the theme well */
+  background-color: var(--color-bg-page);
+  color: var(--color-text);
+  line-height: 1.6;
+  margin: 0;
+  transition: background-color 0.3s, color 0.3s;
 }
 
-/* A little cleanup for the heading */
-.map-card-info h2 {
-  margin-top: 0;
-  margin-bottom: 10px;
-}
+a { color: var(--palette-brand-accent); text-decoration: none; font-weight: bold; }
+a:hover { text-decoration: underline; color: var(--palette-brand-main); }
 
-/* Style for the code block to make copying easy */
-.map-card-info code {
-  background-color: #f4f4f4; /* Light gray background */
-  padding: 3px 6px;
-  border-radius: 4px;
-  font-family: monospace;
-  font-size: 0.9em;
-  color: #333;
-  word-break: break-all; /* Helps break long paths */
-}
-
-/* --- Search Bar Styling --- */
-/* --- Intro Text Alignment --- */
 .intro-wrapper {
-  max-width: 900px; /* Same max-width as gallery */
-  margin: 0 auto;   /* Same centering */
-  padding: 0 20px;  /* Same padding as search bar */
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--color-bg-card);
+  border-bottom: 4px solid var(--palette-brand-accent); /* Accent Border */
+  margin-bottom: 20px;
+  box-shadow: 0 2px 10px rgba(74, 51, 42, 0.05);
 }
 
-/* --- Search Bar Styling --- */
+.intro-wrapper h1 { margin-top: 0; color: var(--palette-brand-main); font-size: 2.5rem; }
+.intro-wrapper p { color: var(--color-text-muted); max-width: 700px; margin: 10px auto; }
 
-/* This wrapper aligns the search bar with your gallery */
-.map-search-wrapper {
-  max-width: 900px; /* Same max-width as .map-gallery */
-  margin: 0 auto;   /* Same margin to center it */
-  padding: 0 20px;  /* Same padding to line up the content */
-  margin-bottom: 20px; /* Add some space above the first card */
-}
-
-/* Style the text label above the search bar */
-.map-search-wrapper label {
-  display: block; /* Puts the label on its own line */
-  font-weight: 600;
-  margin-bottom: 8px;
-  font-size: 1.1em;
-}
-
-/* Style the search input box itself */
-#mapSearchInput {
-  width: 100%; /* Make it fill the wrapper */
-  padding: 12px 15px;
+/* ============================================
+   5. INPUTS & BUTTONS
+   ============================================ */
+input[type="text"], 
+input[type="url"], 
+input[type="number"],
+select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  background: var(--color-input-bg);
+  color: var(--color-text);
   font-size: 1em;
-  border: 1px solid #ccc;
-  border-radius: 8px; /* Matches your card's border-radius */
-  box-sizing: border-box; /* Important for 100% width */
 }
 
-/* --- Gallery & Card Improvements --- */
+input:focus {
+  outline: none;
+  border-color: var(--palette-brand-accent);
+  box-shadow: 0 0 0 3px rgba(107, 142, 35, 0.2);
+}
+
+/* Primary Submit Button */
+button#submit-btn {
+  background: var(--palette-brand-main);
+  color: var(--palette-white); 
+  border: none; 
+  padding: 12px; 
+  width: 100%; 
+  font-size: 1.1em; 
+  font-weight: bold; 
+  margin-top: 10px; 
+  cursor: pointer; 
+  border-radius: var(--border-radius);
+  transition: background 0.2s;
+}
+button#submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent); }
+
+/* Tool/Utility Buttons */
+.tool-btn { 
+  background: var(--color-bg-controls); 
+  border: 1px solid var(--color-border);
+  color: var(--color-text); 
+  padding: 6px 12px; 
+  border-radius: 4px; 
+  cursor: pointer; 
+  font-size: 0.8em; 
+  margin-left: 5px; 
+  transition: all 0.2s;
+}
+.tool-btn:hover { 
+  background: var(--palette-brand-accent); 
+  color: var(--palette-white); 
+  border-color: var(--palette-brand-accent);
+}
+
+/* Discord Login Button */
+.discord-btn {
+  background-color: var(--palette-brand-discord); 
+  color: var(--palette-white); 
+  padding: 12px 24px; 
+  border: none; 
+  border-radius: var(--border-radius); 
+  font-size: 16px; 
+  cursor: pointer; 
+  font-weight: bold;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: 100%;
+  transition: background 0.2s;
+}
+.discord-btn:hover { background-color: var(--palette-brand-discord-dark); }
+
+/* ============================================
+   6. MAP INDEX (GALLERY)
+   ============================================ */
+.map-search-wrapper {
+  max-width: 800px;
+  margin: 0 auto 30px;
+  padding: 0 20px;
+}
 
 .map-gallery {
-  max-width: 900px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+  padding: 20px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 20px 20px 20px; /* Add padding to all sides */
 }
 
 .map-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
   display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 15px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  background-color: #fff; /* A solid background color is nice */
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
-/* Container for the code and button */
+.map-card:hover { 
+  transform: translateY(-3px); 
+  box-shadow: 0 10px 20px rgba(74, 51, 42, 0.15); 
+  border-color: var(--palette-brand-accent);
+}
+
+.map-thumbnail-link {
+  display: block;
+  height: 200px;
+  overflow: hidden;
+  background: var(--color-bg-controls);
+  position: relative;
+}
+
+.map-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.map-card:hover .map-thumbnail {
+  transform: scale(1.05);
+}
+
+.map-card-info { padding: 15px; font-size: 0.9em; }
+.map-card-info h2 { 
+  margin: 0 0 10px 0; 
+  font-size: 1.2em; 
+  color: var(--palette-brand-main); 
+}
+
+[data-theme="dark"] .map-card-info h2 { color: var(--palette-brand-highlight); }
+
+.map-card-info p { margin: 5px 0; color: var(--color-text); }
+
+/* Copy Blocks */
 .copy-wrapper {
   display: flex;
-  align-items: center;
-  width: 100%;
-  padding: 2px;
+  background: var(--color-bg-controls);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  margin-top: 5px;
+  overflow: hidden;
 }
-
-/* The <code> block */
-.copy-wrapper .copy-target {
+.copy-target {
   flex-grow: 1;
-  background-color: #f4f4f4;
-  padding: 8px 10px;
-  border-radius: 4px 0 0 4px;
+  padding: 8px;
   font-family: monospace;
-  font-size: 0.9em;
-  color: #333;
-  
-  /* 👇 This line allows long URLs to wrap */
-  word-break: break-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: var(--color-input-bg);
+  color: var(--color-text);
+  font-size: 0.85em;
+}
+.copy-button {
+  background: var(--color-bg-controls); 
+  border: none; 
+  border-left: 1px solid var(--color-border);
+  padding: 0 12px; cursor: pointer; 
+  font-weight: bold; font-size: 0.8em;
+  color: var(--color-text-muted);
+}
+.copy-button:hover { background: var(--palette-brand-accent); color: white; }
+
+
+/* ============================================
+   7. SUBMISSION TOOL LAYOUT
+   ============================================ */
+.submit-container { 
+  display: grid; 
+  grid-template-columns: 1fr 350px; 
+  gap: var(--spacing-md); 
+  margin: var(--spacing-md); 
+  height: 85vh; 
 }
 
-/* The new copy button */
-.copy-wrapper .copy-button {
-  flex-shrink: 0; /* Prevents button from shrinking */
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-left: none; /* Joins it to the code block */
-  background-color: #eee;
-  border-radius: 0 4px 4px 0; /* Rounded on the right */
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9em;
+@media (max-width: 768px) { 
+  .submit-container { grid-template-columns: 1fr; height: auto; } 
 }
 
-.copy-wrapper .copy-button:hover {
-  background-color: #dcdcdc;
+/* Sidebar Controls */
+.controls { 
+  background: var(--color-bg-controls); 
+  padding: 20px; 
+  border-radius: 8px; 
+  color: var(--color-text); 
+  overflow-y: auto; 
+  border: 1px solid var(--color-border);
+}
+.controls h3 { 
+  margin-top: 0; 
+  border-bottom: 2px solid var(--color-border); 
+  padding-bottom: 10px; 
+  font-size: 1.1em; 
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.section { 
+  margin-bottom: 25px; 
+  background: var(--color-bg-card); 
+  padding: 15px; 
+  border-radius: 6px; 
+  border: 1px solid var(--color-border); 
+  box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+}
+
+.controls label { 
+  display: block; margin-top: 12px; 
+  font-weight: bold; font-size: 0.85em; 
+  color: var(--color-text-muted); 
+  text-transform: uppercase;
+}
+
+.input-group { display: flex; gap: 5px; margin-top: 4px; }
+.input-group button { 
+  cursor: pointer; padding: 0 15px; 
+  background: var(--palette-brand-main); 
+  color: var(--palette-white); 
+  border: none; border-radius: 4px; 
+}
+.input-group button:hover { background: var(--palette-brand-accent); }
+
+.slider-group { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.slider-group input[type="range"] { flex-grow: 1; accent-color: var(--palette-brand-main); }
+.slider-group input[type="number"] { width: 60px; }
+
+.generated-cmd { 
+  background: #2c2c2c; 
+  color: #4ade80; /* Terminal Green */
+  font-family: monospace; 
+  padding: 15px; 
+  word-break: break-all; 
+  margin-top: 10px; 
+  border-radius: 4px; 
+  font-size: 0.85em; 
+  border: 1px solid #444;
+}
+
+#statusMsg { margin-top: 10px; font-weight: bold; text-align: center; font-size: 0.9em; }
+
+
+/* ============================================
+   8. MAP VIEWER COMPONENT
+   ============================================ */
+.map-viewer { 
+  position: relative; 
+  background: var(--palette-viewer-bg); 
+  border: 2px solid var(--palette-viewer-border); 
+  border-radius: 8px;
+  overflow: auto; 
+  display: flex;  
+  align-items: flex-start;
+  justify-content: flex-start;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+}
+
+.canvas-wrapper {
+  position: relative;
+  box-sizing: content-box;
+  padding-top: 25px;  
+  padding-left: 30px; 
+  background-color: #333;
+  min-width: 100px; min-height: 100px;
+  overflow: hidden;
+}
+
+#preview-img { 
+  display: block;
+  transform-origin: top left;
+  image-rendering: high-quality;
+  transition: transform 0.1s linear; 
+}
+
+/* The Red Grid Overlay */
+#grid-overlay {
+  position: absolute; 
+  top: 25px; left: 30px; 
+  pointer-events: none; 
+  z-index: 10;
+  border-right: 2px solid var(--palette-grid-red);
+  border-bottom: 2px solid var(--palette-grid-red);
+  background-size: 28px 28px; 
+  background-image: 
+    linear-gradient(to right, rgba(255, 0, 0, 0.6) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 0, 0, 0.6) 1px, transparent 1px);
+}
+
+/* Rulers */
+.axis-label {
+  position: absolute; font-family: monospace; font-size: 10px;
+  color: #aaa; display: flex; align-items: center; justify-content: center; pointer-events: none;
+}
+.axis-x { 
+  top: 0; height: 25px; width: 28px; 
+  border-right: 1px solid var(--palette-viewer-border); 
+  background: var(--palette-viewer-bg); 
+}
+.axis-y { 
+  left: 0; width: 30px; height: 28px; 
+  border-bottom: 1px solid var(--palette-viewer-border); 
+  background: var(--palette-viewer-bg); 
 }

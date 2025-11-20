@@ -2,6 +2,8 @@
 layout: default
 title: Map Index
 ---
+<link rel="stylesheet" href="/codex/assets/css/style.css">
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <div class="intro-wrapper">
@@ -10,7 +12,7 @@ title: Map Index
     Community submitted maps for Avrae. 
     <a href="/codex/submit">Submit a new map here</a>.
   </p>
-  <p>Use <a href="https://www.corvux.me/Avrae_Combat_Planner/">Corvue Avrae Combat Planner</a> to add or adjust avrae settings </p>
+  <p>Use <a href="https://www.corvux.me/Avrae_Combat_Planner/">Corvue Avrae Combat Planner</a> to add or adjust avrae settings.</p>
 </div>
 
 <div class="map-search-wrapper">
@@ -25,8 +27,7 @@ title: Map Index
 <script>
   /* --- CONFIGURATION --- */
   const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
-  
-  /* 🔴 USE THE SAME "eyJ..." KEY YOU USED IN SUBMIT.HTML 🔴 */
+  /* 🔴 USE YOUR "anon" KEY HERE 🔴 */
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'; 
   
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -38,7 +39,7 @@ title: Map Index
   async function fetchAndRenderMaps() {
     const container = document.getElementById('gallery-container');
 
-    // 1. Fetch Approved Maps from Supabase
+    /* 1. Fetch Approved Maps */
     const { data: maps, error } = await db
       .from('maps')
       .select('*')
@@ -47,7 +48,7 @@ title: Map Index
 
     if (error) {
       console.error('Error loading maps:', error);
-      container.innerHTML = `<p style="color:red; text-align:center;">Error loading maps. Please try again later.</p>`;
+      container.innerHTML = `<p style="color:var(--palette-danger); text-align:center;">Error loading maps.</p>`;
       return;
     }
 
@@ -56,20 +57,17 @@ title: Map Index
       return;
     }
 
-    // 2. Clear Loading Text
+    /* 2. Clear Loading Text */
     container.innerHTML = '';
 
-    // 3. Generate HTML for each map
+    /* 3. Generate HTML */
     maps.forEach(map => {
-      // Create Card Element
       const card = document.createElement('div');
       card.className = 'map-card';
       
-      // Build Search Data String (Name + Creator + Keywords)
       const searchString = `${map.name} ${map.creator} ${map.keywords || ''}`.toLowerCase();
       card.setAttribute('data-search', searchString);
 
-      // HTML Structure
       card.innerHTML = `
         <a href="${map.image_url}" class="map-thumbnail-link" target="_blank" rel="noopener noreferrer">
           <img src="${map.image_url}" alt="Thumbnail for ${map.name}" class="map-thumbnail" loading="lazy">
@@ -93,24 +91,22 @@ title: Map Index
             <button class="copy-button" type="button">Copy</button>
           </div>
 
-          <p><strong>Keywords:</strong> <span style="font-size: 0.9em; color: #666;">${map.keywords || 'None'}</span></p>
+          <p><strong>Keywords:</strong> <span style="font-size: 0.9em; color: var(--color-text-muted);">${map.keywords || 'None'}</span></p>
           
-          <p style="font-size: 0.8em; margin-top: 10px; color: #888;">
+          <p style="font-size: 0.8em; margin-top: 10px; color: var(--color-text-muted);">
             <em>Submitted by: ${map.submitted_by || 'Anonymous'}</em>
           </p>
         </div>
       `;
 
-      // Append to gallery
       container.appendChild(card);
     });
 
-    // 4. Re-Initialize Interactions (Search & Copy)
     setupInteractions();
   }
 
   function setupInteractions() {
-    /* --- Search Logic --- */
+    /* Search Logic */
     const searchInput = document.getElementById('mapSearchInput');
     const allMapCards = document.querySelectorAll('.map-card');
 
@@ -127,7 +123,7 @@ title: Map Index
       });
     });
 
-    /* --- Copy Button Logic --- */
+    /* Copy Button Logic */
     const allCopyButtons = document.querySelectorAll('.copy-button');
     
     allCopyButtons.forEach(button => {
@@ -138,12 +134,12 @@ title: Map Index
         navigator.clipboard.writeText(textToCopy).then(() => {
           const originalText = button.innerText;
           button.innerText = 'Copied!';
-          button.style.background = '#2ea44f';
+          button.style.background = 'var(--palette-success)';
           button.style.color = 'white';
           
           setTimeout(() => {
             button.innerText = originalText;
-            button.style.background = ''; // Reset style
+            button.style.background = ''; 
             button.style.color = '';
           }, 2000);
         }).catch(err => {
