@@ -11,48 +11,101 @@ title: Submit Map
     grid-template-columns: 1fr 350px; 
     gap: 20px; 
     margin: 20px 0; 
+    height: 85vh; /* Use most of the screen height */
   }
-  @media (max-width: 768px) { .submit-container { grid-template-columns: 1fr; } }
+  @media (max-width: 768px) { .submit-container { grid-template-columns: 1fr; height: auto; } }
   
+  /* The Map Viewer - Scrollable Window */
   .map-viewer { 
-    position: relative; background: #222; min-height: 500px; 
-    overflow: hidden; border: 2px solid #444; border-radius: 8px;
+    position: relative; 
+    background: #222; 
+    border: 2px solid #444; 
+    border-radius: 8px;
+    overflow: auto; /* Allows scrolling for large maps */
+    display: flex;  
+    align-items: flex-start;
+    justify-content: flex-start;
   }
   
-  #preview-img { 
-    position: absolute; top: 0; left: 0; 
-    transform-origin: top left; max-width: 100%; z-index: 1;
+  /* Wrapper allows us to stack Image + Grid + Coordinates */
+  .canvas-wrapper {
+    position: relative;
+    box-sizing: content-box;
+    padding-top: 20px;  /* Space for X-axis letters */
+    padding-left: 30px; /* Space for Y-axis numbers */
+    background-color: #333; /* Dark background for the "gutter" */
   }
 
+  #preview-img { 
+    display: block;
+    max-width: none; /* Allow full resolution */
+    image-rendering: -webkit-optimize-contrast; /* Crisper edges */
+  }
+
+  /* The Red Grid Overlay */
   #grid-overlay {
-    position: absolute; top: 0; left: 0;
-    pointer-events: none; z-index: 2;
-    border: 1px solid red; box-sizing: border-box;
+    position: absolute; 
+    top: 20px; left: 30px; /* Offset to match padding */
+    pointer-events: none; 
+    z-index: 10;
+    border-right: 2px solid rgba(255,0,0,0.5);
+    border-bottom: 2px solid rgba(255,0,0,0.5);
+    box-sizing: border-box;
+    
+    /* The actual grid lines */
     background-image: 
-      linear-gradient(to right, rgba(255, 0, 0, 0.5) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 0, 0, 0.5) 1px, transparent 1px);
+      linear-gradient(to right, rgba(255, 0, 0, 0.6) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 0, 0, 0.6) 1px, transparent 1px);
     transform-origin: top left;
   }
 
-  .controls { background: #f4f4f4; padding: 20px; border-radius: 8px; color: #333; }
+  /* Coordinate Labels */
+  .axis-label {
+    position: absolute;
+    font-family: sans-serif;
+    font-size: 12px;
+    color: #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+  
+  /* X-Axis (Letters) */
+  .axis-x { top: 0; height: 20px; border-right: 1px solid #555; background: #222; }
+  
+  /* Y-Axis (Numbers) */
+  .axis-y { left: 0; width: 30px; border-bottom: 1px solid #555; background: #222; }
+
+
+  /* Controls Sidebar */
+  .controls { background: #f4f4f4; padding: 20px; border-radius: 8px; color: #333; overflow-y: auto; }
   .controls label { display: block; margin-top: 15px; font-weight: bold; font-size: 0.9em; }
   .controls input { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
   
+  /* Inputs & Buttons */
   .input-group { display: flex; gap: 10px; margin-top: 5px; }
   .input-group button { cursor: pointer; padding: 0 15px; background: #444; color: #fff; border: none; border-radius: 4px;}
   
   .slider-group { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
   .slider-group input[type="range"] { flex-grow: 1; }
-  .slider-group input[type="number"] { width: 60px; }
+  .slider-group input[type="number"] { width: 70px; }
+  
+  .header-row { display: flex; justify-content: space-between; align-items: center; }
+  .auto-fit-btn { 
+    background: #6f42c1; color: white; border: none; border-radius: 4px; 
+    cursor: pointer; padding: 4px 8px; font-size: 0.8em; display: flex; align-items: center; gap: 5px;
+  }
+  .auto-fit-btn:hover { background: #5a32a3; }
 
   .generated-cmd { 
     background: #222; color: #0f0; font-family: monospace; 
-    padding: 10px; word-break: break-all; margin-top: 20px; border-radius: 4px; 
+    padding: 10px; word-break: break-all; margin-top: 20px; border-radius: 4px; font-size: 0.85em;
   }
 
   button#submit-btn {
     background: #2ea44f; color: white; border: none; 
-    padding: 15px; width: 100%; font-size: 1.1em; margin-top: 20px; 
+    padding: 15px; width: 100%; font-size: 1.1em; font-weight: bold; margin-top: 20px; 
     cursor: pointer; border-radius: 6px;
   }
   button#submit-btn:disabled { background: #ccc; cursor: not-allowed; }
@@ -61,14 +114,21 @@ title: Submit Map
 
 <div class="intro-wrapper">
   <h1>Submit & Align Map</h1>
-  <p>Paste a link, align the grid, and submit to the library.</p>
+  <p>Load a map, align the grid, and submit.</p>
 </div>
 
 <div class="submit-container">
   <div class="map-viewer" id="viewPort">
-    <p style="color:#888; text-align:center; margin-top: 200px;">Map Preview will appear here</p>
-    <img id="preview-img" src="" alt="">
-    <div id="grid-overlay"></div>
+    <div class="canvas-wrapper" id="canvasWrapper">
+        <p id="placeholder-text" style="color:#888; width: 300px; padding: 50px;">Map Preview will appear here</p>
+        
+        <div id="axis-x-container"></div>
+        <div id="axis-y-container"></div>
+        
+        <img id="preview-img" src="" alt="" style="display:none;">
+        
+        <div id="grid-overlay"></div>
+    </div>
   </div>
 
   <div class="controls">
@@ -91,22 +151,28 @@ title: Submit Map
     <hr style="margin: 20px 0;">
     
     <h3>2. Grid Alignment</h3>
-    <label>Grid Width</label>
+    
+    <div class="header-row">
+        <label>Pixels Per Cell (Zoom)</label>
+        <button class="auto-fit-btn" onclick="autoFit()" title="Guess grid size based on image">
+            <span>🪄 Auto-Calc</span>
+        </button>
+    </div>
+    <div class="slider-group">
+      <input type="range" id="ppi_slider" min="30" max="200" value="70" oninput="updateGrid()">
+      <input type="number" id="ppi_num" value="70" oninput="updateGrid()">
+    </div>
+
+    <label>Grid Width (Cols)</label>
     <div class="slider-group">
       <input type="range" id="gridW_slider" min="5" max="100" value="25" oninput="updateGrid()">
       <input type="number" id="gridW_num" value="25" oninput="updateGrid()">
     </div>
 
-    <label>Grid Height</label>
+    <label>Grid Height (Rows)</label>
     <div class="slider-group">
       <input type="range" id="gridH_slider" min="5" max="100" value="25" oninput="updateGrid()">
       <input type="number" id="gridH_num" value="25" oninput="updateGrid()">
-    </div>
-
-    <label>Pixels Per Cell</label>
-    <div class="slider-group">
-      <input type="range" id="ppi_slider" min="30" max="200" value="70" oninput="updateGrid()">
-      <input type="number" id="ppi_num" value="70" oninput="updateGrid()">
     </div>
 
     <hr style="margin: 20px 0;">
@@ -128,7 +194,7 @@ title: Submit Map
   // --- 1. CONFIGURATION ---
   const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
   
-  // 🔴 REPLACE THIS WITH THE KEY THAT STARTS WITH "eyJ..."
+  // 🔴 REPLACE WITH YOUR ANON KEY (Starts with eyJ...) 🔴
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'; 
   
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -138,44 +204,65 @@ title: Submit Map
   const overlay = document.getElementById('grid-overlay');
   const cmdOutput = document.getElementById('cmdOutput');
   const statusMsg = document.getElementById('statusMsg');
+  const xAxis = document.getElementById('axis-x-container');
+  const yAxis = document.getElementById('axis-y-container');
 
   // --- 3. LOAD IMAGE ---
   function loadImage() {
     const url = document.getElementById('imgUrl').value;
     if(!url) return;
 
-    console.log("Attempting to load:", url);
     statusMsg.innerText = "Loading...";
     statusMsg.style.color = "blue";
 
-    // Hide placeholder text
-    const placeholder = document.querySelector('.map-viewer p');
-    if(placeholder) placeholder.style.display = 'none';
+    document.getElementById('placeholder-text').style.display = 'none';
 
-    // Load image
+    // Reset
     img.removeAttribute('src'); 
     img.style.display = 'block'; 
     img.src = url; 
   }
 
   img.onload = function() {
-    console.log("Image loaded");
     statusMsg.innerText = "";
-    updateGrid(); 
+    // Use auto-fit on first load if grid is small default
+    if(document.getElementById('gridW_num').value == 25) {
+        autoFit();
+    } else {
+        updateGrid();
+    }
   };
 
   img.onerror = function() {
-    console.error("Image failed");
-    statusMsg.innerText = "❌ Error: Check link. Must be .jpg/.png";
+    statusMsg.innerText = "❌ Error: Check link. Must be direct .jpg/.png";
     statusMsg.style.color = "red";
   };
 
-  // --- 4. UPDATE GRID ---
-  function updateGrid() {
-    const w = document.getElementById('gridW_num').value = document.getElementById('gridW_slider').value;
-    const h = document.getElementById('gridH_num').value = document.getElementById('gridH_slider').value;
-    const ppi = document.getElementById('ppi_num').value = document.getElementById('ppi_slider').value;
+  // --- 4. MAGIC WAND: AUTO CALCULATE ---
+  function autoFit() {
+      if(!img.src || img.naturalWidth === 0) return;
+      
+      const ppi = parseInt(document.getElementById('ppi_num').value);
+      const w = Math.round(img.naturalWidth / ppi);
+      const h = Math.round(img.naturalHeight / ppi);
 
+      // Update Inputs
+      document.getElementById('gridW_num').value = w;
+      document.getElementById('gridW_slider').value = w;
+      document.getElementById('gridH_num').value = h;
+      document.getElementById('gridH_slider').value = h;
+
+      updateGrid();
+  }
+
+  // --- 5. UPDATE GRID & COORDINATES ---
+  function updateGrid() {
+    // Sync inputs
+    const w = parseInt(document.getElementById('gridW_num').value = document.getElementById('gridW_slider').value);
+    const h = parseInt(document.getElementById('gridH_num').value = document.getElementById('gridH_slider').value);
+    const ppi = parseInt(document.getElementById('ppi_num').value = document.getElementById('ppi_slider').value);
+
+    // 1. Update Grid Overlay Size
     const totalWidth = w * ppi;
     const totalHeight = h * ppi;
 
@@ -183,17 +270,51 @@ title: Submit Map
     overlay.style.height = totalHeight + 'px';
     overlay.style.backgroundSize = `${ppi}px ${ppi}px`; 
 
-    if(img.src) {
-        img.style.width = totalWidth + 'px';
-        img.style.height = totalHeight + 'px';
-    }
+    // 2. Update Axis Generators
+    renderCoordinates(w, h, ppi);
 
+    // 3. Update Avrae Command
     const url = document.getElementById('imgUrl').value || "[URL]";
     const cmd = `!map -bg ${url} -w ${w} -h ${h} --options c${ppi}`;
     cmdOutput.innerText = cmd;
   }
 
-  // --- 5. SUBMIT ---
+  function renderCoordinates(cols, rows, size) {
+    // X-Axis (Letters)
+    xAxis.innerHTML = '';
+    for(let i=0; i<cols; i++) {
+        const el = document.createElement('div');
+        el.className = 'axis-label axis-x';
+        el.innerText = getColumnLabel(i); // A, B, C...
+        el.style.left = (30 + (i * size)) + 'px'; // 30px offset for Y-axis gutter
+        el.style.width = size + 'px';
+        xAxis.appendChild(el);
+    }
+
+    // Y-Axis (Numbers)
+    yAxis.innerHTML = '';
+    for(let i=0; i<rows; i++) {
+        const el = document.createElement('div');
+        el.className = 'axis-label axis-y';
+        el.innerText = (i + 1); // 1, 2, 3...
+        el.style.top = (20 + (i * size)) + 'px'; // 20px offset for X-axis gutter
+        el.style.height = size + 'px';
+        yAxis.appendChild(el);
+    }
+  }
+
+  // Helper: 0->A, 1->B, ... 26->AA
+  function getColumnLabel(index) {
+      let label = "";
+      let n = index;
+      while (n >= 0) {
+          label = String.fromCharCode((n % 26) + 65) + label;
+          n = Math.floor(n / 26) - 1;
+      }
+      return label;
+  }
+
+  // --- 6. SUBMIT ---
   async function submitMap() {
     const btn = document.getElementById('submit-btn');
     
