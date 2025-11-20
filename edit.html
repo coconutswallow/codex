@@ -190,24 +190,24 @@ title: Edit Map
       btn.disabled = true;
       btn.innerText = "Archiving old version...";
 
-      // 1. Archive Old Map
-      const { error: archiveError } = await db
-        .from('maps')
-        .update({ is_approved: false }) // Hide the old one
-        .eq('id', originalMapId);
+      /* --- STEP 1: ARCHIVE OLD MAP (Using RPC) --- */
+      // We use .rpc() to call the secure database function we just created
+      const { error: archiveError } = await db.rpc('archive_map', { 
+          map_id: parseInt(originalMapId) 
+      });
 
       if(archiveError) {
           console.error(archiveError);
-          msg.innerText = "Error archiving old version.";
+          msg.innerText = "Error archiving old version (Check console).";
           btn.disabled = false;
           return;
       }
 
       btn.innerText = "Saving new version...";
 
-      // 2. Insert New Version
+      /* --- STEP 2: INSERT NEW VERSION --- */
       const meta = currentUser.user_metadata;
-      const discordName = meta.full_name || meta.name || "Unknown";
+      const discordName = meta.full_name || meta.custom_claims?.global_name || meta.name || "Unknown";
       
       const payload = {
           name: document.getElementById('mapName').value,
@@ -223,19 +223,19 @@ title: Edit Map
           avrae_cmd: document.getElementById('cmdOutput').innerText,
           
           submitted_by: discordName,
-          is_free_use: true,
-          // Trigger in DB will handle approval logic (auto-approve if admin, else false)
+          is_free_use: true
+          // Database Trigger handles is_approved automatically
       };
 
       const { error: insertError } = await db.from('maps').insert(payload);
 
       if(insertError) {
            msg.innerText = "Error saving new version: " + insertError.message;
-           msg.style.color = "red";
+           msg.style.color = "var(--palette-danger)";
            btn.disabled = false;
       } else {
            msg.innerText = "Success! New version submitted.";
-           msg.style.color = "green";
+           msg.style.color = "var(--palette-success)";
            setTimeout(() => { window.location.href = "/codex/maps/"; }, 1500);
       }
   }
