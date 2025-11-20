@@ -15,38 +15,33 @@ title: Submit Map
   }
   @media (max-width: 768px) { .submit-container { grid-template-columns: 1fr; height: auto; } }
   
-  /* Map Viewer */
   .map-viewer { 
     position: relative; 
     background: #222; 
     border: 2px solid #444; 
     border-radius: 8px;
-    overflow: auto; /* Scrollbars for large maps */
+    overflow: auto; 
     display: flex;  
     align-items: flex-start;
     justify-content: flex-start;
   }
   
-  /* The Canvas Wrapper */
   .canvas-wrapper {
     position: relative;
     box-sizing: content-box;
-    padding-top: 25px;  /* Space for X-axis */
-    padding-left: 35px; /* Space for Y-axis */
+    padding-top: 25px;  
+    padding-left: 35px; 
     background-color: #333;
-    /* Ensure the wrapper is at least as big as the grid so we don't clip controls */
     min-width: 100px;
     min-height: 100px;
   }
 
   #preview-img { 
     display: block;
-    /* Image width is controlled by JS */
     transform-origin: top left;
     image-rendering: high-quality;
   }
 
-  /* The Fixed Grid Overlay */
   #grid-overlay {
     position: absolute; 
     top: 25px; left: 35px; 
@@ -54,15 +49,12 @@ title: Submit Map
     z-index: 10;
     border-right: 2px solid rgba(255,0,0,0.5);
     border-bottom: 2px solid rgba(255,0,0,0.5);
-    
-    /* FIXED VISUAL GRID: 40px squares on screen */
     background-size: 40px 40px;
     background-image: 
       linear-gradient(to right, rgba(255, 0, 0, 0.6) 1px, transparent 1px),
       linear-gradient(to bottom, rgba(255, 0, 0, 0.6) 1px, transparent 1px);
   }
 
-  /* Axis Labels */
   .axis-label {
     position: absolute;
     font-family: monospace;
@@ -76,7 +68,6 @@ title: Submit Map
   .axis-x { top: 0; height: 25px; width: 40px; border-right: 1px solid #444; background: #222; }
   .axis-y { left: 0; width: 35px; height: 40px; border-bottom: 1px solid #444; background: #222; }
 
-  /* Controls Sidebar */
   .controls { background: #f4f4f4; padding: 20px; border-radius: 8px; color: #333; overflow-y: auto; }
   .controls label { display: block; margin-top: 15px; font-weight: bold; font-size: 0.9em; }
   .controls input { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
@@ -114,9 +105,7 @@ title: Submit Map
         
         <div id="axis-x-container"></div>
         <div id="axis-y-container"></div>
-        
         <img id="preview-img" src="" alt="" style="display:none;">
-        
         <div id="grid-overlay"></div>
     </div>
   </div>
@@ -184,16 +173,13 @@ title: Submit Map
 </div>
 
 <script>
-  // --- 1. CONFIGURATION ---
+  /* --- CONFIGURATION --- */
   const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
-  
-  // 🔴 YOUR ANON KEY 🔴
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M
-'; 
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'; 
   
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  // --- 2. APP STATE ---
+  /* --- APP STATE --- */
   const img = document.getElementById('preview-img');
   const overlay = document.getElementById('grid-overlay');
   const cmdOutput = document.getElementById('cmdOutput');
@@ -201,10 +187,9 @@ title: Submit Map
   const xAxis = document.getElementById('axis-x-container');
   const yAxis = document.getElementById('axis-y-container');
   
-  // CONSTANT VISUAL SIZE (The "Ruler")
   const VISUAL_CELL_SIZE = 40; 
 
-  // --- 3. LOAD IMAGE ---
+  /* --- LOAD IMAGE --- */
   function loadImage() {
     const url = document.getElementById('imgUrl').value;
     if(!url) return;
@@ -220,7 +205,7 @@ title: Submit Map
 
   img.onload = function() {
     statusMsg.innerText = "";
-    autoCrop(); // Auto-set W/H on load for convenience
+    autoCrop(); 
   };
 
   img.onerror = function() {
@@ -228,12 +213,11 @@ title: Submit Map
     statusMsg.style.color = "red";
   };
 
-  // --- 4. AUTO W/H CALC ---
+  /* --- AUTO CALC --- */
   function autoCrop() {
     if(!img.naturalWidth) return;
     const ppi = parseInt(document.getElementById('ppi_num').value);
     
-    // Based on current PPI, how many squares is this?
     const cols = Math.ceil(img.naturalWidth / ppi);
     const rows = Math.ceil(img.naturalHeight / ppi);
     
@@ -245,34 +229,26 @@ title: Submit Map
     updateGrid();
   }
 
-  // --- 5. UPDATE LOGIC (REVERSED) ---
+  /* --- UPDATE LOGIC --- */
   function updateGrid() {
-    // 1. Get Inputs
     const w_cols = parseInt(document.getElementById('gridW_num').value = document.getElementById('gridW_slider').value);
     const h_rows = parseInt(document.getElementById('gridH_num').value = document.getElementById('gridH_slider').value);
     const ppi_val = parseInt(document.getElementById('ppi_num').value = document.getElementById('ppi_slider').value);
 
-    // 2. Calculate SCALED Image Width
-    // Logic: If PPI is 70, then 70px of image = 40px of screen (VISUAL_CELL_SIZE).
-    // Ratio = VISUAL / PPI
     if(img.naturalWidth > 0) {
         const scaleRatio = VISUAL_CELL_SIZE / ppi_val;
         img.style.width = (img.naturalWidth * scaleRatio) + 'px';
-        img.style.height = "auto"; // Maintain aspect ratio
+        img.style.height = "auto"; 
     }
 
-    // 3. Calculate Grid Overlay Size (Visual Only)
-    // The grid is simply Cols * 40px wide
     const overlayWidth = w_cols * VISUAL_CELL_SIZE;
     const overlayHeight = h_rows * VISUAL_CELL_SIZE;
 
     overlay.style.width = overlayWidth + 'px';
     overlay.style.height = overlayHeight + 'px';
 
-    // 4. Update Rulers
     renderCoordinates(w_cols, h_rows);
 
-    // 5. Update Command
     const url = document.getElementById('imgUrl').value || "[URL]";
     const cmd = `!map -bg ${url} -w ${w_cols} -h ${h_rows} --options c${ppi_val}`;
     cmdOutput.innerText = cmd;
@@ -310,7 +286,7 @@ title: Submit Map
       return label;
   }
 
-  // --- 6. SUBMIT ---
+  /* --- SUBMIT --- */
   async function submitMap() {
     const btn = document.getElementById('submit-btn');
     
