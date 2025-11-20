@@ -338,7 +338,7 @@ title: Submit Map
       return label;
   }
 
-  async function submitMap() {
+  {
     const btn = document.getElementById('submit-btn');
     
     if (!document.getElementById('tosCheck').checked) return alert("Please confirm free to use.");
@@ -349,33 +349,30 @@ title: Submit Map
     btn.disabled = true;
     btn.innerText = "Sending...";
 
+    /* GET USER DATA */
     const meta = currentUser.user_metadata;
     const discordName = meta.full_name || meta.custom_claims?.global_name || meta.name || "Unknown";
 
-    /* CHECK TOGGLE STATE */
+    /* CHECK AVRAE TOGGLE */
     const isAvraeOn = document.getElementById('avraeToggle').checked;
     let finalCmd = "";
-    
-    // Only save command if user explicitly enabled Avrae Settings
     if (isAvraeOn) {
         finalCmd = document.getElementById('cmdOutput').innerText;
     }
 
+    /* CONSTRUCT PAYLOAD */
+    // Note: We removed 'is_approved'. The Database Trigger now handles that automatically!
     const payload = {
       name: document.getElementById('mapName').value,
       image_url: document.getElementById('imgUrl').value,
       creator: document.getElementById('creator').value,
       keywords: document.getElementById('keywords').value,
-      
-      // If Avrae is off, we save defaults/nulls for grid data
       grid_width: isAvraeOn ? document.getElementById('gridW_num').value : 0,
       grid_height: isAvraeOn ? document.getElementById('gridH_num').value : 0,
       cell_size_px: isAvraeOn ? document.getElementById('ppi_num').value : 0,
-      avrae_cmd: finalCmd, // Will be empty string if off
-      
+      avrae_cmd: finalCmd,
       submitted_by: discordName,
-      is_free_use: true,
-      is_approved: false 
+      is_free_use: true
     };
 
     const { error } = await db.from('maps').insert(payload);
@@ -387,7 +384,9 @@ title: Submit Map
       btn.disabled = false;
       btn.innerText = "Submit";
     } else {
-      statusMsg.innerText = "Success! Sent for approval.";
+      // We can't know for sure if it was auto-approved without a second fetch,
+      // so we give a generic success message.
+      statusMsg.innerText = "Success! Map submitted.";
       statusMsg.style.color = "var(--palette-success)";
       btn.innerText = "Submitted";
       document.getElementById('mapName').value = "";
