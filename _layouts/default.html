@@ -1,33 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ page.title }} | Codex</title>
-  
-  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
-  
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page.title | default: site.title }}</title>
+    
+    <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+    <link rel="stylesheet" href="{{ '/assets/css/search.css' | relative_url }}"> 
+    <link rel="stylesheet" href="{{ '/assets/css/home.css' | relative_url }}">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script src="{{ '/assets/js/heading-links.js' | relative_url }}"></script>
+    
+    {% for stylesheet in page.extra_css %}
+        <link rel="stylesheet" href="{{ stylesheet | relative_url }}">
+    {% endfor %}
 </head>
-<body>
+<body class="{{ page.body_class }} {{ layout.body_class }}" {% if page.background_image or layout.background_image %}style="--page-bg-image: url('{{ page.background_image | default: layout.background_image | relative_url }}')"{% endif %}>
+    
+    <header class="site-header">
+        <div class="header-content">
+            <button id="menu-toggle" aria-label="Toggle Navigation Menu">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+            <h1 class="site-title">
+                <a href="{{ '/' | relative_url }}" class="home-link">
+                    <img src="{{ '/assets/thumbnails/guild-icon.png' | relative_url }}" class="guild-icon" onerror="this.style.display='none'">
+                    {{ site.title | default: "Codex" }}
+                </a>
+            </h1>
+            
+            <div class="header-search-container">
+                <input type="text" id="search-input" placeholder="Search docs..." aria-label="Search documents">
+            </div>
+        </div>
+    </header>
 
-  <header class="site-header">
-    <div class="header-content">
-      <a href="{{ '/' | relative_url }}" class="site-logo">🥥 Codex</a>
-      <nav class="site-nav">
-        <a href="{{ '/maps' | relative_url }}">Map Index</a>
-        <a href="{{ '/map-submit' | relative_url }}">Submit Map</a>
-        </nav>
+    <div id="sidebar-menu">
+        <div class="sidebar-header">
+            <h4 class="sidebar-title">Navigation</h4>
+            <button id="close-menu-btn" class="close-btn" aria-label="Close Menu">&times;</button>
+        </div>
+        <div class="sidebar-nav">
+            {% for nav_item in site.navigation %}
+                {% if nav_item.url %}
+                    <a href="{{ nav_item.url | relative_url }}" class="nav-link">{{ nav_item.title }}</a>
+                {% elsif nav_item.links %}
+                    <div class="nav-section">
+                        <button class="nav-section-toggle" aria-expanded="false">
+                            <span class="toggle-icon">▶</span>
+                            {{ nav_item.title }}
+                        </button>
+                        <div class="nav-submenu">
+                            {% for link in nav_item.links %}
+                                <a href="{{ link.url | relative_url }}">{{ link.title }}</a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
     </div>
-  </header>
 
-  <main class="page-content">
-    {{ content }}
-  </main>
+    <div id="menu-overlay"></div>
+    <ul id="search-results"></ul>
 
-  <footer class="site-footer">
-    <p>&copy; {{ "now" | date: "%Y" }} Codex Library. Maps are property of their creators.</p>
-  </footer>
+    <div class="page">
+        {{ content }}
+    </div>
+    
+    <footer class="site-footer">
+        <div class="footer-content">
+            <p>&copy; {{ "now" | date: "%Y" }} Codex Library.</p>
+            <div class="footer-icons">
+                <a href="#" target="_blank" aria-label="Discord">Discord</a>
+            </div>
+        </div>
+    </footer>
 
+    <script>
+        const BASE_URL = "{{ site.baseurl }}"; 
+        const menuToggle = document.getElementById('menu-toggle');
+        const sidebarMenu = document.getElementById('sidebar-menu');
+        const closeMenuBtn = document.getElementById('close-menu-btn');
+        const menuOverlay = document.getElementById('menu-overlay');
+
+        if (menuToggle && sidebarMenu && closeMenuBtn && menuOverlay) {
+            function toggleMenu() {
+                sidebarMenu.classList.toggle('active');
+                menuOverlay.classList.toggle('active');
+                document.body.classList.toggle('menu-open');
+            }
+            menuToggle.addEventListener('click', toggleMenu);
+            closeMenuBtn.addEventListener('click', toggleMenu);
+            menuOverlay.addEventListener('click', toggleMenu);
+        }
+    </script>
+    
+    <script src="{{ '/assets/js/lunr.js' | relative_url }}"></script> 
+    <script src="{{ '/assets/js/search.js' | relative_url }}"></script>
+    <script src="{{ '/assets/js/sidebar.js' | relative_url }}"></script> 
+
+    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode">
+        <span class="sun-icon">☀️</span>
+        <span class="moon-icon">🌙</span>
+    </button>
+
+    <script>
+    (function() {
+        const themeToggle = document.getElementById('theme-toggle');
+        const htmlElement = document.documentElement;
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        htmlElement.setAttribute('data-theme', currentTheme);
+        
+        function toggleTheme() {
+            const currentTheme = htmlElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            htmlElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+        if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+    })();
+    </script>
 </body>
 </html>
