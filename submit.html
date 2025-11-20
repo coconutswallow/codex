@@ -137,20 +137,20 @@ title: Submit Map
     
     <label>Pixels Per Cell (Scale Image)</label>
     <div class="slider-group">
-      <input type="range" id="ppi_slider" min="20" max="100" value="70" step="1" oninput="updateGrid()">
-      <input type="number" id="ppi_num" value="70" oninput="updateGrid()">
+      <input type="range" id="ppi_slider" min="20" max="100" value="70" step="1" oninput="updateFromSlider('ppi')">
+      <input type="number" id="ppi_num" value="70" oninput="updateFromInput('ppi')">
     </div>
 
     <label>Grid Width (Columns)</label>
     <div class="slider-group">
-      <input type="range" id="gridW_slider" min="1" max="100" value="20" oninput="updateGrid()">
-      <input type="number" id="gridW_num" value="20" oninput="updateGrid()">
+      <input type="range" id="gridW_slider" min="1" max="100" value="20" oninput="updateFromSlider('w')">
+      <input type="number" id="gridW_num" value="20" oninput="updateFromInput('w')">
     </div>
 
     <label>Grid Height (Rows)</label>
     <div class="slider-group">
-      <input type="range" id="gridH_slider" min="1" max="100" value="20" oninput="updateGrid()">
-      <input type="number" id="gridH_num" value="20" oninput="updateGrid()">
+      <input type="range" id="gridH_slider" min="1" max="100" value="20" oninput="updateFromSlider('h')">
+      <input type="number" id="gridH_num" value="20" oninput="updateFromInput('h')">
     </div>
     
     <div style="text-align: right; margin-top: 5px;">
@@ -221,19 +221,46 @@ title: Submit Map
     const cols = Math.ceil(img.naturalWidth / ppi);
     const rows = Math.ceil(img.naturalHeight / ppi);
     
+    // Update both slider and number input for Sync
     document.getElementById('gridW_slider').value = cols;
     document.getElementById('gridW_num').value = cols;
     document.getElementById('gridH_slider').value = rows;
     document.getElementById('gridH_num').value = rows;
     
-    updateGrid();
+    renderGrid();
   }
 
-  /* --- UPDATE LOGIC --- */
-  function updateGrid() {
-    const w_cols = parseInt(document.getElementById('gridW_num').value = document.getElementById('gridW_slider').value);
-    const h_rows = parseInt(document.getElementById('gridH_num').value = document.getElementById('gridH_slider').value);
-    const ppi_val = parseInt(document.getElementById('ppi_num').value = document.getElementById('ppi_slider').value);
+  /* --- INPUT SYNC HANDLERS --- */
+  // User moved a slider -> Update number box -> Render
+  function updateFromSlider(type) {
+    if(type === 'ppi') {
+        document.getElementById('ppi_num').value = document.getElementById('ppi_slider').value;
+    } else if(type === 'w') {
+        document.getElementById('gridW_num').value = document.getElementById('gridW_slider').value;
+    } else if(type === 'h') {
+        document.getElementById('gridH_num').value = document.getElementById('gridH_slider').value;
+    }
+    renderGrid();
+  }
+
+  // User typed a number -> Update slider -> Render
+  function updateFromInput(type) {
+    if(type === 'ppi') {
+        document.getElementById('ppi_slider').value = document.getElementById('ppi_num').value;
+    } else if(type === 'w') {
+        document.getElementById('gridW_slider').value = document.getElementById('gridW_num').value;
+    } else if(type === 'h') {
+        document.getElementById('gridH_slider').value = document.getElementById('gridH_num').value;
+    }
+    renderGrid();
+  }
+
+  /* --- MAIN RENDER LOGIC --- */
+  function renderGrid() {
+    // Just read from the Number inputs (they are the source of truth now)
+    const w_cols = parseInt(document.getElementById('gridW_num').value);
+    const h_rows = parseInt(document.getElementById('gridH_num').value);
+    const ppi_val = parseInt(document.getElementById('ppi_num').value);
 
     if(img.naturalWidth > 0) {
         const scaleRatio = VISUAL_CELL_SIZE / ppi_val;
@@ -249,8 +276,10 @@ title: Submit Map
 
     renderCoordinates(w_cols, h_rows);
 
-    const url = document.getElementById('imgUrl').value || "[URL]";
-    const cmd = `!map -bg ${url} -w ${w_cols} -h ${h_rows} --options c${ppi_val}`;
+    // FIXED: Command Syntax
+    const url = document.getElementById('imgUrl').value || "URL";
+    // Syntax: !map -bg "URL" -mapsize WxH -options dc[PPI] -t DM
+    const cmd = `!map -bg "${url}" -mapsize ${w_cols}x${h_rows} -options dc${ppi_val} -t DM`;
     cmdOutput.innerText = cmd;
   }
 
