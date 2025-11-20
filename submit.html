@@ -178,7 +178,6 @@ title: Submit Map
     document.getElementById('form-section').style.display = 'block';
     
     const meta = currentUser.user_metadata;
-    /* Discord ID auto-population logic */
     const name = meta.full_name || meta.custom_claims?.global_name || meta.name || "User";
     document.getElementById('user-display').innerText = name;
   }
@@ -203,11 +202,9 @@ title: Submit Map
     const url = document.getElementById('imgUrl').value;
     if(!url) return;
     
-    // Update UI Status
     statusMsg.innerText = "Loading...";
     statusMsg.style.color = "var(--color-text)"; 
     
-    // RESET THE SUBMIT BUTTON
     const btn = document.getElementById('submit-btn');
     btn.innerText = "Submit";
     btn.disabled = false;
@@ -228,7 +225,6 @@ title: Submit Map
     statusMsg.style.color = "var(--palette-danger)";
   };
 
-  /* --- TOGGLE AVRAE MODE --- */
   function toggleAvraeMode() {
     const isOn = document.getElementById('avraeToggle').checked;
     const settingsDiv = document.getElementById('avrae-settings-container');
@@ -267,7 +263,6 @@ title: Submit Map
     renderGrid();
   }
 
-  /* --- MAIN RENDERER --- */
   function renderGrid() {
     const w_cols = parseInt(document.getElementById('gridW_num').value);
     const h_rows = parseInt(document.getElementById('gridH_num').value);
@@ -341,26 +336,25 @@ title: Submit Map
   async function submitMap() {
     const btn = document.getElementById('submit-btn');
     
+    /* VALIDATION CHECKS */
     if (!document.getElementById('tosCheck').checked) return alert("Please confirm free to use.");
     if (!document.getElementById('imgUrl').value) return alert("URL required.");
+    if (!document.getElementById('mapName').value) return alert("Please enter a Map Name."); // <--- NEW CHECK
     if (img.naturalWidth === 0) return alert("Load a valid image first.");
     if (!currentUser) return alert("You must be logged in!");
 
     btn.disabled = true;
     btn.innerText = "Sending...";
 
-    /* GET USER DATA */
     const meta = currentUser.user_metadata;
     const discordName = meta.full_name || meta.custom_claims?.global_name || meta.name || "Unknown";
 
-    /* CHECK AVRAE TOGGLE */
     const isAvraeOn = document.getElementById('avraeToggle').checked;
     let finalCmd = "";
     if (isAvraeOn) {
         finalCmd = document.getElementById('cmdOutput').innerText;
     }
 
-    /* CONSTRUCT PAYLOAD */
     const payload = {
       name: document.getElementById('mapName').value,
       image_url: document.getElementById('imgUrl').value,
