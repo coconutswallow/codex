@@ -1,13 +1,136 @@
+---
+layout: default
+title: Submit Map
+---
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  /* --- CSS STYLES --- */
+  .submit-container { 
+    display: grid; 
+    grid-template-columns: 1fr 350px; 
+    gap: 20px; 
+    margin: 20px 0; 
+  }
+  @media (max-width: 768px) { .submit-container { grid-template-columns: 1fr; } }
+  
+  .map-viewer { 
+    position: relative; background: #222; min-height: 500px; 
+    overflow: hidden; border: 2px solid #444; border-radius: 8px;
+  }
+  
+  #preview-img { 
+    position: absolute; top: 0; left: 0; 
+    transform-origin: top left; max-width: 100%; z-index: 1;
+  }
+
+  #grid-overlay {
+    position: absolute; top: 0; left: 0;
+    pointer-events: none; z-index: 2;
+    border: 1px solid red; box-sizing: border-box;
+    background-image: 
+      linear-gradient(to right, rgba(255, 0, 0, 0.5) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 0, 0, 0.5) 1px, transparent 1px);
+    transform-origin: top left;
+  }
+
+  .controls { background: #f4f4f4; padding: 20px; border-radius: 8px; color: #333; }
+  .controls label { display: block; margin-top: 15px; font-weight: bold; font-size: 0.9em; }
+  .controls input { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+  
+  .input-group { display: flex; gap: 10px; margin-top: 5px; }
+  .input-group button { cursor: pointer; padding: 0 15px; background: #444; color: #fff; border: none; border-radius: 4px;}
+  
+  .slider-group { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
+  .slider-group input[type="range"] { flex-grow: 1; }
+  .slider-group input[type="number"] { width: 60px; }
+
+  .generated-cmd { 
+    background: #222; color: #0f0; font-family: monospace; 
+    padding: 10px; word-break: break-all; margin-top: 20px; border-radius: 4px; 
+  }
+
+  button#submit-btn {
+    background: #2ea44f; color: white; border: none; 
+    padding: 15px; width: 100%; font-size: 1.1em; margin-top: 20px; 
+    cursor: pointer; border-radius: 6px;
+  }
+  button#submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+  #statusMsg { margin-top: 15px; font-weight: bold; text-align: center; }
+</style>
+
+<div class="intro-wrapper">
+  <h1>Submit & Align Map</h1>
+  <p>Paste a link, align the grid, and submit to the library.</p>
+</div>
+
+<div class="submit-container">
+  <div class="map-viewer" id="viewPort">
+    <p style="color:#888; text-align:center; margin-top: 200px;">Map Preview will appear here</p>
+    <img id="preview-img" src="" alt="">
+    <div id="grid-overlay"></div>
+  </div>
+
+  <div class="controls">
+    <h3>1. Map Source</h3>
+    <label>Image URL (Direct Link)</label>
+    <div class="input-group">
+      <input type="url" id="imgUrl" placeholder="https://i.imgur.com/..." onkeydown="if(event.key === 'Enter') loadImage()">
+      <button onclick="loadImage()">Load</button>
+    </div>
+
+    <label>Map Name</label>
+    <input type="text" id="mapName" placeholder="e.g. Forest Road">
+
+    <label>Creator</label>
+    <input type="text" id="creator" placeholder="e.g. Neutral Party">
+    
+    <label>Keywords</label>
+    <input type="text" id="keywords" placeholder="forest, day, ambush">
+
+    <hr style="margin: 20px 0;">
+    
+    <h3>2. Grid Alignment</h3>
+    <label>Grid Width</label>
+    <div class="slider-group">
+      <input type="range" id="gridW_slider" min="5" max="100" value="25" oninput="updateGrid()">
+      <input type="number" id="gridW_num" value="25" oninput="updateGrid()">
+    </div>
+
+    <label>Grid Height</label>
+    <div class="slider-group">
+      <input type="range" id="gridH_slider" min="5" max="100" value="25" oninput="updateGrid()">
+      <input type="number" id="gridH_num" value="25" oninput="updateGrid()">
+    </div>
+
+    <label>Pixels Per Cell</label>
+    <div class="slider-group">
+      <input type="range" id="ppi_slider" min="30" max="200" value="70" oninput="updateGrid()">
+      <input type="number" id="ppi_num" value="70" oninput="updateGrid()">
+    </div>
+
+    <hr style="margin: 20px 0;">
+
+    <h3>3. Submit</h3>
+    <div class="generated-cmd" id="cmdOutput">!map -bg ...</div>
+
+    <label style="margin-top:15px; font-weight:normal; display: flex; gap: 10px; align-items: center;">
+      <input type="checkbox" id="tosCheck" style="width: auto; margin: 0;"> 
+      I confirm this map is free to use.
+    </label>
+
+    <button id="submit-btn" onclick="submitMap()">Submit to Library</button>
+    <p id="statusMsg"></p>
+  </div>
+</div>
+
 <script>
   // --- 1. CONFIGURATION ---
   const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
   
-  // ⚠️ CHECK THIS KEY: Standard Supabase "anon" keys usually start with "eyJ..."
-  // If this "sb_publishable..." key fails, go back to Dashboard > Settings > API 
-  // and look for the key labeled "anon" "public".
-  const SUPABASE_KEY = 'sb_publishable_cGXFwDjzWIWCdRRmcMZIcg_vnp1Azyo'; 
+  // 🔴 REPLACE THIS WITH THE KEY THAT STARTS WITH "eyJ..."
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'; 
   
-  // FIXED: Changed variable name to 'db' to avoid conflict with the library name
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   // --- 2. APP STATE ---
@@ -25,31 +148,29 @@
     statusMsg.innerText = "Loading...";
     statusMsg.style.color = "blue";
 
-    // Remove the "Map Preview" text if it exists
+    // Hide placeholder text
     const placeholder = document.querySelector('.map-viewer p');
     if(placeholder) placeholder.style.display = 'none';
 
-    // Force the image to attempt loading
+    // Load image
     img.removeAttribute('src'); 
     img.style.display = 'block'; 
     img.src = url; 
   }
 
-  // Listen for the load event
   img.onload = function() {
-    console.log("Image loaded successfully");
+    console.log("Image loaded");
     statusMsg.innerText = "";
     updateGrid(); 
   };
 
-  // Listen for errors
   img.onerror = function() {
-    console.error("Image failed to load");
-    statusMsg.innerText = "❌ Error: content blocked or invalid link. Ensure URL ends in .jpg/.png";
+    console.error("Image failed");
+    statusMsg.innerText = "❌ Error: Check link. Must be .jpg/.png";
     statusMsg.style.color = "red";
   };
 
-  // --- 4. UPDATE GRID VISUALS ---
+  // --- 4. UPDATE GRID ---
   function updateGrid() {
     const w = document.getElementById('gridW_num').value = document.getElementById('gridW_slider').value;
     const h = document.getElementById('gridH_num').value = document.getElementById('gridH_slider').value;
@@ -72,13 +193,13 @@
     cmdOutput.innerText = cmd;
   }
 
-  // --- 5. SUBMIT TO SUPABASE ---
+  // --- 5. SUBMIT ---
   async function submitMap() {
     const btn = document.getElementById('submit-btn');
     
-    if (!document.getElementById('tosCheck').checked) return alert("Please confirm the map is free to use.");
-    if (!document.getElementById('imgUrl').value) return alert("Image URL is required.");
-    if (img.naturalWidth === 0) return alert("Please load a valid image first.");
+    if (!document.getElementById('tosCheck').checked) return alert("Please confirm free to use.");
+    if (!document.getElementById('imgUrl').value) return alert("URL required.");
+    if (img.naturalWidth === 0) return alert("Load a valid image first.");
 
     btn.disabled = true;
     btn.innerText = "Sending...";
@@ -97,7 +218,6 @@
       is_approved: false 
     };
 
-    // FIXED: Using 'db' here instead of 'supabase'
     const { error } = await db.from('maps').insert(payload);
 
     if (error) {
@@ -107,10 +227,9 @@
       btn.disabled = false;
       btn.innerText = "Submit to Library";
     } else {
-      statusMsg.innerText = "Success! Map submitted for approval.";
+      statusMsg.innerText = "Success! Sent for approval.";
       statusMsg.style.color = "green";
       btn.innerText = "Submitted";
-      
       document.getElementById('mapName').value = "";
       document.getElementById('keywords').value = "";
     }
