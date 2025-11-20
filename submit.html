@@ -5,7 +5,6 @@ title: Submit Map
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-  /* --- CSS STYLES --- */
   .submit-container { 
     display: grid; 
     grid-template-columns: 1fr 350px; 
@@ -91,6 +90,9 @@ title: Submit Map
   }
   button#submit-btn:disabled { background: #ccc; cursor: not-allowed; }
   #statusMsg { margin-top: 15px; font-weight: bold; text-align: center; }
+  
+  .tool-btn { background:#444; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.8em; margin-left: 5px;}
+  .tool-btn:hover { background:#222; }
 </style>
 
 <div class="intro-wrapper">
@@ -102,7 +104,6 @@ title: Submit Map
   <div class="map-viewer" id="viewPort">
     <div class="canvas-wrapper" id="canvasWrapper">
         <p id="placeholder-text" style="color:#888; width: 300px; padding: 50px;">Map Preview will appear here</p>
-        
         <div id="axis-x-container"></div>
         <div id="axis-y-container"></div>
         <img id="preview-img" src="" alt="" style="display:none;">
@@ -131,30 +132,31 @@ title: Submit Map
     
     <h3>2. Grid Alignment</h3>
     <p style="font-size:0.85em; color:#666; margin-bottom: 10px;">
-        <strong>Step 1:</strong> Use "Pixels Per Cell" to resize the image until the walls align with the grid.
-        <br><strong>Step 2:</strong> Use Width/Height to crop the grid.
+        <strong>Option A:</strong> Adjust sliders until grid matches.<br>
+        <strong>Option B:</strong> Set Width/Height, then click "Fit Image".
     </p>
     
-    <label>Pixels Per Cell (Scale Image)</label>
+    <label>Grid Width (Cols)</label>
     <div class="slider-group">
-      <input type="range" id="ppi_slider" min="20" max="100" value="70" step="1" oninput="updateFromSlider('ppi')">
-      <input type="number" id="ppi_num" value="70" oninput="updateFromInput('ppi')">
-    </div>
-
-    <label>Grid Width (Columns)</label>
-    <div class="slider-group">
-      <input type="range" id="gridW_slider" min="1" max="100" value="20" oninput="updateFromSlider('w')">
-      <input type="number" id="gridW_num" value="20" oninput="updateFromInput('w')">
+      <input type="range" id="gridW_slider" min="1" max="100" value="30" oninput="updateFromSlider('w')">
+      <input type="number" id="gridW_num" value="30" oninput="updateFromInput('w')">
     </div>
 
     <label>Grid Height (Rows)</label>
     <div class="slider-group">
-      <input type="range" id="gridH_slider" min="1" max="100" value="20" oninput="updateFromSlider('h')">
-      <input type="number" id="gridH_num" value="20" oninput="updateFromInput('h')">
+      <input type="range" id="gridH_slider" min="1" max="100" value="30" oninput="updateFromSlider('h')">
+      <input type="number" id="gridH_num" value="30" oninput="updateFromInput('h')">
     </div>
     
-    <div style="text-align: right; margin-top: 5px;">
-       <button onclick="autoCrop()" style="background:#444; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.8em;">Auto-Set W/H</button>
+    <div style="text-align:right; margin-top:10px;">
+       <button class="tool-btn" onclick="calcPPIfromGrid()">🪄 Fit Image to Grid</button>
+       <button class="tool-btn" onclick="calcGridFromPPI()">Auto-Set W/H</button>
+    </div>
+
+    <label>Pixels Per Cell (Resulting Scale)</label>
+    <div class="slider-group">
+      <input type="range" id="ppi_slider" min="20" max="150" value="40" step="1" oninput="updateFromSlider('ppi')">
+      <input type="number" id="ppi_num" value="40" oninput="updateFromInput('ppi')">
     </div>
 
     <hr style="margin: 20px 0;">
@@ -173,13 +175,11 @@ title: Submit Map
 </div>
 
 <script>
-  /* --- CONFIGURATION --- */
   const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'; 
+  const SUPABASE_KEY = 'YOUR_ANON_KEY_HERE'; 
   
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  /* --- APP STATE --- */
   const img = document.getElementById('preview-img');
   const overlay = document.getElementById('grid-overlay');
   const cmdOutput = document.getElementById('cmdOutput');
@@ -189,7 +189,6 @@ title: Submit Map
   
   const VISUAL_CELL_SIZE = 40; 
 
-  /* --- LOAD IMAGE --- */
   function loadImage() {
     const url = document.getElementById('imgUrl').value;
     if(!url) return;
@@ -205,7 +204,8 @@ title: Submit Map
 
   img.onload = function() {
     statusMsg.innerText = "";
-    autoCrop(); 
+    // Run default calculation
+    renderGrid();
   };
 
   img.onerror = function() {
@@ -213,15 +213,14 @@ title: Submit Map
     statusMsg.style.color = "red";
   };
 
-  /* --- AUTO CALC --- */
-  function autoCrop() {
+  // Tool 1: User sets PPI, we calculate Grid W/H
+  function calcGridFromPPI() {
     if(!img.naturalWidth) return;
     const ppi = parseInt(document.getElementById('ppi_num').value);
     
     const cols = Math.ceil(img.naturalWidth / ppi);
     const rows = Math.ceil(img.naturalHeight / ppi);
     
-    // Update both slider and number input for Sync
     document.getElementById('gridW_slider').value = cols;
     document.getElementById('gridW_num').value = cols;
     document.getElementById('gridH_slider').value = rows;
@@ -230,8 +229,20 @@ title: Submit Map
     renderGrid();
   }
 
-  /* --- INPUT SYNC HANDLERS --- */
-  // User moved a slider -> Update number box -> Render
+  // Tool 2: User sets Grid W, we calculate PPI (Fit Image to Grid)
+  function calcPPIfromGrid() {
+    if(!img.naturalWidth) return;
+    const cols = parseInt(document.getElementById('gridW_num').value);
+    
+    // Calculate exact PPI needed to fit width
+    const exactPPI = Math.round(img.naturalWidth / cols);
+    
+    document.getElementById('ppi_slider').value = exactPPI;
+    document.getElementById('ppi_num').value = exactPPI;
+    
+    renderGrid();
+  }
+
   function updateFromSlider(type) {
     if(type === 'ppi') {
         document.getElementById('ppi_num').value = document.getElementById('ppi_slider').value;
@@ -243,7 +254,6 @@ title: Submit Map
     renderGrid();
   }
 
-  // User typed a number -> Update slider -> Render
   function updateFromInput(type) {
     if(type === 'ppi') {
         document.getElementById('ppi_slider').value = document.getElementById('ppi_num').value;
@@ -255,13 +265,12 @@ title: Submit Map
     renderGrid();
   }
 
-  /* --- MAIN RENDER LOGIC --- */
   function renderGrid() {
-    // Just read from the Number inputs (they are the source of truth now)
     const w_cols = parseInt(document.getElementById('gridW_num').value);
     const h_rows = parseInt(document.getElementById('gridH_num').value);
     const ppi_val = parseInt(document.getElementById('ppi_num').value);
 
+    // Scale Logic: 1200px image / 40ppi = 30 visual cells (at 40px each)
     if(img.naturalWidth > 0) {
         const scaleRatio = VISUAL_CELL_SIZE / ppi_val;
         img.style.width = (img.naturalWidth * scaleRatio) + 'px';
@@ -276,9 +285,7 @@ title: Submit Map
 
     renderCoordinates(w_cols, h_rows);
 
-    // FIXED: Command Syntax
     const url = document.getElementById('imgUrl').value || "URL";
-    // Syntax: !map -bg "URL" -mapsize WxH -options dc[PPI] -t DM
     const cmd = `!map -bg "${url}" -mapsize ${w_cols}x${h_rows} -options dc${ppi_val} -t DM`;
     cmdOutput.innerText = cmd;
   }
@@ -315,7 +322,6 @@ title: Submit Map
       return label;
   }
 
-  /* --- SUBMIT --- */
   async function submitMap() {
     const btn = document.getElementById('submit-btn');
     
