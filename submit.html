@@ -5,6 +5,7 @@ title: Submit Map
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
+  /* --- CSS STYLES --- */
   .submit-container { 
     display: grid; 
     grid-template-columns: 1fr 350px; 
@@ -28,8 +29,9 @@ title: Submit Map
   .canvas-wrapper {
     position: relative;
     box-sizing: content-box;
+    /* Adjusted padding to fit the smaller axis labels */
     padding-top: 25px;  
-    padding-left: 35px; 
+    padding-left: 30px; 
     background-color: #333;
     min-width: 100px;
     min-height: 100px;
@@ -43,12 +45,14 @@ title: Submit Map
 
   #grid-overlay {
     position: absolute; 
-    top: 25px; left: 35px; 
+    top: 25px; left: 30px; 
     pointer-events: none; 
     z-index: 10;
     border-right: 2px solid rgba(255,0,0,0.5);
     border-bottom: 2px solid rgba(255,0,0,0.5);
-    background-size: 40px 40px;
+    
+    /* UPDATED: 28px squares (30% smaller than 40px) */
+    background-size: 28px 28px;
     background-image: 
       linear-gradient(to right, rgba(255, 0, 0, 0.6) 1px, transparent 1px),
       linear-gradient(to bottom, rgba(255, 0, 0, 0.6) 1px, transparent 1px);
@@ -57,15 +61,17 @@ title: Submit Map
   .axis-label {
     position: absolute;
     font-family: monospace;
-    font-size: 11px;
+    font-size: 10px; /* Slightly smaller font */
     color: #aaa;
     display: flex;
     align-items: center;
     justify-content: center;
     pointer-events: none;
   }
-  .axis-x { top: 0; height: 25px; width: 40px; border-right: 1px solid #444; background: #222; }
-  .axis-y { left: 0; width: 35px; height: 40px; border-bottom: 1px solid #444; background: #222; }
+  
+  /* UPDATED: Axis dimensions to match 28px */
+  .axis-x { top: 0; height: 25px; width: 28px; border-right: 1px solid #444; background: #222; }
+  .axis-y { left: 0; width: 30px; height: 28px; border-bottom: 1px solid #444; background: #222; }
 
   .controls { background: #f4f4f4; padding: 20px; border-radius: 8px; color: #333; overflow-y: auto; }
   .controls label { display: block; margin-top: 15px; font-weight: bold; font-size: 0.9em; }
@@ -104,6 +110,7 @@ title: Submit Map
   <div class="map-viewer" id="viewPort">
     <div class="canvas-wrapper" id="canvasWrapper">
         <p id="placeholder-text" style="color:#888; width: 300px; padding: 50px;">Map Preview will appear here</p>
+        
         <div id="axis-x-container"></div>
         <div id="axis-y-container"></div>
         <img id="preview-img" src="" alt="" style="display:none;">
@@ -187,7 +194,8 @@ title: Submit Map
   const xAxis = document.getElementById('axis-x-container');
   const yAxis = document.getElementById('axis-y-container');
   
-  const VISUAL_CELL_SIZE = 40; 
+  // UPDATED: Reduced from 40 to 28 (~30% smaller)
+  const VISUAL_CELL_SIZE = 28; 
 
   function loadImage() {
     const url = document.getElementById('imgUrl').value;
@@ -204,7 +212,6 @@ title: Submit Map
 
   img.onload = function() {
     statusMsg.innerText = "";
-    // Run default calculation
     renderGrid();
   };
 
@@ -234,7 +241,6 @@ title: Submit Map
     if(!img.naturalWidth) return;
     const cols = parseInt(document.getElementById('gridW_num').value);
     
-    // Calculate exact PPI needed to fit width
     const exactPPI = Math.round(img.naturalWidth / cols);
     
     document.getElementById('ppi_slider').value = exactPPI;
@@ -270,7 +276,6 @@ title: Submit Map
     const h_rows = parseInt(document.getElementById('gridH_num').value);
     const ppi_val = parseInt(document.getElementById('ppi_num').value);
 
-    // Scale Logic: 1200px image / 40ppi = 30 visual cells (at 40px each)
     if(img.naturalWidth > 0) {
         const scaleRatio = VISUAL_CELL_SIZE / ppi_val;
         img.style.width = (img.naturalWidth * scaleRatio) + 'px';
@@ -296,7 +301,8 @@ title: Submit Map
         const el = document.createElement('div');
         el.className = 'axis-label axis-x';
         el.innerText = getColumnLabel(i);
-        el.style.left = (35 + (i * VISUAL_CELL_SIZE)) + 'px'; 
+        // Offset is 30px (width of Y axis container) + col * size
+        el.style.left = (30 + (i * VISUAL_CELL_SIZE)) + 'px'; 
         el.style.width = VISUAL_CELL_SIZE + 'px';
         xAxis.appendChild(el);
     }
@@ -306,6 +312,7 @@ title: Submit Map
         const el = document.createElement('div');
         el.className = 'axis-label axis-y';
         el.innerText = (i + 1);
+        // Offset is 25px (height of X axis container) + row * size
         el.style.top = (25 + (i * VISUAL_CELL_SIZE)) + 'px'; 
         el.style.height = VISUAL_CELL_SIZE + 'px';
         yAxis.appendChild(el);
