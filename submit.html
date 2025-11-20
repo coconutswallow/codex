@@ -128,7 +128,7 @@ title: Submit Map
   /* --- CONFIGURATION --- */
   const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
   /* 🔴 YOUR KEY HERE 🔴 */
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'; 
+  const SUPABASE_KEY = 'YOUR_ANON_KEY_HERE'; 
   
   let db;
   let currentUser = null;
@@ -178,6 +178,7 @@ title: Submit Map
     document.getElementById('form-section').style.display = 'block';
     
     const meta = currentUser.user_metadata;
+    /* Discord ID auto-population logic */
     const name = meta.full_name || meta.custom_claims?.global_name || meta.name || "User";
     document.getElementById('user-display').innerText = name;
   }
@@ -338,7 +339,8 @@ title: Submit Map
       return label;
   }
 
-  {
+  /* RESTORED FUNCTION DEFINITION BELOW */
+  async function submitMap() {
     const btn = document.getElementById('submit-btn');
     
     if (!document.getElementById('tosCheck').checked) return alert("Please confirm free to use.");
@@ -361,7 +363,6 @@ title: Submit Map
     }
 
     /* CONSTRUCT PAYLOAD */
-    // Note: We removed 'is_approved'. The Database Trigger now handles that automatically!
     const payload = {
       name: document.getElementById('mapName').value,
       image_url: document.getElementById('imgUrl').value,
@@ -384,8 +385,6 @@ title: Submit Map
       btn.disabled = false;
       btn.innerText = "Submit";
     } else {
-      // We can't know for sure if it was auto-approved without a second fetch,
-      // so we give a generic success message.
       statusMsg.innerText = "Success! Map submitted.";
       statusMsg.style.color = "var(--palette-success)";
       btn.innerText = "Submitted";
