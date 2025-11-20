@@ -56,8 +56,11 @@ title: Submit Map
           <button onclick="loadImage()">Load</button>
         </div>
 
-        <label>Creator / Website</label>
+        <label>Creator Name</label>
         <input type="text" id="creator" placeholder="e.g. Neutral Party">
+
+        <label>Creator/Source URL</label>
+        <input type="url" id="sourceUrl" placeholder="https://patreon.com/..." >
         
         <label>Search Keywords</label>
         <input type="text" id="keywords" placeholder="forest, road, day">
@@ -128,7 +131,7 @@ title: Submit Map
   /* --- CONFIGURATION --- */
   const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
   /* 🔴 YOUR KEY HERE 🔴 */
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'; 
+  const SUPABASE_KEY = 'YOUR_ANON_KEY_HERE'; 
   
   let db;
   let currentUser = null;
@@ -336,10 +339,9 @@ title: Submit Map
   async function submitMap() {
     const btn = document.getElementById('submit-btn');
     
-    /* VALIDATION CHECKS */
     if (!document.getElementById('tosCheck').checked) return alert("Please confirm free to use.");
     if (!document.getElementById('imgUrl').value) return alert("URL required.");
-    if (!document.getElementById('mapName').value) return alert("Please enter a Map Name."); // <--- NEW CHECK
+    if (!document.getElementById('mapName').value) return alert("Please enter a Map Name.");
     if (img.naturalWidth === 0) return alert("Load a valid image first.");
     if (!currentUser) return alert("You must be logged in!");
 
@@ -359,6 +361,10 @@ title: Submit Map
       name: document.getElementById('mapName').value,
       image_url: document.getElementById('imgUrl').value,
       creator: document.getElementById('creator').value,
+      
+      /* NEW FIELD ADDED HERE */
+      source_url: document.getElementById('sourceUrl').value,
+      
       keywords: document.getElementById('keywords').value,
       grid_width: isAvraeOn ? document.getElementById('gridW_num').value : 0,
       grid_height: isAvraeOn ? document.getElementById('gridH_num').value : 0,
