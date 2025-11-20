@@ -9,9 +9,10 @@ title: Map Index
 <div class="intro-wrapper">
   <h1>Maps Index</h1>
   <p>
-    Searchable index of free battle maps.   
-    <a href="/codex/submit">Contribute to the database here!</a>
+    Community submitted maps for Avrae. 
+    <a href="/codex/submit">Submit a new map here</a>.
   </p>
+  <p>Use <a href="https://www.corvux.me/Avrae_Combat_Planner/">Corvue Avrae Combat Planner</a> to add or adjust avrae settings.</p>
 </div>
 
 <div class="map-search-wrapper">
@@ -27,7 +28,7 @@ title: Map Index
   /* --- CONFIGURATION --- */
   const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
   /* 🔴 USE YOUR "anon" KEY HERE 🔴 */
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'; 
+  const SUPABASE_KEY = 'YOUR_ANON_KEY_HERE'; 
   
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -67,6 +68,11 @@ title: Map Index
       const searchString = `${map.name} ${map.creator} ${map.keywords || ''}`.toLowerCase();
       card.setAttribute('data-search', searchString);
 
+      /* Logic to handle the Source Link */
+      const sourceHtml = map.source_url 
+        ? `<p><strong>Source:</strong> <a href="${map.source_url}" target="_blank" rel="noopener noreferrer">Visit Website</a></p>` 
+        : '';
+
       card.innerHTML = `
         <a href="${map.image_url}" class="map-thumbnail-link" target="_blank" rel="noopener noreferrer">
           <img src="${map.image_url}" alt="Thumbnail for ${map.name}" class="map-thumbnail" loading="lazy">
@@ -75,6 +81,8 @@ title: Map Index
         <div class="map-card-info">
           <h2>${map.name}</h2>
           <p><strong>Creator:</strong> ${map.creator}</p>
+          
+          ${sourceHtml}
           
           ${ map.grid_width ? `<p><strong>Dimensions:</strong> ${map.grid_width}x${map.grid_height}</p>` : '' }
 
@@ -86,7 +94,7 @@ title: Map Index
 
           <p><strong>Avrae Map Code:</strong></p>
           <div class="copy-wrapper">
-            <code class="copy-target">${map.avrae_cmd || 'Not Submitted'}</code>
+            <code class="copy-target">${map.avrae_cmd || 'Not submitted'}</code>
             <button class="copy-button" type="button">Copy</button>
           </div>
 
