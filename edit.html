@@ -1,0 +1,242 @@
+---
+layout: default
+title: Edit Map
+---
+<link rel="stylesheet" href="/codex/assets/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<div class="intro-wrapper">
+  <h1>Edit / Revise Map</h1>
+  <p>You are creating a <strong>new version</strong> of this map. The core info (Image/Creator) is locked.</p>
+  <div style="margin-top: 20px;">
+    <a href="/codex/maps/" class="tool-btn" style="text-decoration: none;">&larr; Cancel</a>
+  </div>
+</div>
+
+<div class="submit-container">
+  
+  <div class="map-viewer" id="viewPort">
+    <div class="canvas-wrapper" id="canvasWrapper">
+        <img id="preview-img" src="" alt="" style="display:none;">
+        <div id="grid-overlay"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div id="loading-msg" style="text-align:center; padding:20px;">Loading Map Data...</div>
+    
+    <div id="editor-ui" style="display:none;">
+        
+        <div class="section" style="background:#eee; opacity: 0.8;">
+            <h3>Core Info (Locked)</h3>
+            <label>Map Name</label>
+            <input type="text" id="mapName" disabled>
+            <label>Image URL</label>
+            <input type="text" id="imgUrl" disabled>
+            <label>Creator</label>
+            <input type="text" id="creator" disabled>
+             <input type="hidden" id="sourceUrl">
+        </div>
+
+        <div class="section">
+            <h3>Revise Settings</h3>
+            
+            <label>Search Keywords</label>
+            <input type="text" id="keywords" placeholder="forest, road, day">
+            
+            <hr style="margin: 15px 0; border-top: 1px dashed #ccc;">
+
+            <label>Pixels Per Cell</label>
+            <div class="slider-group">
+              <input type="range" id="ppi_slider" min="20" max="150" oninput="updateFromSlider('ppi')">
+              <input type="number" id="ppi_num" oninput="updateFromInput('ppi')">
+            </div>
+    
+            <label>Grid W / H</label>
+            <div class="slider-group">
+              <input type="number" id="gridW_num" oninput="updateFromInput('w')">
+              <span style="font-weight:bold;">x</span>
+              <input type="number" id="gridH_num" oninput="updateFromInput('h')">
+            </div>
+            
+            <label>Offset (X / Y)</label>
+            <div style="display:flex; gap:10px;">
+                <input type="number" id="offX" value="0" oninput="renderGrid()">
+                <input type="number" id="offY" value="0" oninput="renderGrid()">
+            </div>
+
+            <label style="margin-top: 20px;">Generated Command</label>
+            <div class="generated-cmd" id="cmdOutput">!map ...</div>
+        </div>
+
+        <div class="section">
+            <button id="save-btn" onclick="saveVersion()">Save New Version</button>
+            <p id="statusMsg"></p>
+        </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
+  /* 🔴 YOUR KEY HERE 🔴 */
+  const SUPABASE_KEY = 'YOUR_ANON_KEY_HERE'; 
+  
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  
+  let currentUser = null;
+  let originalMapId = null;
+  
+  const VISUAL_CELL_SIZE = 28;
+  const img = document.getElementById('preview-img');
+  const overlay = document.getElementById('grid-overlay');
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Check Login
+    const { data } = await db.auth.getSession();
+    if (!data.session) {
+        alert("You must be logged in to edit.");
+        window.location.href = "/codex/maps/"; // Redirect if not logged in
+        return;
+    }
+    currentUser = data.session.user;
+
+    // 2. Get ID from URL
+    const params = new URLSearchParams(window.location.search);
+    originalMapId = params.get('id');
+    
+    if(!originalMapId) {
+        alert("No map ID provided.");
+        return;
+    }
+
+    // 3. Fetch Data
+    loadMapData(originalMapId);
+  });
+
+  async function loadMapData(id) {
+      const { data, error } = await db.from('maps').select('*').eq('id', id).single();
+      
+      if(error || !data) {
+          alert("Error loading map data.");
+          return;
+      }
+
+      // Populate Fields
+      document.getElementById('mapName').value = data.name;
+      document.getElementById('imgUrl').value = data.image_url;
+      document.getElementById('creator').value = data.creator;
+      document.getElementById('sourceUrl').value = data.source_url || '';
+      document.getElementById('keywords').value = data.keywords || '';
+
+      // Populate Grid Settings (or defaults)
+      document.getElementById('ppi_num').value = data.cell_size_px || 70;
+      document.getElementById('ppi_slider').value = data.cell_size_px || 70;
+      document.getElementById('gridW_num').value = data.grid_width || 30;
+      document.getElementById('gridH_num').value = data.grid_height || 30;
+      
+      // Attempt to parse offset from old command if possible, otherwise 0
+      // (Parsing logic is complex, defaulting to 0 for safety unless we stored offset columns)
+      document.getElementById('offX').value = 0;
+      document.getElementById('offY').value = 0;
+
+      // Load Image & UI
+      document.getElementById('loading-msg').style.display = 'none';
+      document.getElementById('editor-ui').style.display = 'block';
+      
+      img.src = data.image_url;
+      img.onload = () => {
+          img.style.display = 'block';
+          renderGrid();
+      };
+  }
+
+  /* --- RENDER LOGIC (Same as Submit) --- */
+  function updateFromSlider(type) {
+    if(type === 'ppi') document.getElementById('ppi_num').value = document.getElementById('ppi_slider').value;
+    renderGrid();
+  }
+  function updateFromInput(type) {
+    if(type === 'ppi') document.getElementById('ppi_slider').value = document.getElementById('ppi_num').value;
+    renderGrid();
+  }
+
+  function renderGrid() {
+    const w = parseInt(document.getElementById('gridW_num').value);
+    const h = parseInt(document.getElementById('gridH_num').value);
+    const ppi = parseInt(document.getElementById('ppi_num').value);
+    const ox = parseInt(document.getElementById('offX').value) || 0;
+    const oy = parseInt(document.getElementById('offY').value) || 0;
+
+    if(img.naturalWidth > 0) {
+        const scale = VISUAL_CELL_SIZE / ppi;
+        img.style.width = (img.naturalWidth * scale) + 'px';
+        img.style.height = "auto";
+        img.style.transform = `translate(${ox * scale}px, ${oy * scale}px)`;
+    }
+
+    overlay.style.width = (w * VISUAL_CELL_SIZE) + 'px';
+    overlay.style.height = (h * VISUAL_CELL_SIZE) + 'px';
+    
+    const cmd = `!map -bg "${document.getElementById('imgUrl').value}" -mapsize ${w}x${h} -options dc${ppi} -o${ox}:${oy} -t DM`;
+    document.getElementById('cmdOutput').innerText = cmd;
+  }
+
+  /* --- VERSIONING SAVE --- */
+  async function saveVersion() {
+      const btn = document.getElementById('save-btn');
+      const msg = document.getElementById('statusMsg');
+      
+      btn.disabled = true;
+      btn.innerText = "Archiving old version...";
+
+      // 1. Archive Old Map
+      const { error: archiveError } = await db
+        .from('maps')
+        .update({ is_approved: false }) // Hide the old one
+        .eq('id', originalMapId);
+
+      if(archiveError) {
+          console.error(archiveError);
+          msg.innerText = "Error archiving old version.";
+          btn.disabled = false;
+          return;
+      }
+
+      btn.innerText = "Saving new version...";
+
+      // 2. Insert New Version
+      const meta = currentUser.user_metadata;
+      const discordName = meta.full_name || meta.name || "Unknown";
+      
+      const payload = {
+          name: document.getElementById('mapName').value,
+          image_url: document.getElementById('imgUrl').value,
+          creator: document.getElementById('creator').value,
+          source_url: document.getElementById('sourceUrl').value,
+          
+          // New Data
+          keywords: document.getElementById('keywords').value,
+          grid_width: document.getElementById('gridW_num').value,
+          grid_height: document.getElementById('gridH_num').value,
+          cell_size_px: document.getElementById('ppi_num').value,
+          avrae_cmd: document.getElementById('cmdOutput').innerText,
+          
+          submitted_by: discordName,
+          is_free_use: true,
+          // Trigger in DB will handle approval logic (auto-approve if admin, else false)
+      };
+
+      const { error: insertError } = await db.from('maps').insert(payload);
+
+      if(insertError) {
+           msg.innerText = "Error saving new version: " + insertError.message;
+           msg.style.color = "red";
+           btn.disabled = false;
+      } else {
+           msg.innerText = "Success! New version submitted.";
+           msg.style.color = "green";
+           setTimeout(() => { window.location.href = "/codex/maps/"; }, 1500);
+      }
+  }
+</script>

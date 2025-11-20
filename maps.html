@@ -3,14 +3,19 @@ layout: default
 title: Map Index
 ---
 <link rel="stylesheet" href="/codex/assets/css/style.css">
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <div class="intro-wrapper">
   <h1>Maps Index</h1>
-  <p>Curated D&D Battle Maps - fast, searcheable (with optional Avrae map command presets)</p>
-  <p><a href="/codex/map-submit">Contribute by submitting a new map here</a>.</p>
+  <p>Community submitted maps for Avrae. <a href="/codex/map-submit">Submit a new map here</a>.</p>
   
+  <div id="auth-ui" style="margin-top: 15px; font-size: 0.9em;">
+    <button id="login-btn" onclick="login()" class="tool-btn" style="display:none;">Login to Edit</button>
+    <div id="user-info" style="display:none;">
+      <span>Logged in as: <strong id="username-display"></strong></span>
+      <button onclick="logout()" class="tool-btn">Logout</button>
+    </div>
+  </div>
 </div>
 
 <div class="map-search-wrapper">
@@ -25,19 +30,59 @@ title: Map Index
 <script>
   /* --- CONFIGURATION --- */
   const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
-  /* 🔴 USE YOUR "anon" KEY HERE 🔴 */
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'; 
-  
+  const SUPABASE_KEY = 'YOUR_ANON_KEY_HERE'; 
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  document.addEventListener('DOMContentLoaded', async () => {
-    await fetchAndRenderMaps();
+  let currentUser = null;
+
+  /* --- AUTH & INIT --- */
+  document.addEventListener('DOMContentLoaded', () => {
+    initAuth();
   });
 
+  function initAuth() {
+    db.auth.onAuthStateChange((event, session) => {
+      handleSession(session);
+    });
+    db.auth.getSession().then(({data}) => handleSession(data.session));
+  }
+
+  function handleSession(session) {
+    const loginBtn = document.getElementById('login-btn');
+    const userInfo = document.getElementById('user-info');
+
+    if (session) {
+      currentUser = session.user;
+      loginBtn.style.display = 'none';
+      userInfo.style.display = 'block';
+      
+      const meta = currentUser.user_metadata;
+      document.getElementById('username-display').innerText = meta.full_name || meta.name || "User";
+    } else {
+      currentUser = null;
+      loginBtn.style.display = 'inline-block';
+      userInfo.style.display = 'none';
+    }
+    
+    // Re-render maps to show/hide Edit buttons based on login state
+    fetchAndRenderMaps(); 
+  }
+
+  async function login() {
+    const redirectUrl = window.location.href; // Come back to this exact page
+    await db.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: redirectUrl } });
+  }
+
+  async function logout() {
+    await db.auth.signOut();
+    window.location.reload();
+  }
+
+  /* --- RENDER LOGIC --- */
   async function fetchAndRenderMaps() {
     const container = document.getElementById('gallery-container');
+    // Don't clear container yet to prevent flashing, but we will clear it before appending
 
-    /* 1. Fetch Approved Maps */
     const { data: maps, error } = await db
       .from('maps')
       .select('*')
@@ -45,58 +90,48 @@ title: Map Index
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error loading maps:', error);
-      container.innerHTML = `<p style="color:var(--palette-danger); text-align:center;">Error loading maps.</p>`;
+      container.innerHTML = `<p style="color:var(--palette-danger); text-align:center;">Error.</p>`;
       return;
     }
 
-    if (!maps || maps.length === 0) {
-      container.innerHTML = `<p style="text-align:center;">No maps found.</p>`;
-      return;
-    }
+    container.innerHTML = ''; // Clear now
 
-    /* 2. Clear Loading Text */
-    container.innerHTML = '';
-
-    /* 3. Generate HTML */
     maps.forEach(map => {
       const card = document.createElement('div');
       card.className = 'map-card';
-      
       const searchString = `${map.name} ${map.creator} ${map.keywords || ''}`.toLowerCase();
       card.setAttribute('data-search', searchString);
 
-      /* Logic: Wrap Creator in Link if source_url exists */
       const creatorDisplay = map.source_url 
         ? `<a href="${map.source_url}" target="_blank" rel="noopener noreferrer">${map.creator}</a>` 
         : map.creator;
 
+      // EDIT BUTTON LOGIC
+      // Only show if user is logged in
+      const editButtonHtml = currentUser 
+        ? `<a href="/codex/edit?id=${map.id}" class="edit-btn">✏️ Edit / Revise</a>` 
+        : '';
+
       card.innerHTML = `
-        <a href="${map.image_url}" class="map-thumbnail-link" target="_blank" rel="noopener noreferrer" title="Click to view original image">
-          <img src="${map.image_url}" alt="Thumbnail for ${map.name}" class="map-thumbnail" loading="lazy">
+        <a href="${map.image_url}" class="map-thumbnail-link" target="_blank">
+          <img src="${map.image_url}" alt="${map.name}" class="map-thumbnail" loading="lazy">
         </a>
 
         <div class="map-card-info">
           <h2>${map.name}</h2>
-          
           <p><strong>Creator:</strong> ${creatorDisplay}</p>
-          
-          ${ map.grid_width ? `<p><strong>Dimensions:</strong> ${map.grid_width}x${map.grid_height}</p>` : '' }
+          ${ map.grid_width ? `<p><strong>Dim:</strong> ${map.grid_width}x${map.grid_height}</p>` : '' }
 
-          <p><strong>Avrae Map Code:</strong></p>
           <div class="copy-wrapper">
-            <code class="copy-target">${map.avrae_cmd || 'Not submitted'}</code>
-            <button class="copy-button" type="button">Copy</button>
+             <code class="copy-target">${map.avrae_cmd || 'Not submitted'}</code>
+             <button class="copy-button">Copy</button>
           </div>
-
-          <p><strong>Keywords:</strong> <span style="font-size: 0.9em; color: var(--color-text-muted);">${map.keywords || 'None'}</span></p>
           
-          <p style="font-size: 0.8em; margin-top: 10px; color: var(--color-text-muted);">
-            <em>Submitted by: ${map.submitted_by || 'Anonymous'}</em>
-          </p>
+          <p style="font-size:0.85em; color:var(--color-text-muted); margin-top:5px;">Tags: ${map.keywords || ''}</p>
+          
+          ${editButtonHtml}
         </div>
       `;
-
       container.appendChild(card);
     });
 
@@ -104,45 +139,25 @@ title: Map Index
   }
 
   function setupInteractions() {
-    /* Search Logic */
     const searchInput = document.getElementById('mapSearchInput');
-    const allMapCards = document.querySelectorAll('.map-card');
+    const allCards = document.querySelectorAll('.map-card');
 
-    searchInput.addEventListener('keyup', () => {
-      const filterText = searchInput.value.toLowerCase().trim();
-      
-      allMapCards.forEach(card => {
-        const cardData = card.getAttribute('data-search');
-        if (cardData.includes(filterText)) {
-          card.style.display = 'flex'; 
-        } else {
-          card.style.display = 'none';
-        }
-      });
-    });
-
-    /* Copy Button Logic */
-    const allCopyButtons = document.querySelectorAll('.copy-button');
-    
-    allCopyButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        const codeElement = button.previousElementSibling;
-        const textToCopy = codeElement.innerText;
-        
-        navigator.clipboard.writeText(textToCopy).then(() => {
-          const originalText = button.innerText;
-          button.innerText = 'Copied!';
-          button.style.background = 'var(--palette-success)';
-          button.style.color = 'white';
-          
-          setTimeout(() => {
-            button.innerText = originalText;
-            button.style.background = ''; 
-            button.style.color = '';
-          }, 2000);
-        }).catch(err => {
-          console.error('Failed to copy text: ', err);
+    if(searchInput) {
+        searchInput.addEventListener('keyup', () => {
+          const filterText = searchInput.value.toLowerCase().trim();
+          allCards.forEach(card => {
+            card.style.display = card.getAttribute('data-search').includes(filterText) ? 'flex' : 'none';
+          });
         });
+    }
+
+    document.querySelectorAll('.copy-button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        navigator.clipboard.writeText(btn.previousElementSibling.innerText);
+        const oldText = btn.innerText;
+        btn.innerText = 'Copied!';
+        btn.style.color = 'var(--palette-success)';
+        setTimeout(() => { btn.innerText = oldText; btn.style.color = ''; }, 2000);
       });
     });
   }
