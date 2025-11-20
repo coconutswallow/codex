@@ -1,233 +1,38 @@
----
-layout: default
-title: Submit Map
----
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-  /* --- CSS STYLES --- */
-  .submit-container { 
-    display: grid; 
-    grid-template-columns: 1fr 350px; 
-    gap: 20px; 
-    margin: 20px 0; 
-    height: 85vh; 
-  }
-  @media (max-width: 768px) { .submit-container { grid-template-columns: 1fr; height: auto; } }
-  
-  .map-viewer { 
-    position: relative; 
-    background: #222; 
-    border: 2px solid #444; 
-    border-radius: 8px;
-    overflow: auto; 
-    display: flex;  
-    align-items: flex-start;
-    justify-content: flex-start;
-  }
-  
-  .canvas-wrapper {
-    position: relative;
-    box-sizing: content-box;
-    padding-top: 25px;  
-    padding-left: 35px; 
-    background-color: #333;
-    min-width: 100px;
-    min-height: 100px;
-  }
-
-  #preview-img { 
-    display: block;
-    transform-origin: top left;
-    image-rendering: high-quality;
-  }
-
-  #grid-overlay {
-    position: absolute; 
-    top: 25px; left: 35px; 
-    pointer-events: none; 
-    z-index: 10;
-    border-right: 2px solid rgba(255,0,0,0.5);
-    border-bottom: 2px solid rgba(255,0,0,0.5);
-    background-size: 28px 28px; /* 30% Smaller visual grid */
-    background-image: 
-      linear-gradient(to right, rgba(255, 0, 0, 0.6) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 0, 0, 0.6) 1px, transparent 1px);
-  }
-
-  .axis-label {
-    position: absolute;
-    font-family: monospace;
-    font-size: 10px;
-    color: #aaa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-  }
-  .axis-x { top: 0; height: 25px; width: 28px; border-right: 1px solid #444; background: #222; }
-  .axis-y { left: 0; width: 30px; height: 28px; border-bottom: 1px solid #444; background: #222; }
-
-  .controls { background: #f4f4f4; padding: 20px; border-radius: 8px; color: #333; overflow-y: auto; }
-  .controls label { display: block; margin-top: 15px; font-weight: bold; font-size: 0.9em; }
-  .controls input { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
-  
-  .input-group { display: flex; gap: 10px; margin-top: 5px; }
-  .input-group button { cursor: pointer; padding: 0 15px; background: #444; color: #fff; border: none; border-radius: 4px;}
-  
-  .slider-group { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
-  .slider-group input[type="range"] { flex-grow: 1; }
-  .slider-group input[type="number"] { width: 70px; }
-  
-  .generated-cmd { 
-    background: #222; color: #0f0; font-family: monospace; 
-    padding: 10px; word-break: break-all; margin-top: 20px; border-radius: 4px; font-size: 0.85em;
-  }
-
-  button#submit-btn {
-    background: #2ea44f; color: white; border: none; 
-    padding: 15px; width: 100%; font-size: 1.1em; font-weight: bold; margin-top: 20px; 
-    cursor: pointer; border-radius: 6px;
-  }
-  button#submit-btn:disabled { background: #ccc; cursor: not-allowed; }
-  #statusMsg { margin-top: 15px; font-weight: bold; text-align: center; }
-  
-  .tool-btn { background:#444; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.8em; margin-left: 5px;}
-  .tool-btn:hover { background:#222; }
-
-  /* Login Button Style */
-  .discord-btn {
-    background-color: #5865F2; color: white; 
-    padding: 12px 24px; border: none; border-radius: 4px; 
-    font-size: 16px; cursor: pointer; font-weight: bold;
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    width: 100%;
-  }
-  .discord-btn:hover { background-color: #4752C4; }
-</style>
-
-<div class="intro-wrapper">
-  <h1>Submit & Align Map</h1>
-  <p>Adjust "Pixels Per Cell" to match the grid.</p>
-</div>
-
-<div class="submit-container">
-  
-  <div class="map-viewer" id="viewPort">
-    <div class="canvas-wrapper" id="canvasWrapper">
-        <p id="placeholder-text" style="color:#888; width: 300px; padding: 50px;">Map Preview will appear here</p>
-        <div id="axis-x-container"></div>
-        <div id="axis-y-container"></div>
-        <img id="preview-img" src="" alt="" style="display:none;">
-        <div id="grid-overlay"></div>
-    </div>
-  </div>
-
-  <div class="controls">
-    
-    <div id="login-section" style="text-align: center; padding: 40px 0;">
-      <p style="margin-bottom: 20px;">You must log in to submit maps.</p>
-      <button onclick="login()" class="discord-btn">
-        Login with Discord
-      </button>
-    </div>
-
-    <div id="form-section" style="display:none;">
-      
-      <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <span id="user-display" style="font-size: 0.8em; color: #666;"></span>
-        <button onclick="logout()" style="font-size:0.7em; border:1px solid #ccc; background:none; cursor:pointer;">Log Out</button>
-      </div>
-
-      <h3>1. Map Source</h3>
-      <label>Image URL (Direct Link)</label>
-      <div class="input-group">
-        <input type="url" id="imgUrl" placeholder="https://i.imgur.com/..." onkeydown="if(event.key === 'Enter') loadImage()">
-        <button onclick="loadImage()">Load</button>
-      </div>
-
-      <label>Map Name</label>
-      <input type="text" id="mapName" placeholder="e.g. Forest Road">
-
-      <label>Creator</label>
-      <input type="text" id="creator" placeholder="e.g. Neutral Party">
-      
-      <label>Keywords</label>
-      <input type="text" id="keywords" placeholder="forest, day, ambush">
-
-      <hr style="margin: 20px 0;">
-      
-      <h3>2. Grid Alignment</h3>
-      
-      <label>Grid Width (Cols)</label>
-      <div class="slider-group">
-        <input type="range" id="gridW_slider" min="1" max="100" value="30" oninput="updateFromSlider('w')">
-        <input type="number" id="gridW_num" value="30" oninput="updateFromInput('w')">
-      </div>
-
-      <label>Grid Height (Rows)</label>
-      <div class="slider-group">
-        <input type="range" id="gridH_slider" min="1" max="100" value="30" oninput="updateFromSlider('h')">
-        <input type="number" id="gridH_num" value="30" oninput="updateFromInput('h')">
-      </div>
-      
-      <div style="text-align:right; margin-top:10px;">
-         <button class="tool-btn" onclick="calcPPIfromGrid()">🪄 Fit Image to Grid</button>
-         <button class="tool-btn" onclick="calcGridFromPPI()">Auto-Set W/H</button>
-      </div>
-
-      <label>Pixels Per Cell (Scale)</label>
-      <div class="slider-group">
-        <input type="range" id="ppi_slider" min="20" max="150" value="40" step="1" oninput="updateFromSlider('ppi')">
-        <input type="number" id="ppi_num" value="40" oninput="updateFromInput('ppi')">
-      </div>
-
-      <hr style="margin: 20px 0;">
-
-      <h3>3. Submit</h3>
-      <div class="generated-cmd" id="cmdOutput">!map -bg ...</div>
-
-      <label style="margin-top:15px; font-weight:normal; display: flex; gap: 10px; align-items: center;">
-        <input type="checkbox" id="tosCheck" style="width: auto; margin: 0;"> 
-        I confirm this map is free to use.
-      </label>
-
-      <button id="submit-btn" onclick="submitMap()">Submit to Library</button>
-      <p id="statusMsg"></p>
-    </div>
-  </div>
-</div>
-
 <script>
   /* --- CONFIGURATION --- */
   const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
-  const SUPABASE_KEY = 'YOUR_ANON_KEY_HERE'; 
+  const SUPABASE_KEY = 'YOUR_ANON_KEY_HERE'; // Make sure this is your eyJ... key
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   /* --- AUTHENTICATION LOGIC --- */
   let currentUser = null;
 
-  // 1. Check if user is logged in on load
-  async function checkSession() {
-    const { data: { session } } = await db.auth.getSession();
+  // 1. The Listener (Replaces manual check)
+  // This waits for Supabase to process the URL tokens automatically
+  db.auth.onAuthStateChange((event, session) => {
     if (session) {
       currentUser = session.user;
       showForm();
+      
+      // CLEAN THE URL: Remove the huge access token hash from the address bar
+      // so the user can refresh without issues.
+      const newUrl = window.location.origin + window.location.pathname;
+      window.history.replaceState(null, null, newUrl);
+      
     } else {
       showLogin();
     }
-  }
+  });
 
-  // 2. Login Function
+  // 2. Login Function (FIXED)
   async function login() {
-    // Force the redirect to come back to THIS page (submit.html)
-    // instead of the site root.
-    const currentUrl = window.location.href;
+    // STRIP URL: Only send the clean path, never the current massive URL
+    const redirectUrl = window.location.origin + window.location.pathname;
     
     await db.auth.signInWithOAuth({ 
       provider: 'discord',
       options: {
-        redirectTo: currentUrl 
+        redirectTo: redirectUrl
       }
     });
   }
@@ -243,8 +48,9 @@ title: Submit Map
     document.getElementById('login-section').style.display = 'none';
     document.getElementById('form-section').style.display = 'block';
     
-    // Get Name
-    const name = currentUser.user_metadata.full_name || currentUser.user_metadata.custom_claims?.global_name || "User";
+    // Get Name safely
+    const meta = currentUser.user_metadata;
+    const name = meta.full_name || meta.custom_claims?.global_name || meta.name || "User";
     document.getElementById('user-display').innerText = `Logged in as: ${name}`;
   }
 
@@ -253,9 +59,6 @@ title: Submit Map
     document.getElementById('login-section').style.display = 'block';
     document.getElementById('form-section').style.display = 'none';
   }
-
-  // Run on load
-  checkSession();
 
   /* --- MAP TOOL LOGIC --- */
   const img = document.getElementById('preview-img');
@@ -398,11 +201,13 @@ title: Submit Map
     if (!document.getElementById('imgUrl').value) return alert("URL required.");
     if (img.naturalWidth === 0) return alert("Load a valid image first.");
 
+    if (!currentUser) return alert("You must be logged in!");
+
     btn.disabled = true;
     btn.innerText = "Sending...";
 
-    // Use the REAL Discord name now
-    const discordName = currentUser.user_metadata.full_name || currentUser.user_metadata.custom_claims?.global_name || "Unknown User";
+    const meta = currentUser.user_metadata;
+    const discordName = meta.full_name || meta.custom_claims?.global_name || meta.name || "Unknown User";
 
     const payload = {
       name: document.getElementById('mapName').value,
@@ -413,7 +218,7 @@ title: Submit Map
       grid_height: document.getElementById('gridH_num').value,
       cell_size_px: document.getElementById('ppi_num').value,
       avrae_cmd: document.getElementById('cmdOutput').innerText,
-      submitted_by: discordName, // <--- SAVING DISCORD NAME
+      submitted_by: discordName,
       is_free_use: true,
       is_approved: false 
     };
