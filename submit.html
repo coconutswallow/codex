@@ -15,6 +15,7 @@ title: Submit Map
   }
   @media (max-width: 768px) { .submit-container { grid-template-columns: 1fr; height: auto; } }
   
+  /* Map Viewer Area */
   .map-viewer { 
     position: relative; 
     background: #222; 
@@ -29,17 +30,21 @@ title: Submit Map
   .canvas-wrapper {
     position: relative;
     box-sizing: content-box;
+    /* Padding for Rulers */
     padding-top: 25px;  
     padding-left: 30px; 
     background-color: #333;
     min-width: 100px;
     min-height: 100px;
+    overflow: hidden; /* Hide image if it shifts outside bounds */
   }
 
   #preview-img { 
     display: block;
     transform-origin: top left;
     image-rendering: high-quality;
+    /* Transition for smooth offset movement */
+    transition: transform 0.1s linear; 
   }
 
   #grid-overlay {
@@ -55,59 +60,60 @@ title: Submit Map
       linear-gradient(to bottom, rgba(255, 0, 0, 0.6) 1px, transparent 1px);
   }
 
+  /* Rulers */
   .axis-label {
-    position: absolute;
-    font-family: monospace;
-    font-size: 10px;
-    color: #aaa;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
+    position: absolute; font-family: monospace; font-size: 10px;
+    color: #aaa; display: flex; align-items: center; justify-content: center; pointer-events: none;
   }
   .axis-x { top: 0; height: 25px; width: 28px; border-right: 1px solid #444; background: #222; }
   .axis-y { left: 0; width: 30px; height: 28px; border-bottom: 1px solid #444; background: #222; }
 
+  /* Sidebar & Inputs */
   .controls { background: #f4f4f4; padding: 20px; border-radius: 8px; color: #333; overflow-y: auto; }
-  .controls label { display: block; margin-top: 15px; font-weight: bold; font-size: 0.9em; }
-  .controls input { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+  .controls h3 { margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 1.1em;}
   
-  .input-group { display: flex; gap: 10px; margin-top: 5px; }
-  .input-group button { cursor: pointer; padding: 0 15px; background: #444; color: #fff; border: none; border-radius: 4px;}
+  .section { margin-bottom: 25px; background: white; padding: 15px; border-radius: 6px; border: 1px solid #ddd;}
   
-  .slider-group { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
+  .controls label { display: block; margin-top: 10px; font-weight: bold; font-size: 0.85em; color: #555;}
+  .controls input[type="text"], .controls input[type="url"], .controls input[type="number"] { 
+    width: 100%; padding: 6px; margin-top: 4px; box-sizing: border-box; 
+    border: 1px solid #ccc; border-radius: 4px;
+  }
+  
+  .input-group { display: flex; gap: 5px; margin-top: 4px; }
+  .input-group button { cursor: pointer; padding: 0 10px; background: #444; color: #fff; border: none; border-radius: 4px;}
+  
+  .slider-group { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
   .slider-group input[type="range"] { flex-grow: 1; }
-  .slider-group input[type="number"] { width: 70px; }
+  .slider-group input[type="number"] { width: 60px; }
   
   .generated-cmd { 
     background: #222; color: #0f0; font-family: monospace; 
-    padding: 10px; word-break: break-all; margin-top: 20px; border-radius: 4px; font-size: 0.85em;
+    padding: 10px; word-break: break-all; margin-top: 10px; border-radius: 4px; font-size: 0.8em;
   }
 
+  /* Submit Button */
   button#submit-btn {
     background: #2ea44f; color: white; border: none; 
-    padding: 15px; width: 100%; font-size: 1.1em; font-weight: bold; margin-top: 20px; 
+    padding: 12px; width: 100%; font-size: 1.1em; font-weight: bold; margin-top: 10px; 
     cursor: pointer; border-radius: 6px;
   }
   button#submit-btn:disabled { background: #ccc; cursor: not-allowed; }
-  #statusMsg { margin-top: 15px; font-weight: bold; text-align: center; }
+  #statusMsg { margin-top: 10px; font-weight: bold; text-align: center; font-size: 0.9em;}
   
-  .tool-btn { background:#444; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.8em; margin-left: 5px;}
+  .tool-btn { background:#444; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.75em; margin-left: 5px;}
   .tool-btn:hover { background:#222; }
-
+  
+  /* Discord Button */
   .discord-btn {
-    background-color: #5865F2; color: white; 
-    padding: 12px 24px; border: none; border-radius: 4px; 
-    font-size: 16px; cursor: pointer; font-weight: bold;
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    width: 100%;
+    background-color: #5865F2; color: white; padding: 12px; border: none; border-radius: 4px; 
+    font-size: 16px; cursor: pointer; font-weight: bold; width: 100%;
   }
   .discord-btn:hover { background-color: #4752C4; }
 </style>
 
 <div class="intro-wrapper">
   <h1>Submit & Align Map</h1>
-  <p>Adjust "Pixels Per Cell" to match the grid.</p>
 </div>
 
 <div class="submit-container">
@@ -125,74 +131,91 @@ title: Submit Map
   <div class="controls">
     
     <div id="login-section" style="text-align: center; padding: 40px 0;">
-      <p style="margin-bottom: 20px;">You must log in to submit maps.</p>
-      <button onclick="login()" class="discord-btn">
-        Login with Discord
-      </button>
+      <p style="margin-bottom: 20px;">Log in to submit maps.</p>
+      <button onclick="login()" class="discord-btn">Login with Discord</button>
     </div>
 
     <div id="form-section" style="display:none;">
       
-      <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-        <span id="user-display" style="font-size: 0.8em; color: #666;"></span>
+      <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <div style="font-size: 0.8em; color: #666;">
+          Submitted by: <strong id="user-display">User</strong>
+        </div>
         <button onclick="logout()" style="font-size:0.7em; border:1px solid #ccc; background:none; cursor:pointer;">Log Out</button>
       </div>
 
-      <h3>1. Map Source</h3>
-      <label>Image URL (Direct Link)</label>
-      <div class="input-group">
-        <input type="url" id="imgUrl" placeholder="https://i.imgur.com/..." onkeydown="if(event.key === 'Enter') loadImage()">
-        <button onclick="loadImage()">Load</button>
-      </div>
+      <div class="section">
+        <h3>1. Map Info</h3>
+        <label>Map Name</label>
+        <input type="text" id="mapName" placeholder="e.g. Forest Ambush">
 
-      <label>Map Name</label>
-      <input type="text" id="mapName" placeholder="e.g. Forest Road">
+        <label>Image URL</label>
+        <div class="input-group">
+          <input type="url" id="imgUrl" placeholder="https://..." onkeydown="if(event.key === 'Enter') loadImage()">
+          <button onclick="loadImage()">Load</button>
+        </div>
 
-      <label>Creator</label>
-      <input type="text" id="creator" placeholder="e.g. Neutral Party">
-      
-      <label>Keywords</label>
-      <input type="text" id="keywords" placeholder="forest, day, ambush">
-
-      <hr style="margin: 20px 0;">
-      
-      <h3>2. Grid Alignment</h3>
-      
-      <label>Grid Width (Cols)</label>
-      <div class="slider-group">
-        <input type="range" id="gridW_slider" min="1" max="100" value="30" oninput="updateFromSlider('w')">
-        <input type="number" id="gridW_num" value="30" oninput="updateFromInput('w')">
-      </div>
-
-      <label>Grid Height (Rows)</label>
-      <div class="slider-group">
-        <input type="range" id="gridH_slider" min="1" max="100" value="30" oninput="updateFromSlider('h')">
-        <input type="number" id="gridH_num" value="30" oninput="updateFromInput('h')">
+        <label>Creator / Website</label>
+        <input type="text" id="creator" placeholder="e.g. Neutral Party">
+        
+        <label>Search Keywords</label>
+        <input type="text" id="keywords" placeholder="forest, road, day">
       </div>
       
-      <div style="text-align:right; margin-top:10px;">
-         <button class="tool-btn" onclick="calcPPIfromGrid()">🪄 Fit Image to Grid</button>
-         <button class="tool-btn" onclick="calcGridFromPPI()">Auto-Set W/H</button>
+      <div class="section">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3>2. Battle Map Setup</h3>
+            <label style="margin:0; display:flex; align-items:center; gap:5px; font-weight:normal; font-size:0.8em;">
+                <input type="checkbox" id="gridToggle" checked onchange="toggleGrid()"> Show Grid
+            </label>
+        </div>
+
+        <label>Pixels Per Cell</label>
+        <div class="slider-group">
+          <input type="range" id="ppi_slider" min="20" max="150" value="40" step="1" oninput="updateFromSlider('ppi')">
+          <input type="number" id="ppi_num" value="40" oninput="updateFromInput('ppi')">
+        </div>
+
+        <label>Grid W / H (Cells)</label>
+        <div class="slider-group">
+          <span style="font-size:0.8em; font-weight:bold; width:15px;">W</span>
+          <input type="number" id="gridW_num" value="30" oninput="updateFromInput('w')">
+          <span style="font-size:0.8em; font-weight:bold; width:15px;">H</span>
+          <input type="number" id="gridH_num" value="30" oninput="updateFromInput('h')">
+        </div>
+        
+        <div style="text-align:right; margin-top:5px;">
+           <button class="tool-btn" onclick="calcPPIfromGrid()">Fit Image to Grid</button>
+           <button class="tool-btn" onclick="calcGridFromPPI()">Auto-Set W/H</button>
+        </div>
+
+        <hr style="border:0; border-top:1px dashed #ccc; margin:15px 0;">
+
+        <label>Offset Background (Pixels)</label>
+        <div style="display:flex; gap:10px;">
+            <div style="flex:1;">
+                <span style="font-size:0.8em;">Right (X)</span>
+                <input type="number" id="offX" value="0" oninput="renderGrid()">
+            </div>
+            <div style="flex:1;">
+                <span style="font-size:0.8em;">Down (Y)</span>
+                <input type="number" id="offY" value="0" oninput="renderGrid()">
+            </div>
+        </div>
       </div>
 
-      <label>Pixels Per Cell (Scale)</label>
-      <div class="slider-group">
-        <input type="range" id="ppi_slider" min="20" max="150" value="40" step="1" oninput="updateFromSlider('ppi')">
-        <input type="number" id="ppi_num" value="40" oninput="updateFromInput('ppi')">
+      <div class="section" style="background:#f9f9f9;">
+        <h3>3. Output</h3>
+        <div class="generated-cmd" id="cmdOutput">!map ...</div>
+
+        <label style="margin-top:15px; font-weight:normal; display: flex; gap: 10px; align-items: center;">
+          <input type="checkbox" id="tosCheck" style="width: auto; margin: 0;"> 
+          I confirm this map is free to use.
+        </label>
+
+        <button id="submit-btn" onclick="submitMap()">Submit</button>
+        <p id="statusMsg"></p>
       </div>
-
-      <hr style="margin: 20px 0;">
-
-      <h3>3. Submit</h3>
-      <div class="generated-cmd" id="cmdOutput">!map -bg ...</div>
-
-      <label style="margin-top:15px; font-weight:normal; display: flex; gap: 10px; align-items: center;">
-        <input type="checkbox" id="tosCheck" style="width: auto; margin: 0;"> 
-        I confirm this map is free to use.
-      </label>
-
-      <button id="submit-btn" onclick="submitMap()">Submit to Library</button>
-      <p id="statusMsg"></p>
     </div>
   </div>
 </div>
@@ -201,57 +224,46 @@ title: Submit Map
   /* --- CONFIGURATION --- */
   const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
   
-  /* 🔴 PASTE YOUR KEY BELOW. IT MUST START WITH eyJ... 🔴 */
+  /* 🔴 YOUR KEY HERE 🔴 */
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'; 
   
-  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  /* --- AUTHENTICATION LOGIC --- */
+  let db;
   let currentUser = null;
 
-  /* 1. Handle Session State */
+  /* --- INITIALIZATION --- */
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      initAuth();
+    } catch (err) { console.error("Init Error:", err); }
+  });
+
+  function initAuth() {
+    db.auth.onAuthStateChange((event, session) => {
+      setTimeout(() => handleSession(session), 50);
+    });
+    db.auth.getSession().then(({data}) => handleSession(data.session));
+  }
+
   function handleSession(session) {
     if (session) {
-      console.log("✅ User found:", session.user.email);
       currentUser = session.user;
-      showForm();
-      
-      /* Clean the URL safely */
-      if (window.location.hash && window.location.hash.includes('access_token')) {
-         const newUrl = window.location.origin + window.location.pathname;
-         window.history.replaceState(null, null, newUrl);
-      }
+      try {
+        showForm();
+        /* Clean URL */
+        if (window.location.hash && window.location.hash.includes('access_token')) {
+           const newUrl = window.location.origin + window.location.pathname;
+           window.history.replaceState(null, null, newUrl);
+        }
+      } catch (e) { showLogin(); }
     } else {
-      console.log("⚠️ No user session found.");
       showLogin();
     }
   }
 
-  /* 2. Setup Listener */
-  db.auth.onAuthStateChange((event, session) => {
-    console.log("🔄 Auth Event:", event);
-    handleSession(session);
-  });
-
-  /* 3. Manual Check on Load */
-  document.addEventListener('DOMContentLoaded', async () => {
-    console.log("🚀 App started. Checking session...");
-    const { data, error } = await db.auth.getSession();
-    if (error) console.error("Session Error:", error);
-    handleSession(data.session);
-  });
-
-  /* --- ACTIONS --- */
   async function login() {
     const redirectUrl = window.location.origin + window.location.pathname;
-    console.log("Redirecting to:", redirectUrl);
-        
-    await db.auth.signInWithOAuth({ 
-      provider: 'discord',
-      options: {
-        redirectTo: redirectUrl
-      }
-    });
+    await db.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: redirectUrl } });
   }
 
   async function logout() {
@@ -259,14 +271,14 @@ title: Submit Map
     window.location.reload(); 
   }
 
-  /* --- UI TOGGLES --- */
   function showForm() {
     document.getElementById('login-section').style.display = 'none';
     document.getElementById('form-section').style.display = 'block';
-        
+    
     const meta = currentUser.user_metadata;
+    /* Discord ID auto-population logic */
     const name = meta.full_name || meta.custom_claims?.global_name || meta.name || "User";
-    document.getElementById('user-display').innerText = `Logged in as: ${name}`;
+    document.getElementById('user-display').innerText = name;
   }
 
   function showLogin() {
@@ -275,24 +287,21 @@ title: Submit Map
     document.getElementById('form-section').style.display = 'none';
   }
 
-  /* --- MAP TOOL LOGIC --- */
+  /* --- MAP LOGIC --- */
   const img = document.getElementById('preview-img');
   const overlay = document.getElementById('grid-overlay');
   const cmdOutput = document.getElementById('cmdOutput');
   const statusMsg = document.getElementById('statusMsg');
   const xAxis = document.getElementById('axis-x-container');
   const yAxis = document.getElementById('axis-y-container');
-    
+  
   const VISUAL_CELL_SIZE = 28; 
 
   function loadImage() {
     const url = document.getElementById('imgUrl').value;
     if(!url) return;
-
     statusMsg.innerText = "Loading...";
-    statusMsg.style.color = "blue";
     document.getElementById('placeholder-text').style.display = 'none';
-
     img.removeAttribute('src'); 
     img.style.display = 'block'; 
     img.src = url; 
@@ -304,20 +313,21 @@ title: Submit Map
   };
 
   img.onerror = function() {
-    statusMsg.innerText = "❌ Error: Invalid link or CORS block.";
+    statusMsg.innerText = "❌ Error loading image.";
     statusMsg.style.color = "red";
   };
 
+  function toggleGrid() {
+    const isOn = document.getElementById('gridToggle').checked;
+    overlay.style.display = isOn ? 'block' : 'none';
+  }
+
+  /* Calculations */
   function calcGridFromPPI() {
     if(!img.naturalWidth) return;
     const ppi = parseInt(document.getElementById('ppi_num').value);
-    const cols = Math.ceil(img.naturalWidth / ppi);
-    const rows = Math.ceil(img.naturalHeight / ppi);
-        
-    document.getElementById('gridW_slider').value = cols;
-    document.getElementById('gridW_num').value = cols;
-    document.getElementById('gridH_slider').value = rows;
-    document.getElementById('gridH_num').value = rows;
+    document.getElementById('gridW_num').value = Math.ceil(img.naturalWidth / ppi);
+    document.getElementById('gridH_num').value = Math.ceil(img.naturalHeight / ppi);
     renderGrid();
   }
 
@@ -325,59 +335,65 @@ title: Submit Map
     if(!img.naturalWidth) return;
     const cols = parseInt(document.getElementById('gridW_num').value);
     const exactPPI = Math.round(img.naturalWidth / cols);
-        
     document.getElementById('ppi_slider').value = exactPPI;
     document.getElementById('ppi_num').value = exactPPI;
     renderGrid();
   }
 
   function updateFromSlider(type) {
-    if(type === 'ppi') {
-        document.getElementById('ppi_num').value = document.getElementById('ppi_slider').value;
-    } else if(type === 'w') {
-        document.getElementById('gridW_num').value = document.getElementById('gridW_slider').value;
-    } else if(type === 'h') {
-        document.getElementById('gridH_num').value = document.getElementById('gridH_slider').value;
-    }    
+    if(type === 'ppi') document.getElementById('ppi_num').value = document.getElementById('ppi_slider').value;
     renderGrid();
   }
 
   function updateFromInput(type) {
-    if(type === 'ppi') {
-        document.getElementById('ppi_slider').value = document.getElementById('ppi_num').value;
-    } else if(type === 'w') {
-        document.getElementById('gridW_slider').value = document.getElementById('gridW_num').value;
-    } else if(type === 'h') {
-        document.getElementById('gridH_slider').value = document.getElementById('gridH_num').value;
-    }    
+    if(type === 'ppi') document.getElementById('ppi_slider').value = document.getElementById('ppi_num').value;
     renderGrid();
   }
 
+  /* --- MAIN RENDERER --- */
   function renderGrid() {
     const w_cols = parseInt(document.getElementById('gridW_num').value);
     const h_rows = parseInt(document.getElementById('gridH_num').value);
     const ppi_val = parseInt(document.getElementById('ppi_num').value);
+    const offX = parseInt(document.getElementById('offX').value) || 0;
+    const offY = parseInt(document.getElementById('offY').value) || 0;
 
     if(img.naturalWidth > 0) {
         const scaleRatio = VISUAL_CELL_SIZE / ppi_val;
+        
+        // Apply Scaling to Image
         img.style.width = (img.naturalWidth * scaleRatio) + 'px';
-        img.style.height = "auto"; 
+        img.style.height = "auto";
+        
+        // Apply Offset to Image (Moving the BG relative to the fixed Grid)
+        // Since Command is -oX:Y (Shift Right/Down), we translate the image
+        // But we must scale the offset to visual pixels too!
+        const visualOffX = offX * scaleRatio;
+        const visualOffY = offY * scaleRatio;
+        img.style.transform = `translate(${visualOffX}px, ${visualOffY}px)`;
     }
 
-    const overlayWidth = w_cols * VISUAL_CELL_SIZE;
-    const overlayHeight = h_rows * VISUAL_CELL_SIZE;
+    // Update Grid Overlay
+    overlay.style.width = (w_cols * VISUAL_CELL_SIZE) + 'px';
+    overlay.style.height = (h_rows * VISUAL_CELL_SIZE) + 'px';
 
-    overlay.style.width = overlayWidth + 'px';
-    overlay.style.height = overlayHeight + 'px';
     renderCoordinates(w_cols, h_rows);
 
+    // Generate Command
     const url = document.getElementById('imgUrl').value || "URL";
-    const cmd = `!map -bg "${url}" -mapsize ${w_cols}x${h_rows} -options dc${ppi_val} -t DM`;
+    let options = `dc${ppi_val}`;
+    if (offX > 0 || offY > 0) {
+        options += ` -o${offX}:${offY}`;
+    }
+    
+    const cmd = `!map -bg "${url}" -mapsize ${w_cols}x${h_rows} -options ${options} -t DM`;
     cmdOutput.innerText = cmd;
   }
 
   function renderCoordinates(cols, rows) {
     xAxis.innerHTML = '';
+    yAxis.innerHTML = '';
+    
     for(let i=0; i<cols; i++) {
         const el = document.createElement('div');
         el.className = 'axis-label axis-x';
@@ -386,8 +402,6 @@ title: Submit Map
         el.style.width = VISUAL_CELL_SIZE + 'px';
         xAxis.appendChild(el);
     }
-
-    yAxis.innerHTML = '';
     for(let i=0; i<rows; i++) {
         const el = document.createElement('div');
         el.className = 'axis-label axis-y';
@@ -410,18 +424,17 @@ title: Submit Map
 
   async function submitMap() {
     const btn = document.getElementById('submit-btn');
-        
+    
     if (!document.getElementById('tosCheck').checked) return alert("Please confirm free to use.");
     if (!document.getElementById('imgUrl').value) return alert("URL required.");
     if (img.naturalWidth === 0) return alert("Load a valid image first.");
-
     if (!currentUser) return alert("You must be logged in!");
 
     btn.disabled = true;
     btn.innerText = "Sending...";
 
     const meta = currentUser.user_metadata;
-    const discordName = meta.full_name || meta.custom_claims?.global_name || meta.name || "Unknown User";
+    const discordName = meta.full_name || meta.custom_claims?.global_name || meta.name || "Unknown";
 
     const payload = {
       name: document.getElementById('mapName').value,
@@ -444,7 +457,7 @@ title: Submit Map
       statusMsg.innerText = "Error: " + error.message;
       statusMsg.style.color = "red";
       btn.disabled = false;
-      btn.innerText = "Submit to Library";
+      btn.innerText = "Submit";
     } else {
       statusMsg.innerText = "Success! Sent for approval.";
       statusMsg.style.color = "green";
