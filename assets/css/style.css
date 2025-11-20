@@ -3,6 +3,65 @@
    Theme: Coconut & Palm
    ============================================ */
 
+   /* ============================================
+   0. SITE LAYOUT (Header/Footer)
+   ============================================ */
+.site-header {
+  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-border);
+  padding: 15px 0;
+  margin-bottom: 0; /* Intro/Hero will sit flush against this */
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.site-logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--palette-brand-main);
+  text-decoration: none;
+}
+
+.site-nav a {
+  margin-left: 20px;
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.site-nav a:hover { color: var(--palette-brand-accent); }
+
+.page-content {
+  min-height: 80vh; /* Pushes footer down */
+}
+
+.site-footer {
+  text-align: center;
+  padding: 40px;
+  margin-top: 50px;
+  background: var(--color-bg-card);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 0.85em;
+}
+
+/* HERO BLOCK (Used on individual pages) */
+.hero-block {
+  background: var(--color-bg-card);
+  border-bottom: 4px solid var(--palette-brand-accent);
+  text-align: center;
+  padding: 60px 20px;
+  margin-bottom: 30px;
+}
+.hero-block h1 { margin: 0 0 15px 0; color: var(--palette-brand-main); font-size: 2.5rem; }
+.hero-block p { max-width: 700px; margin: 0 auto 20px; color: var(--color-text-muted); }
+
 /* ============================================
    1. COLOR PALETTE (Design Tokens)
    ============================================ */

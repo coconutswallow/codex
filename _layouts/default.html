@@ -1,21 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <title>{{ page.title | default: site.title }}</title>
-    <link rel="stylesheet" href="{{ "/assets/css/style.css" | relative_url }}">
-  </head>
-  <body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page.title }} | Codex</title>
+  
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
 
-    <header>
-      </header>
+  <header class="site-header">
+    <div class="header-content">
+      <a href="{{ '/' | relative_url }}" class="site-logo">🥥 Codex</a>
+      <nav class="site-nav">
+        <a href="{{ '/maps' | relative_url }}">Map Index</a>
+        <a href="{{ '/map-submit' | relative_url }}">Submit Map</a>
+        </nav>
+    </div>
+  </header>
 
-    <main>
-      {{ content }}
-    </main>
+  <main class="page-content">
+    {{ content }}
+  </main>
 
-    <footer>
-      </footer>
+  <footer class="site-footer">
+    <p>&copy; {{ "now" | date: "%Y" }} Codex Library. Maps are property of their creators.</p>
+  </footer>
 
-  </body>
+</body>
 </html>
