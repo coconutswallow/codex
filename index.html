@@ -67,29 +67,22 @@ title: Map Index
       const searchString = `${map.name} ${map.creator} ${map.keywords || ''}`.toLowerCase();
       card.setAttribute('data-search', searchString);
 
-      /* Logic to handle the Source Link */
-      const sourceHtml = map.source_url 
-        ? `<p><strong>Source:</strong> <a href="${map.source_url}" target="_blank" rel="noopener noreferrer">Visit Website</a></p>` 
-        : '';
+      /* Logic: Wrap Creator in Link if source_url exists */
+      const creatorDisplay = map.source_url 
+        ? `<a href="${map.source_url}" target="_blank" rel="noopener noreferrer">${map.creator}</a>` 
+        : map.creator;
 
       card.innerHTML = `
-        <a href="${map.image_url}" class="map-thumbnail-link" target="_blank" rel="noopener noreferrer">
+        <a href="${map.image_url}" class="map-thumbnail-link" target="_blank" rel="noopener noreferrer" title="Click to view original image">
           <img src="${map.image_url}" alt="Thumbnail for ${map.name}" class="map-thumbnail" loading="lazy">
         </a>
 
         <div class="map-card-info">
           <h2>${map.name}</h2>
-          <p><strong>Creator:</strong> ${map.creator}</p>
           
-          ${sourceHtml}
+          <p><strong>Creator:</strong> ${creatorDisplay}</p>
           
           ${ map.grid_width ? `<p><strong>Dimensions:</strong> ${map.grid_width}x${map.grid_height}</p>` : '' }
-
-          <p><strong>Image URL:</strong></p>
-          <div class="copy-wrapper">
-            <code class="copy-target">${map.image_url}</code>
-            <button class="copy-button" type="button">Copy</button>
-          </div>
 
           <p><strong>Avrae Map Code:</strong></p>
           <div class="copy-wrapper">
