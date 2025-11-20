@@ -220,7 +220,16 @@ title: Submit Map
 
   // 2. Login Function
   async function login() {
-    await db.auth.signInWithOAuth({ provider: 'discord' });
+    // Force the redirect to come back to THIS page (submit.html)
+    // instead of the site root.
+    const currentUrl = window.location.href;
+    
+    await db.auth.signInWithOAuth({ 
+      provider: 'discord',
+      options: {
+        redirectTo: currentUrl 
+      }
+    });
   }
 
   // 3. Logout Function
