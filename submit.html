@@ -1,9 +1,14 @@
 <script>
   // --- 1. CONFIGURATION ---
-  // 🔴 PASTE YOUR KEYS HERE 🔴
   const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
+  
+  // ⚠️ CHECK THIS KEY: Standard Supabase "anon" keys usually start with "eyJ..."
+  // If this "sb_publishable..." key fails, go back to Dashboard > Settings > API 
+  // and look for the key labeled "anon" "public".
   const SUPABASE_KEY = 'sb_publishable_cGXFwDjzWIWCdRRmcMZIcg_vnp1Azyo'; 
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  
+  // FIXED: Changed variable name to 'db' to avoid conflict with the library name
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   // --- 2. APP STATE ---
   const img = document.getElementById('preview-img');
@@ -16,7 +21,7 @@
     const url = document.getElementById('imgUrl').value;
     if(!url) return;
 
-    console.log("Attempting to load:", url); // Debug log
+    console.log("Attempting to load:", url);
     statusMsg.innerText = "Loading...";
     statusMsg.style.color = "blue";
 
@@ -25,9 +30,9 @@
     if(placeholder) placeholder.style.display = 'none';
 
     // Force the image to attempt loading
-    img.removeAttribute('src'); // Reset
-    img.style.display = 'block'; // Ensure it is visible
-    img.src = url; // Set new source
+    img.removeAttribute('src'); 
+    img.style.display = 'block'; 
+    img.src = url; 
   }
 
   // Listen for the load event
@@ -46,27 +51,22 @@
 
   // --- 4. UPDATE GRID VISUALS ---
   function updateGrid() {
-    // Sync Sliders and Number boxes
     const w = document.getElementById('gridW_num').value = document.getElementById('gridW_slider').value;
     const h = document.getElementById('gridH_num').value = document.getElementById('gridH_slider').value;
     const ppi = document.getElementById('ppi_num').value = document.getElementById('ppi_slider').value;
 
-    // Calculate Dimensions
     const totalWidth = w * ppi;
     const totalHeight = h * ppi;
 
-    // Apply to Overlay
     overlay.style.width = totalWidth + 'px';
     overlay.style.height = totalHeight + 'px';
     overlay.style.backgroundSize = `${ppi}px ${ppi}px`; 
 
-    // Force Image to match the grid width 
     if(img.src) {
         img.style.width = totalWidth + 'px';
         img.style.height = totalHeight + 'px';
     }
 
-    // Update Command String
     const url = document.getElementById('imgUrl').value || "[URL]";
     const cmd = `!map -bg ${url} -w ${w} -h ${h} --options c${ppi}`;
     cmdOutput.innerText = cmd;
@@ -76,11 +76,8 @@
   async function submitMap() {
     const btn = document.getElementById('submit-btn');
     
-    // Validation
     if (!document.getElementById('tosCheck').checked) return alert("Please confirm the map is free to use.");
     if (!document.getElementById('imgUrl').value) return alert("Image URL is required.");
-    
-    // Check if image actually loaded (naturalWidth is 0 if broken)
     if (img.naturalWidth === 0) return alert("Please load a valid image first.");
 
     btn.disabled = true;
@@ -100,8 +97,8 @@
       is_approved: false 
     };
 
-    // Send to Database
-    const { error } = await supabase.from('maps').insert(payload);
+    // FIXED: Using 'db' here instead of 'supabase'
+    const { error } = await db.from('maps').insert(payload);
 
     if (error) {
       console.error(error);
@@ -114,7 +111,6 @@
       statusMsg.style.color = "green";
       btn.innerText = "Submitted";
       
-      // Clear inputs
       document.getElementById('mapName').value = "";
       document.getElementById('keywords').value = "";
     }
