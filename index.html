@@ -1,150 +1,392 @@
 ---
 layout: default
-title: Map Index
+title: Submit Map
 ---
 <link rel="stylesheet" href="/codex/assets/css/style.css">
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <div class="intro-wrapper">
-  <h1>Maps Index</h1>
-  <p>
-    Searchable index of free battle maps.   
-    <a href="/codex/submit">Contribute to the database here!</a>
-  </p>
+  <h1>Submit & Align Map</h1>
+  <p>Adjust the grid, offset, and pixels per cell to match the image.</p>
+  
+  <div style="margin-top: 20px;">
+    <a href="/codex/" class="tool-btn" style="text-decoration: none; padding: 8px 16px; font-size: 1em;">
+      &larr; Back to Map Index
+    </a>
+  </div>
 </div>
 
-<div class="map-search-wrapper">
-  <label for="mapSearchInput">Search Maps:</label>
-  <input type="text" id="mapSearchInput" placeholder="Type keywords, name, or creator...">
-</div>
+<div class="submit-container">
+  
+  <div class="map-viewer" id="viewPort">
+    <div class="canvas-wrapper" id="canvasWrapper">
+        <p id="placeholder-text" style="color:#888; width: 300px; padding: 50px;">Map Preview will appear here</p>
+        <div id="axis-x-container" style="display:none;"></div>
+        <div id="axis-y-container" style="display:none;"></div>
+        <img id="preview-img" src="" alt="" style="display:none;">
+        <div id="grid-overlay" style="display:none;"></div>
+    </div>
+  </div>
 
-<div class="map-gallery" id="gallery-container">
-  <p style="text-align:center; color:#666; margin-top: 50px;">Loading library...</p>
+  <div class="controls">
+    
+    <div id="login-section" style="text-align: center; padding: 40px 0;">
+      <p style="margin-bottom: 20px;">Log in to submit maps.</p>
+      <button onclick="login()" class="discord-btn">Login with Discord</button>
+    </div>
+
+    <div id="form-section" style="display:none;">
+      
+      <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <div style="font-size: 0.8em; color: var(--color-text-muted);">
+          Submitted by: <strong id="user-display">User</strong>
+        </div>
+        <button onclick="logout()" style="font-size:0.7em; border:1px solid var(--color-border); color:var(--color-text); background:none; cursor:pointer; padding: 2px 6px; border-radius: 4px;">Log Out</button>
+      </div>
+
+      <div class="section">
+        <h3>1. Map Info</h3>
+        <label>Map Name</label>
+        <input type="text" id="mapName" placeholder="e.g. Forest Ambush">
+
+        <label>Image URL</label>
+        <div class="input-group">
+          <input type="url" id="imgUrl" placeholder="https://..." onkeydown="if(event.key === 'Enter') loadImage()">
+          <button onclick="loadImage()">Load</button>
+        </div>
+
+        <label>Creator / Website</label>
+        <input type="text" id="creator" placeholder="e.g. Neutral Party">
+        
+        <label>Search Keywords</label>
+        <input type="text" id="keywords" placeholder="forest, road, day">
+      </div>
+      
+      <div class="section">
+        <div style="margin-bottom: 15px;">
+            <h3>2. Battle Map Setup</h3>
+            <label style="margin-top:10px; display:flex; align-items:center; gap:10px; cursor:pointer; text-transform:none; color:var(--color-text);">
+                <input type="checkbox" id="avraeToggle" onchange="toggleAvraeMode()" style="width:auto; margin:0;"> 
+                <strong>Include Avrae Maps settings</strong>
+            </label>
+        </div>
+
+        <div id="avrae-settings-container" style="display:none;">
+            <label>Pixels Per Cell</label>
+            <div class="slider-group">
+              <input type="range" id="ppi_slider" min="20" max="150" value="40" step="1" oninput="updateFromSlider('ppi')">
+              <input type="number" id="ppi_num" value="40" oninput="updateFromInput('ppi')">
+            </div>
+    
+            <label>Grid W / H (Cells)</label>
+            <div class="slider-group">
+              <span style="font-size:0.8em; font-weight:bold; width:15px;">W</span>
+              <input type="number" id="gridW_num" value="30" oninput="updateFromInput('w')">
+              <span style="font-size:0.8em; font-weight:bold; width:15px;">H</span>
+              <input type="number" id="gridH_num" value="30" oninput="updateFromInput('h')">
+            </div>
+            
+            <div style="text-align:right; margin-top:5px;">
+               <button class="tool-btn" onclick="calcPPIfromGrid()">Fit Image to Grid</button>
+               <button class="tool-btn" onclick="calcGridFromPPI()">Auto-Set W/H</button>
+            </div>
+    
+            <hr style="border:0; border-top:1px dashed var(--color-border); margin:15px 0;">
+    
+            <label>Offset Background (Pixels)</label>
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1;">
+                    <span style="font-size:0.8em;">Right (X)</span>
+                    <input type="number" id="offX" value="0" oninput="renderGrid()">
+                </div>
+                <div style="flex:1;">
+                    <span style="font-size:0.8em;">Down (Y)</span>
+                    <input type="number" id="offY" value="0" oninput="renderGrid()">
+                </div>
+            </div>
+
+            <label style="margin-top: 20px;">Generated Command</label>
+            <div class="generated-cmd" id="cmdOutput">!map ...</div>
+        </div>
+      </div>
+
+      <div class="section" style="background:var(--palette-bg-page-light);">
+        <label style="margin-top:0; font-weight:normal; display: flex; gap: 10px; align-items: center; text-transform:none;">
+          <input type="checkbox" id="tosCheck" style="width: auto; margin: 0;"> 
+          I confirm this map is free to use.
+        </label>
+
+        <button id="submit-btn" onclick="submitMap()">Submit</button>
+        <p id="statusMsg"></p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
   /* --- CONFIGURATION --- */
   const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
-  /* 🔴 USE YOUR "anon" KEY HERE 🔴 */
+  /* 🔴 YOUR KEY HERE 🔴 */
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'; 
   
-  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  let db;
+  let currentUser = null;
 
-  document.addEventListener('DOMContentLoaded', async () => {
-    await fetchAndRenderMaps();
+  /* --- INITIALIZATION --- */
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      initAuth();
+    } catch (err) { console.error("Init Error:", err); }
   });
 
-  async function fetchAndRenderMaps() {
-    const container = document.getElementById('gallery-container');
-
-    /* 1. Fetch Approved Maps */
-    const { data: maps, error } = await db
-      .from('maps')
-      .select('*')
-      .eq('is_approved', true)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error loading maps:', error);
-      container.innerHTML = `<p style="color:var(--palette-danger); text-align:center;">Error loading maps.</p>`;
-      return;
-    }
-
-    if (!maps || maps.length === 0) {
-      container.innerHTML = `<p style="text-align:center;">No maps found.</p>`;
-      return;
-    }
-
-    /* 2. Clear Loading Text */
-    container.innerHTML = '';
-
-    /* 3. Generate HTML */
-    maps.forEach(map => {
-      const card = document.createElement('div');
-      card.className = 'map-card';
-      
-      const searchString = `${map.name} ${map.creator} ${map.keywords || ''}`.toLowerCase();
-      card.setAttribute('data-search', searchString);
-
-      card.innerHTML = `
-        <a href="${map.image_url}" class="map-thumbnail-link" target="_blank" rel="noopener noreferrer">
-          <img src="${map.image_url}" alt="Thumbnail for ${map.name}" class="map-thumbnail" loading="lazy">
-        </a>
-
-        <div class="map-card-info">
-          <h2>${map.name}</h2>
-          <p><strong>Creator:</strong> ${map.creator}</p>
-          
-          ${ map.grid_width ? `<p><strong>Dimensions:</strong> ${map.grid_width}x${map.grid_height}</p>` : '' }
-
-          <p><strong>Image URL:</strong></p>
-          <div class="copy-wrapper">
-            <code class="copy-target">${map.image_url}</code>
-            <button class="copy-button" type="button">Copy</button>
-          </div>
-
-          <p><strong>Avrae Map Code:</strong></p>
-          <div class="copy-wrapper">
-            <code class="copy-target">${map.avrae_cmd || 'Not Submitted'}</code>
-            <button class="copy-button" type="button">Copy</button>
-          </div>
-
-          <p><strong>Keywords:</strong> <span style="font-size: 0.9em; color: var(--color-text-muted);">${map.keywords || 'None'}</span></p>
-          
-          <p style="font-size: 0.8em; margin-top: 10px; color: var(--color-text-muted);">
-            <em>Submitted by: ${map.submitted_by || 'Anonymous'}</em>
-          </p>
-        </div>
-      `;
-
-      container.appendChild(card);
+  function initAuth() {
+    db.auth.onAuthStateChange((event, session) => {
+      setTimeout(() => handleSession(session), 50);
     });
-
-    setupInteractions();
+    db.auth.getSession().then(({data}) => handleSession(data.session));
   }
 
-  function setupInteractions() {
-    /* Search Logic */
-    const searchInput = document.getElementById('mapSearchInput');
-    const allMapCards = document.querySelectorAll('.map-card');
-
-    searchInput.addEventListener('keyup', () => {
-      const filterText = searchInput.value.toLowerCase().trim();
-      
-      allMapCards.forEach(card => {
-        const cardData = card.getAttribute('data-search');
-        if (cardData.includes(filterText)) {
-          card.style.display = 'flex'; 
-        } else {
-          card.style.display = 'none';
+  function handleSession(session) {
+    if (session) {
+      currentUser = session.user;
+      try {
+        showForm();
+        if (window.location.hash && window.location.hash.includes('access_token')) {
+           const newUrl = window.location.origin + window.location.pathname;
+           window.history.replaceState(null, null, newUrl);
         }
-      });
-    });
+      } catch (e) { showLogin(); }
+    } else {
+      showLogin();
+    }
+  }
 
-    /* Copy Button Logic */
-    const allCopyButtons = document.querySelectorAll('.copy-button');
+  async function login() {
+    const redirectUrl = window.location.origin + window.location.pathname;
+    await db.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: redirectUrl } });
+  }
+
+  async function logout() {
+    await db.auth.signOut();
+    window.location.reload(); 
+  }
+
+  function showForm() {
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('form-section').style.display = 'block';
     
-    allCopyButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        const codeElement = button.previousElementSibling;
-        const textToCopy = codeElement.innerText;
+    const meta = currentUser.user_metadata;
+    /* Discord ID auto-population logic */
+    const name = meta.full_name || meta.custom_claims?.global_name || meta.name || "User";
+    document.getElementById('user-display').innerText = name;
+  }
+
+  function showLogin() {
+    currentUser = null;
+    document.getElementById('login-section').style.display = 'block';
+    document.getElementById('form-section').style.display = 'none';
+  }
+
+  /* --- MAP LOGIC --- */
+  const img = document.getElementById('preview-img');
+  const overlay = document.getElementById('grid-overlay');
+  const cmdOutput = document.getElementById('cmdOutput');
+  const statusMsg = document.getElementById('statusMsg');
+  const xAxis = document.getElementById('axis-x-container');
+  const yAxis = document.getElementById('axis-y-container');
+  
+  const VISUAL_CELL_SIZE = 28; 
+
+  function loadImage() {
+    const url = document.getElementById('imgUrl').value;
+    if(!url) return;
+    
+    // Update UI Status
+    statusMsg.innerText = "Loading...";
+    statusMsg.style.color = "var(--color-text)"; 
+    
+    // RESET THE SUBMIT BUTTON
+    const btn = document.getElementById('submit-btn');
+    btn.innerText = "Submit";
+    btn.disabled = false;
+
+    document.getElementById('placeholder-text').style.display = 'none';
+    img.removeAttribute('src'); 
+    img.style.display = 'block'; 
+    img.src = url; 
+  }
+
+  img.onload = function() {
+    statusMsg.innerText = "";
+    renderGrid();
+  };
+
+  img.onerror = function() {
+    statusMsg.innerText = "❌ Error loading image.";
+    statusMsg.style.color = "var(--palette-danger)";
+  };
+
+  /* --- TOGGLE AVRAE MODE --- */
+  function toggleAvraeMode() {
+    const isOn = document.getElementById('avraeToggle').checked;
+    const settingsDiv = document.getElementById('avrae-settings-container');
+    
+    settingsDiv.style.display = isOn ? 'block' : 'none';
+    overlay.style.display = isOn ? 'block' : 'none';
+    xAxis.style.display = isOn ? 'block' : 'none';
+    yAxis.style.display = isOn ? 'block' : 'none';
+  }
+
+  /* Calculations */
+  function calcGridFromPPI() {
+    if(!img.naturalWidth) return;
+    const ppi = parseInt(document.getElementById('ppi_num').value);
+    document.getElementById('gridW_num').value = Math.ceil(img.naturalWidth / ppi);
+    document.getElementById('gridH_num').value = Math.ceil(img.naturalHeight / ppi);
+    renderGrid();
+  }
+
+  function calcPPIfromGrid() {
+    if(!img.naturalWidth) return;
+    const cols = parseInt(document.getElementById('gridW_num').value);
+    const exactPPI = Math.round(img.naturalWidth / cols);
+    document.getElementById('ppi_slider').value = exactPPI;
+    document.getElementById('ppi_num').value = exactPPI;
+    renderGrid();
+  }
+
+  function updateFromSlider(type) {
+    if(type === 'ppi') document.getElementById('ppi_num').value = document.getElementById('ppi_slider').value;
+    renderGrid();
+  }
+
+  function updateFromInput(type) {
+    if(type === 'ppi') document.getElementById('ppi_slider').value = document.getElementById('ppi_num').value;
+    renderGrid();
+  }
+
+  /* --- MAIN RENDERER --- */
+  function renderGrid() {
+    const w_cols = parseInt(document.getElementById('gridW_num').value);
+    const h_rows = parseInt(document.getElementById('gridH_num').value);
+    const ppi_val = parseInt(document.getElementById('ppi_num').value);
+    const offX = parseInt(document.getElementById('offX').value) || 0;
+    const offY = parseInt(document.getElementById('offY').value) || 0;
+
+    if(img.naturalWidth > 0) {
+        const isAvraeOn = document.getElementById('avraeToggle').checked;
         
-        navigator.clipboard.writeText(textToCopy).then(() => {
-          const originalText = button.innerText;
-          button.innerText = 'Copied!';
-          button.style.background = 'var(--palette-success)';
-          button.style.color = 'white';
-          
-          setTimeout(() => {
-            button.innerText = originalText;
-            button.style.background = ''; 
-            button.style.color = '';
-          }, 2000);
-        }).catch(err => {
-          console.error('Failed to copy text: ', err);
-        });
-      });
-    });
+        if (isAvraeOn) {
+            const scaleRatio = VISUAL_CELL_SIZE / ppi_val;
+            img.style.width = (img.naturalWidth * scaleRatio) + 'px';
+            const visualOffX = offX * scaleRatio;
+            const visualOffY = offY * scaleRatio;
+            img.style.transform = `translate(${visualOffX}px, ${visualOffY}px)`;
+        } else {
+            img.style.width = "100%"; 
+            img.style.transform = "none";
+        }
+        img.style.height = "auto";
+    }
+
+    overlay.style.width = (w_cols * VISUAL_CELL_SIZE) + 'px';
+    overlay.style.height = (h_rows * VISUAL_CELL_SIZE) + 'px';
+
+    renderCoordinates(w_cols, h_rows);
+
+    const url = document.getElementById('imgUrl').value || "URL";
+    let options = `dc${ppi_val}`;
+    if (offX > 0 || offY > 0) {
+        options += ` -o${offX}:${offY}`;
+    }
+    
+    const cmd = `!map -bg "${url}" -mapsize ${w_cols}x${h_rows} -options ${options} -t DM`;
+    cmdOutput.innerText = cmd;
+  }
+
+  function renderCoordinates(cols, rows) {
+    xAxis.innerHTML = '';
+    yAxis.innerHTML = '';
+    
+    for(let i=0; i<cols; i++) {
+        const el = document.createElement('div');
+        el.className = 'axis-label axis-x';
+        el.innerText = getColumnLabel(i);
+        el.style.left = (30 + (i * VISUAL_CELL_SIZE)) + 'px'; 
+        el.style.width = VISUAL_CELL_SIZE + 'px';
+        xAxis.appendChild(el);
+    }
+    for(let i=0; i<rows; i++) {
+        const el = document.createElement('div');
+        el.className = 'axis-label axis-y';
+        el.innerText = (i + 1);
+        el.style.top = (25 + (i * VISUAL_CELL_SIZE)) + 'px'; 
+        el.style.height = VISUAL_CELL_SIZE + 'px';
+        yAxis.appendChild(el);
+    }
+  }
+
+  function getColumnLabel(index) {
+      let label = "";
+      let n = index;
+      while (n >= 0) {
+          label = String.fromCharCode((n % 26) + 65) + label;
+          n = Math.floor(n / 26) - 1;
+      }
+      return label;
+  }
+
+  async function submitMap() {
+    const btn = document.getElementById('submit-btn');
+    
+    if (!document.getElementById('tosCheck').checked) return alert("Please confirm free to use.");
+    if (!document.getElementById('imgUrl').value) return alert("URL required.");
+    if (img.naturalWidth === 0) return alert("Load a valid image first.");
+    if (!currentUser) return alert("You must be logged in!");
+
+    btn.disabled = true;
+    btn.innerText = "Sending...";
+
+    /* GET USER DATA */
+    const meta = currentUser.user_metadata;
+    const discordName = meta.full_name || meta.custom_claims?.global_name || meta.name || "Unknown";
+
+    /* CHECK AVRAE TOGGLE */
+    const isAvraeOn = document.getElementById('avraeToggle').checked;
+    let finalCmd = "";
+    if (isAvraeOn) {
+        finalCmd = document.getElementById('cmdOutput').innerText;
+    }
+
+    /* CONSTRUCT PAYLOAD */
+    const payload = {
+      name: document.getElementById('mapName').value,
+      image_url: document.getElementById('imgUrl').value,
+      creator: document.getElementById('creator').value,
+      keywords: document.getElementById('keywords').value,
+      grid_width: isAvraeOn ? document.getElementById('gridW_num').value : 0,
+      grid_height: isAvraeOn ? document.getElementById('gridH_num').value : 0,
+      cell_size_px: isAvraeOn ? document.getElementById('ppi_num').value : 0,
+      avrae_cmd: finalCmd,
+      submitted_by: discordName,
+      is_free_use: true
+    };
+
+    const { error } = await db.from('maps').insert(payload);
+
+    if (error) {
+      console.error(error);
+      statusMsg.innerText = "Error: " + error.message;
+      statusMsg.style.color = "var(--palette-danger)";
+      btn.disabled = false;
+      btn.innerText = "Submit";
+    } else {
+      statusMsg.innerText = "Success! Map submitted.";
+      statusMsg.style.color = "var(--palette-success)";
+      btn.innerText = "Submitted";
+      document.getElementById('mapName').value = "";
+    }
   }
 </script>
