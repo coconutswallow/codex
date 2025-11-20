@@ -183,48 +183,66 @@ title: Edit Map
   }
 
   /* --- VERSIONING SAVE --- */
-  async function saveVersion() {
+ async function saveVersion() {
       const btn = document.getElementById('save-btn');
       const msg = document.getElementById('statusMsg');
       
       btn.disabled = true;
       btn.innerText = "Archiving old version...";
 
-      /* --- STEP 1: ARCHIVE OLD MAP (Using RPC) --- */
-      // We use .rpc() to call the secure database function we just created
+      /* 1. ARCHIVE OLD MAP */
+      // We grab the original submitter from the DB before we archive, 
+      // so we can preserve credit in the new row.
+      const { data: oldData, error: fetchError } = await db
+          .from('maps')
+          .select('submitted_by')
+          .eq('id', originalMapId)
+          .single();
+
+      if(fetchError) {
+          console.error("Error fetching original owner:", fetchError);
+          // Fallback: If we can't find original, we just proceed
+      }
+
       const { error: archiveError } = await db.rpc('archive_map', { 
           map_id: parseInt(originalMapId) 
       });
 
       if(archiveError) {
           console.error(archiveError);
-          msg.innerText = "Error archiving old version (Check console).";
+          msg.innerText = "Error archiving old version.";
           btn.disabled = false;
           return;
       }
 
       btn.innerText = "Saving new version...";
 
-      /* --- STEP 2: INSERT NEW VERSION --- */
+      /* 2. INSERT NEW VERSION */
       const meta = currentUser.user_metadata;
-      const discordName = meta.full_name || meta.custom_claims?.global_name || meta.name || "Unknown";
+      const currentEditor = meta.full_name || meta.custom_claims?.global_name || meta.name || "Unknown";
       
+      // Preserve original submitter if found, otherwise use current user
+      const originalSubmitter = oldData ? oldData.submitted_by : currentEditor;
+
       const payload = {
+          // Core Data
           name: document.getElementById('mapName').value,
           image_url: document.getElementById('imgUrl').value,
           creator: document.getElementById('creator').value,
           source_url: document.getElementById('sourceUrl').value,
           
-          // New Data
+          // Revised Data
           keywords: document.getElementById('keywords').value,
           grid_width: document.getElementById('gridW_num').value,
           grid_height: document.getElementById('gridH_num').value,
           cell_size_px: document.getElementById('ppi_num').value,
           avrae_cmd: document.getElementById('cmdOutput').innerText,
-          
-          submitted_by: discordName,
-          is_free_use: true
-          // Database Trigger handles is_approved automatically
+          is_free_use: true,
+
+          // Credit & Auditing
+          submitted_by: originalSubmitter, // Keeps the original credit!
+          last_edit: currentEditor,        // Tracks who made this edit
+          edit_date: new Date().toISOString() // Timestamp of this edit
       };
 
       const { error: insertError } = await db.from('maps').insert(payload);
