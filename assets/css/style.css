@@ -2,15 +2,18 @@
    AVRAE MAP LIBRARY - MAIN STYLESHEET
    Theme: Coconut & Palm
    ============================================ */
-
-   /* ============================================
+/* ============================================
    0. SITE LAYOUT (Header/Footer)
    ============================================ */
 .site-header {
   background: var(--color-bg-card);
   border-bottom: 1px solid var(--color-border);
   padding: 15px 0;
-  margin-bottom: 0; /* Intro/Hero will sit flush against this */
+  margin-bottom: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Adds subtle depth */
+  position: sticky; /* Keeps header at top */
+  top: 0;
+  z-index: 1000;
 }
 
 .header-content {
@@ -23,44 +26,70 @@
 }
 
 .site-logo {
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--palette-brand-main);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.5px;
+}
+
+.site-nav {
+  display: flex;
+  gap: 10px;
+}
+
+.site-nav a {
+  margin-left: 0; /* Reset margin */
+  padding: 8px 16px;
+  color: var(--color-text);
+  font-weight: 700;
+  font-size: 0.9rem;
+  border-radius: var(--border-radius);
+  transition: all 0.2s ease;
+}
+
+.site-nav a:hover { 
+  background-color: var(--palette-brand-highlight); 
   color: var(--palette-brand-main);
   text-decoration: none;
 }
 
-.site-nav a {
-  margin-left: 20px;
-  color: var(--color-text);
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-.site-nav a:hover { color: var(--palette-brand-accent); }
-
 .page-content {
-  min-height: 80vh; /* Pushes footer down */
+  min-height: 85vh;
 }
 
 .site-footer {
   text-align: center;
   padding: 40px;
-  margin-top: 50px;
-  background: var(--color-bg-card);
+  margin-top: 60px;
+  background: var(--color-bg-controls); /* Darker footer background */
   border-top: 1px solid var(--color-border);
   color: var(--color-text-muted);
   font-size: 0.85em;
 }
 
-/* HERO BLOCK (Used on individual pages) */
+/* HERO BLOCK */
 .hero-block {
   background: var(--color-bg-card);
   border-bottom: 4px solid var(--palette-brand-accent);
   text-align: center;
-  padding: 60px 20px;
+  padding: 50px 20px;
   margin-bottom: 30px;
+  /* Texture pattern for style */
+  background-image: radial-gradient(var(--palette-brand-highlight) 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-color: var(--palette-bg-page-light);
 }
-.hero-block h1 { margin: 0 0 15px 0; color: var(--palette-brand-main); font-size: 2.5rem; }
-.hero-block p { max-width: 700px; margin: 0 auto 20px; color: var(--color-text-muted); }
+[data-theme="dark"] .hero-block {
+  background-color: var(--palette-bg-card-dark);
+  background-image: radial-gradient(#333 1px, transparent 1px);
+}
+
+.hero-block h1 { margin: 0 0 10px 0; color: var(--palette-brand-main); font-size: 2.2rem; }
+.hero-block p { max-width: 600px; margin: 0 auto 20px; color: var(--color-text); opacity: 0.8; }
 
 /* ============================================
    1. COLOR PALETTE (Design Tokens)

@@ -12,24 +12,6 @@ title: Submit Map
 </div>
 
 <div class="submit-container">
-  </div>
-  
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<div class="intro-wrapper">
-  <h1>Submit Map</h1>
-  <p>Login via discord to submit.  Please only upload maps creators have made free.  For safety, submitted maps will be reviewed by me before
-  being added to the main library, but ping me on discord and I can whitelist you for instant approvals
-  </p>
-  
-  <div style="margin-top: 20px;">
-    <a href="/codex/maps" class="tool-btn" style="text-decoration: none; padding: 8px 16px; font-size: 1em;">
-      &larr; Back to Map Index
-    </a>
-  </div>
-</div>
-
-<div class="submit-container">
   
   <div class="map-viewer" id="viewPort">
     <div class="canvas-wrapper" id="canvasWrapper">
@@ -54,7 +36,7 @@ title: Submit Map
         <div style="font-size: 0.8em; color: var(--color-text-muted);">
           Submitted by: <strong id="user-display">User</strong>
         </div>
-        <button onclick="logout()" style="font-size:0.7em; border:1px solid var(--color-border); color:var(--color-text); background:none; cursor:pointer; padding: 2px 6px; border-radius: 4px;">Log Out</button>
+        <button onclick="logout()" class="tool-btn" style="font-size:0.7em;">Log Out</button>
       </div>
 
       <div class="section">
@@ -80,7 +62,7 @@ title: Submit Map
       
       <div class="section">
         <div style="margin-bottom: 15px;">
-            <h3>2. Avrae Battle Map Setup (Optional)</h3>
+            <h3>2. Battle Map Setup</h3>
             <label style="margin-top:10px; display:flex; align-items:center; gap:10px; cursor:pointer; text-transform:none; color:var(--color-text);">
                 <input type="checkbox" id="avraeToggle" onchange="toggleAvraeMode()" style="width:auto; margin:0;"> 
                 <strong>Include Avrae Maps settings</strong>
