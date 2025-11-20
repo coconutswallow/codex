@@ -1,21 +1,22 @@
 <script>
   /* --- CONFIGURATION --- */
   const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
-  const SUPABASE_KEY = 'YOUR_ANON_KEY_HERE'; // Make sure this is your eyJ... key
+  
+  // 🔴 MAKE SURE THIS IS YOUR "eyJ..." KEY FROM SUPABASE DASHBOARD 🔴
+  const SUPABASE_KEY = 'YOUR_ANON_KEY_HERE'; 
+  
   const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   /* --- AUTHENTICATION LOGIC --- */
   let currentUser = null;
 
-  // 1. The Listener (Replaces manual check)
-  // This waits for Supabase to process the URL tokens automatically
+  // 1. The Listener
   db.auth.onAuthStateChange((event, session) => {
     if (session) {
       currentUser = session.user;
       showForm();
       
-      // CLEAN THE URL: Remove the huge access token hash from the address bar
-      // so the user can refresh without issues.
+      // Clean URL (remove tokens)
       const newUrl = window.location.origin + window.location.pathname;
       window.history.replaceState(null, null, newUrl);
       
@@ -24,9 +25,8 @@
     }
   });
 
-  // 2. Login Function (FIXED)
+  // 2. Login Function
   async function login() {
-    // STRIP URL: Only send the clean path, never the current massive URL
     const redirectUrl = window.location.origin + window.location.pathname;
     
     await db.auth.signInWithOAuth({ 
@@ -48,7 +48,6 @@
     document.getElementById('login-section').style.display = 'none';
     document.getElementById('form-section').style.display = 'block';
     
-    // Get Name safely
     const meta = currentUser.user_metadata;
     const name = meta.full_name || meta.custom_claims?.global_name || meta.name || "User";
     document.getElementById('user-display').innerText = `Logged in as: ${name}`;
