@@ -2,75 +2,124 @@
 layout: default
 title: Map Index
 ---
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <div class="intro-wrapper">
   <h1>Maps Index</h1>
   <p>
-    Maps that are usable for Avrae maps.  Sources are publicly available maps.
+    Community submitted maps for Avrae. 
+    <a href="/codex/submit">Submit a new map here</a>.
   </p>
   <p>Use <a href="https://www.corvux.me/Avrae_Combat_Planner/">Corvue Avrae Combat Planner</a> to add or adjust avrae settings </p>
 </div>
+
 <div class="map-search-wrapper">
   <label for="mapSearchInput">Search Maps:</label>
   <input type="text" id="mapSearchInput" placeholder="Type keywords, name, or creator...">
 </div>
 
-<div class="map-gallery">
+<div class="map-gallery" id="gallery-container">
+  <p style="text-align:center; color:#666; margin-top: 50px;">Loading library...</p>
+</div>
 
-  {% for map in site.maps %}
-    
-    <div class="map-card" data-search="{{ map.name }} {{ map.creator }} {{ map.keywords }}">
-      
-      <a href="{{ map.image_path | relative_url }}" class="map-thumbnail-link" target="_blank" rel="noopener noreferrer">
-        <img src="{{ map.image_path | relative_url }}" alt="Thumbnail for {{ map.name }}" class="map-thumbnail">
-      </a>
-
-      <div class="map-card-info">
-        <h2>{{ map.name }}</h2>
-        <p><strong>Creator:</strong> {{ map.creator }}</p>
-
-        <p><strong>Source:</strong>
-          {% if map.source contains 'http' %}
-            <a href="{{ map.source }}" target="_blank" rel="noopener noreferrer">Source</a>
-          {% else %}
-          <a href="{{ map.source | relative_url }}">Source</a>
-          {% endif %}
-        </p>
-
-        {% if map.dimensions %}
-          <p><strong>Dimensions:</strong> {{ map.dimensions }}</p>
-        {% endif %}
-
-        <p><strong>Image URL:</strong></p>
-        <div class="copy-wrapper">
-          <code class="copy-target">{{ map.image_path | absolute_url }}</code>
-          <button class="copy-button" type="button">Copy</button>
-        </div>
-
-        {% if map.avrae_code %}
-          <p><strong>Avrae Map Code:</strong></p>
-            <div class="copy-wrapper">
-              <code class="copy-target">{{ map.avrae_code }}</code>
-              <button class="copy-button" type="button">Copy</button>
-            </div>
-        {% endif %}
-
-        <p><strong>Keywords:</strong> {{ map.keywords }}</p>
-      </div> </div> {% endfor %} </div> 
-      
 <script>
-  document.addEventListener('DOMContentLoaded', (event) => {
-    
-    /* --- Search logic --- */
+  /* --- CONFIGURATION --- */
+  const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
+  
+  /* 🔴 USE THE SAME "eyJ..." KEY YOU USED IN SUBMIT.HTML 🔴 */
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'; 
+  
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    await fetchAndRenderMaps();
+  });
+
+  async function fetchAndRenderMaps() {
+    const container = document.getElementById('gallery-container');
+
+    // 1. Fetch Approved Maps from Supabase
+    const { data: maps, error } = await db
+      .from('maps')
+      .select('*')
+      .eq('is_approved', true)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error loading maps:', error);
+      container.innerHTML = `<p style="color:red; text-align:center;">Error loading maps. Please try again later.</p>`;
+      return;
+    }
+
+    if (!maps || maps.length === 0) {
+      container.innerHTML = `<p style="text-align:center;">No maps found.</p>`;
+      return;
+    }
+
+    // 2. Clear Loading Text
+    container.innerHTML = '';
+
+    // 3. Generate HTML for each map
+    maps.forEach(map => {
+      // Create Card Element
+      const card = document.createElement('div');
+      card.className = 'map-card';
+      
+      // Build Search Data String (Name + Creator + Keywords)
+      const searchString = `${map.name} ${map.creator} ${map.keywords || ''}`.toLowerCase();
+      card.setAttribute('data-search', searchString);
+
+      // HTML Structure
+      card.innerHTML = `
+        <a href="${map.image_url}" class="map-thumbnail-link" target="_blank" rel="noopener noreferrer">
+          <img src="${map.image_url}" alt="Thumbnail for ${map.name}" class="map-thumbnail" loading="lazy">
+        </a>
+
+        <div class="map-card-info">
+          <h2>${map.name}</h2>
+          <p><strong>Creator:</strong> ${map.creator}</p>
+          
+          ${ map.grid_width ? `<p><strong>Dimensions:</strong> ${map.grid_width}x${map.grid_height}</p>` : '' }
+
+          <p><strong>Image URL:</strong></p>
+          <div class="copy-wrapper">
+            <code class="copy-target">${map.image_url}</code>
+            <button class="copy-button" type="button">Copy</button>
+          </div>
+
+          <p><strong>Avrae Map Code:</strong></p>
+          <div class="copy-wrapper">
+            <code class="copy-target">${map.avrae_cmd || 'Command missing'}</code>
+            <button class="copy-button" type="button">Copy</button>
+          </div>
+
+          <p><strong>Keywords:</strong> <span style="font-size: 0.9em; color: #666;">${map.keywords || 'None'}</span></p>
+          
+          <p style="font-size: 0.8em; margin-top: 10px; color: #888;">
+            <em>Submitted by: ${map.submitted_by || 'Anonymous'}</em>
+          </p>
+        </div>
+      `;
+
+      // Append to gallery
+      container.appendChild(card);
+    });
+
+    // 4. Re-Initialize Interactions (Search & Copy)
+    setupInteractions();
+  }
+
+  function setupInteractions() {
+    /* --- Search Logic --- */
     const searchInput = document.getElementById('mapSearchInput');
     const allMapCards = document.querySelectorAll('.map-card');
 
     searchInput.addEventListener('keyup', () => {
       const filterText = searchInput.value.toLowerCase().trim();
+      
       allMapCards.forEach(card => {
-        const cardData = card.dataset.search.toLowerCase();
+        const cardData = card.getAttribute('data-search');
         if (cardData.includes(filterText)) {
-          // This line is now fixed
           card.style.display = 'flex'; 
         } else {
           card.style.display = 'none';
@@ -78,21 +127,29 @@ title: Map Index
       });
     });
 
-    /* --- Copy button logic --- */
+    /* --- Copy Button Logic --- */
     const allCopyButtons = document.querySelectorAll('.copy-button');
+    
     allCopyButtons.forEach(button => {
       button.addEventListener('click', () => {
         const codeElement = button.previousElementSibling;
         const textToCopy = codeElement.innerText;
+        
         navigator.clipboard.writeText(textToCopy).then(() => {
+          const originalText = button.innerText;
           button.innerText = 'Copied!';
+          button.style.background = '#2ea44f';
+          button.style.color = 'white';
+          
           setTimeout(() => {
-            button.innerText = 'Copy';
+            button.innerText = originalText;
+            button.style.background = ''; // Reset style
+            button.style.color = '';
           }, 2000);
         }).catch(err => {
           console.error('Failed to copy text: ', err);
         });
       });
     });
-  });
+  }
 </script>
