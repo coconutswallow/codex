@@ -7,8 +7,8 @@ title: Submit Map
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <div class="intro-wrapper">
-  <h1>Submit a map to the database</h1>
-  <p>Use your discord login to submit a map.  Please only upload maps that are free to use and credit the artist!</p>
+  <h1>Submit & Align Map</h1>
+  <p>Adjust the grid, offset, and pixels per cell to match the image.</p>
   
   <div style="margin-top: 20px;">
     <a href="/codex/" class="tool-btn" style="text-decoration: none; padding: 8px 16px; font-size: 1em;">
@@ -202,7 +202,16 @@ title: Submit Map
   function loadImage() {
     const url = document.getElementById('imgUrl').value;
     if(!url) return;
+    
+    // Update UI Status
     statusMsg.innerText = "Loading...";
+    statusMsg.style.color = "var(--color-text)"; 
+    
+    // RESET THE SUBMIT BUTTON
+    const btn = document.getElementById('submit-btn');
+    btn.innerText = "Submit";
+    btn.disabled = false;
+
     document.getElementById('placeholder-text').style.display = 'none';
     img.removeAttribute('src'); 
     img.style.display = 'block'; 
@@ -224,10 +233,7 @@ title: Submit Map
     const isOn = document.getElementById('avraeToggle').checked;
     const settingsDiv = document.getElementById('avrae-settings-container');
     
-    // Show/Hide Settings Panel
     settingsDiv.style.display = isOn ? 'block' : 'none';
-    
-    // Show/Hide Visual Grid & Rulers
     overlay.style.display = isOn ? 'block' : 'none';
     xAxis.style.display = isOn ? 'block' : 'none';
     yAxis.style.display = isOn ? 'block' : 'none';
@@ -263,17 +269,13 @@ title: Submit Map
 
   /* --- MAIN RENDERER --- */
   function renderGrid() {
-    // Only process grid logic if toggled on, OR if we just want to load image
     const w_cols = parseInt(document.getElementById('gridW_num').value);
     const h_rows = parseInt(document.getElementById('gridH_num').value);
     const ppi_val = parseInt(document.getElementById('ppi_num').value);
     const offX = parseInt(document.getElementById('offX').value) || 0;
     const offY = parseInt(document.getElementById('offY').value) || 0;
 
-    // Default scale (no grid)
     if(img.naturalWidth > 0) {
-        // If Avrae mode is ON, we use the grid scaling logic.
-        // If Avrae mode is OFF, we just show the image at a reasonable visual size (e.g. fit width)
         const isAvraeOn = document.getElementById('avraeToggle').checked;
         
         if (isAvraeOn) {
@@ -283,20 +285,17 @@ title: Submit Map
             const visualOffY = offY * scaleRatio;
             img.style.transform = `translate(${visualOffX}px, ${visualOffY}px)`;
         } else {
-            // Simple View Mode: Reset transforms and set width to 100% of container
             img.style.width = "100%"; 
             img.style.transform = "none";
         }
         img.style.height = "auto";
     }
 
-    // Update Grid Overlay
     overlay.style.width = (w_cols * VISUAL_CELL_SIZE) + 'px';
     overlay.style.height = (h_rows * VISUAL_CELL_SIZE) + 'px';
 
     renderCoordinates(w_cols, h_rows);
 
-    // Generate Command
     const url = document.getElementById('imgUrl').value || "URL";
     let options = `dc${ppi_val}`;
     if (offX > 0 || offY > 0) {
@@ -339,7 +338,6 @@ title: Submit Map
       return label;
   }
 
-  /* RESTORED FUNCTION DEFINITION BELOW */
   async function submitMap() {
     const btn = document.getElementById('submit-btn');
     
