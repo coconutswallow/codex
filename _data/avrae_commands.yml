@@ -1,3 +1,40 @@
+
+- title: "Manual Roll"
+  syntax: "!r <dice and modifier>"
+  example: "!r 1d20+3"
+  tags: "manual roll"
+  category: "00 Manual Roll"
+  image: ""
+
+- title: "Manual Roll with advantage"
+  syntax: "!r <dice and modifier> adv"
+  example: "!r 1d20+3 adv"
+  tags: "manual roll advantage"
+  category: "00 Manual Roll"
+  image: ""
+
+- title: "Manual Roll with disadvantage"
+  syntax: "!r <dice and modifier> dis"
+  example: "!r 1d20+3 dis"
+  tags: "manual roll disadvantage"
+  category: "00 Manual Roll"
+  image: ""
+
+- title: "Manual Roll Combinations"
+  syntax: "!r <dice and modifier> +/- <other dice>"
+  example: "!r 1d20+3 + 2d6"
+  tags: "manual roll combo"
+  category: "00 Manual Roll"
+  image: ""
+
+- title: "Multi Rolls"
+  syntax: "!rr <quantity> <dice and modifier>"
+  example: "!rr 2 1d20+3"
+  tags: "manual roll multi"
+  category: "00 Manual Roll"
+  image: ""
+
+
 - title: "Import your character sheet"
   syntax: "!import <link to your character sheet>"
   example: "!import www.dndbeyond.com/characters/154162856/gQSD4S"
