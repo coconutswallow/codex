@@ -1311,4 +1311,5 @@ a:hover { text-decoration: underline; color: var(--palette-brand-main); }
 
 .asset-arrow {
   font-size: 1.2em;
-  color
+  color;
+}
