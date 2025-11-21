@@ -26,12 +26,12 @@ permalink: /house-rules/
         - Study for General Knowledge of the enemy:  Nature or Arcana check (as applicable) vs. DC15
         - Study for potential weaknesses:  INT check vs. [15, or 10 + CR of the enemy, whichever is greater]
 
-    **Influence Action**:  use an attack action to try to influence a combatant's behavior (e.g. calm down, or focus attention on another combatant, etc.).  CHA check vs [15, or 10+ CR of the enemy, whichever is greater].  The action cannot force a creature to act against its nature, and depending on the intent and context, multiple passes may be required for influence to be successful. 
+    - **Influence Action**:  use an attack action to try to influence a combatant's behavior (e.g. calm down, or focus attention on another combatant, etc.).  CHA check vs [15, or 10+ CR of the enemy, whichever is greater].  The action cannot force a creature to act against its nature, and depending on the intent and context, multiple passes may be required for influence to be successful. 
 
 ## PBP Specific Rules
 
 - Role play is important.  This is what PBP is about.
 - Must post at least once every 24 hours - so that the DM knows we can move on
-- Unless otherwise stated in the game listing  characters soft-locked.  This means I will write down your stats when we start.  You can play in other games while this PBP is going on, but any XP, items, etc. from outside of the game won't be brought into this game during this PBP) 
+- Unless otherwise stated in the game listing  characters soft-locked.  This means I will write down your stats when we start.  You can play in other games while this PBP is going on, but any XP, items, etc. from outside of the game won't be brought into this game during this PBP
 - If I @you, it means we need your participation to move on BUT it does not mean we need your participation immediately  Please do not feel pressure to respond immediately if you're not able to (unless rule #2 is broken)
 - I will be using Avrae for battle maps and initiative tracking, but learning avrae commands is completely optional.  Manual rolling is completely fine.
