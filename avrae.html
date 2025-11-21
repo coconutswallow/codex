@@ -8,8 +8,7 @@ title: Avrae Quick Reference
   <p>Fast search for syntax, aliases, and snippets.</p>
 </div>
 
-<div class="map-search-wrapper" style="max-width: 800px; flex-direction: column; gap: 15px;">
-  
+<div class="map-search-wrapper" style="max-width: 1200px; flex-direction: column; gap: 15px;">
   <input type="text" id="cmdSearchInput" placeholder="Search commands (e.g. 'attack', 'check', 'map')..." autofocus style="width: 100%;">
 
   <div class="filter-toggles" style="display: flex; gap: 10px; justify-content: center; width: 100%;">
@@ -17,18 +16,24 @@ title: Avrae Quick Reference
     <button class="tool-btn" onclick="setFilter('Player')" id="btn-player">Player</button>
     <button class="tool-btn" onclick="setFilter('DM')" id="btn-dm">DM Only</button>
   </div>
-
 </div>
 
-<div class="avrae-grid" id="cmd-grid">
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 20px 5px; display: grid; grid-template-columns: 1.2fr 1.9fr 1.9fr; font-weight: bold; font-size: 0.8em; color: var(--color-text-muted); text-transform: uppercase;">
+    <span class="hide-mobile">Command</span>
+    <span class="hide-mobile">Syntax</span>
+    <span class="hide-mobile">Example</span>
+</div>
+
+<div class="avrae-list" id="cmd-grid">
   {% for cmd in site.data.avrae_commands %}
-    <div class="cmd-card" 
+    <div class="cmd-row" 
          data-search="{{ cmd.title }} {{ cmd.tags }} {{ cmd.category }} {{ cmd.note }}"
          data-type="{{ cmd.type | default: 'Both' }}">
       
-      <div class="cmd-header">
-        <h3 class="cmd-title">{{ cmd.title }}</h3>
-        <div style="display:flex; gap:5px;">
+      <div class="col-heading">
+        <div class="cmd-title">{{ cmd.title }}</div>
+        
+        <div class="cmd-meta">
             {% if cmd.type == 'DM' %}
                 <span class="cmd-badge" style="background:#4A332A; color:white;">DM</span>
             {% elsif cmd.type == 'Player' %}
@@ -36,31 +41,25 @@ title: Avrae Quick Reference
             {% endif %}
             <span class="cmd-badge">{{ cmd.category }}</span>
         </div>
+
+        {% if cmd.note %}
+            <div class="cmd-note-text">{{ cmd.note }}</div>
+        {% endif %}
       </div>
 
-      <div class="cmd-label">Syntax:</div>
-      <div class="cmd-syntax-wrapper">
-        <code class="cmd-code">{{ cmd.syntax | escape }}</code>
+      <div class="col-code" data-label="Syntax">
+        {{ cmd.syntax | escape }}
       </div>
 
-      <div class="cmd-label">Example:</div>
-      <div class="cmd-syntax-wrapper example-box">
-        <code class="cmd-code">{{ cmd.example | escape }}</code>
-      </div>
-
-      {% if cmd.note %}
-        <div class="cmd-note">
-            <strong>Note:</strong> {{ cmd.note }}
-        </div>
-      {% endif %}
-
-      {% if cmd.image and cmd.image != "" %}
-      <div class="cmd-footer">
-          <span class="demo-link" onclick="openModal('{{ cmd.image | relative_url }}')">
+      <div class="col-code" data-label="Example" style="color: var(--color-text);">
+        {{ cmd.example | escape }}
+        
+        {% if cmd.image and cmd.image != "" %}
+          <span class="demo-link-small" onclick="openModal('{{ cmd.image | relative_url }}')">
             🎥 View Demo
           </span>
+        {% endif %}
       </div>
-      {% endif %}
 
     </div>
   {% endfor %}
@@ -75,11 +74,15 @@ title: Avrae Quick Reference
   </div>
 </div>
 
+<style>
+    @media (max-width: 800px) { .hide-mobile { display: none; } }
+</style>
+
 <script>
   let currentFilter = 'All';
 
   const searchInput = document.getElementById('cmdSearchInput');
-  const allCards = document.querySelectorAll('.cmd-card');
+  const allRows = document.querySelectorAll('.cmd-row'); // Updated selector
   const btns = {
     'All': document.getElementById('btn-all'),
     'Player': document.getElementById('btn-player'),
@@ -103,9 +106,9 @@ title: Avrae Quick Reference
     const filterText = searchInput.value.toLowerCase().trim();
     const terms = filterText.split(" ").filter(t => t.length > 0);
 
-    allCards.forEach(card => {
-      const searchData = card.getAttribute('data-search').toLowerCase();
-      const cardType = card.getAttribute('data-type'); 
+    allRows.forEach(row => {
+      const searchData = row.getAttribute('data-search').toLowerCase();
+      const cardType = row.getAttribute('data-type'); 
 
       const textMatch = terms.every(term => searchData.includes(term));
 
@@ -116,7 +119,7 @@ title: Avrae Quick Reference
           }
       }
 
-      card.style.display = (textMatch && typeMatch) ? 'flex' : 'none';
+      row.style.display = (textMatch && typeMatch) ? 'grid' : 'none'; // Use Grid display
     });
   }
 
