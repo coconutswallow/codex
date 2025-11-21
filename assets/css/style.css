@@ -2,16 +2,116 @@
    AVRAE MAP LIBRARY - MAIN STYLESHEET
    Theme: Coconut & Palm
    ============================================ */
+
 /* ============================================
-   0. SITE LAYOUT (Header/Footer)
+   1. VARIABLES & TOKENS
+   ============================================ */
+:root {
+  /* Brand Colors */
+  --palette-brand-main: #4A332A;          /* Deep Coconut Husk */
+  --palette-brand-accent: #6B8E23;        /* Palm Leaf */
+  --palette-brand-highlight: #D7C49E;     /* Dried Fiber */
+  
+  /* Discord Brand */
+  --palette-brand-discord: #5865F2;
+  --palette-brand-discord-dark: #4752C4;
+
+  /* Backgrounds - Light Mode */
+  --palette-bg-page-light: #FFFAF4;       
+  --palette-bg-card-light: #FFFFFF;       
+  --palette-bg-row-light: #F4EFEA;        
+  --palette-bg-controls-light: #EBE5DE;   
+  
+  /* Backgrounds - Dark Mode */
+  --palette-bg-page-dark: #1C1410;        
+  --palette-bg-card-dark: #2A1F1A;        
+  --palette-bg-controls-dark: #362924;    
+
+  /* Text */
+  --palette-text-main-light: #3E2723;     
+  --palette-text-muted-light: #6D4C41;    
+  
+  --palette-text-main-dark: #EFEBE9;      
+  --palette-text-muted-dark: #BCAAA4;     
+
+  /* Borders */
+  --palette-border-light: #D7CCC8;        
+  --palette-border-dark: #4E342E;         
+
+  /* Map Viewer Specifics */
+  --palette-viewer-bg: #111111;
+  --palette-viewer-border: #444444;
+  --palette-grid-red: rgba(255, 0, 0, 0.6); 
+  
+  /* System */
+  --palette-success: #6B8E23;             
+  --palette-danger: #D32F2F;              
+  --palette-white: #ffffff;
+}
+
+/* Semantic Mapping */
+:root {
+  --color-primary: var(--palette-brand-main);
+  --color-secondary: var(--palette-brand-accent);
+  --color-highlight: var(--palette-brand-highlight);
+  
+  --color-bg-page: var(--palette-bg-page-light);
+  --color-bg-card: var(--palette-bg-card-light);
+  --color-bg-controls: var(--palette-bg-controls-light);
+  
+  --color-text: var(--palette-text-main-light);
+  --color-text-muted: var(--palette-text-muted-light);
+  
+  --color-border: var(--palette-border-light);
+  
+  --color-btn-text: var(--palette-white);
+  --color-input-bg: var(--palette-white);
+  
+  --border-radius: 8px;
+  --spacing-md: 20px;
+}
+
+/* Dark Mode Overrides */
+[data-theme="dark"] {
+  --color-primary: var(--palette-brand-highlight);
+  --color-secondary: var(--palette-brand-accent);
+  
+  --color-bg-page: var(--palette-bg-page-dark);
+  --color-bg-card: var(--palette-bg-card-dark);
+  --color-bg-controls: var(--palette-bg-controls-dark);
+  
+  --color-text: var(--palette-text-main-dark);
+  --color-text-muted: var(--palette-text-muted-dark);
+  
+  --color-border: var(--palette-border-dark);
+  --color-input-bg: #2A1F1A;
+}
+
+/* ============================================
+   2. GLOBAL RESETS
+   ============================================ */
+body {
+  font-family: 'Nunito', system-ui, sans-serif;
+  background-color: var(--color-bg-page);
+  color: var(--color-text);
+  line-height: 1.6;
+  margin: 0;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+a { color: var(--palette-brand-accent); text-decoration: none; font-weight: bold; }
+a:hover { text-decoration: underline; color: var(--palette-brand-main); }
+
+/* ============================================
+   3. LAYOUT (Header / Footer / Hero)
    ============================================ */
 .site-header {
   background: var(--color-bg-card);
   border-bottom: 1px solid var(--color-border);
   padding: 15px 0;
   margin-bottom: 0;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Adds subtle depth */
-  position: sticky; /* Keeps header at top */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  position: sticky;
   top: 0;
   z-index: 1000;
 }
@@ -36,13 +136,10 @@
   letter-spacing: -0.5px;
 }
 
-.site-nav {
-  display: flex;
-  gap: 10px;
-}
+.site-nav { display: flex; gap: 10px; }
 
 .site-nav a {
-  margin-left: 0; /* Reset margin */
+  margin-left: 0;
   padding: 8px 16px;
   color: var(--color-text);
   font-weight: 700;
@@ -57,29 +154,26 @@
   text-decoration: none;
 }
 
-.page-content {
-  min-height: 85vh;
-}
+.page-content { min-height: 85vh; }
 
 .site-footer {
   text-align: center;
   padding: 40px;
   margin-top: 60px;
-  background: var(--color-bg-controls); /* Darker footer background */
+  background: var(--color-bg-controls);
   border-top: 1px solid var(--color-border);
   color: var(--color-text-muted);
   font-size: 0.85em;
 }
 
-/* HERO BLOCK */
+/* Hero Block */
 .hero-block {
   background: var(--color-bg-card);
   border-bottom: 4px solid var(--palette-brand-accent);
   text-align: center;
-  padding: 25px 20px; /* Much smaller height */
+  padding: 25px 20px;
   margin-bottom: 20px;
   background-color: var(--palette-bg-page-light);
-  /* Removed background-image (dots) */
 }
 
 [data-theme="dark"] .hero-block {
@@ -98,129 +192,7 @@
 }
 
 /* ============================================
-   1. COLOR PALETTE (Design Tokens)
-   ============================================ */
-:root {
-  /* Brand Colors (Coconut Theme) */
-  --palette-brand-main: #4A332A;          /* Deep Coconut Husk (Dark Brown) */
-  --palette-brand-accent: #6B8E23;        /* Palm Leaf (Olive/Fresh Green) */
-  --palette-brand-highlight: #D7C49E;     /* Dried Fiber (Tan/Sand) */
-  
-  /* Discord Brand (Kept standard for familiarity) */
-  --palette-brand-discord: #5865F2;
-  --palette-brand-discord-dark: #4752C4;
-
-  /* Backgrounds - Light Mode */
-  --palette-bg-page-light: #FFFAF4;       /* Coconut Milk (Warm Off-White) */
-  --palette-bg-card-light: #FFFFFF;       /* Pure White */
-  --palette-bg-row-light: #F4EFEA;        /* Light Shell Gray/Beige */
-  --palette-bg-controls-light: #EBE5DE;   /* Controls Background */
-  
-  /* Backgrounds - Dark Mode */
-  --palette-bg-page-dark: #1C1410;        /* Very Dark Brown */
-  --palette-bg-card-dark: #2A1F1A;        /* Dark Husk */
-  --palette-bg-controls-dark: #362924;    /* Lighter Dark Brown */
-
-  /* Text */
-  --palette-text-main-light: #3E2723;     /* Dark Brown Text */
-  --palette-text-muted-light: #6D4C41;    /* Muted Brown */
-  
-  --palette-text-main-dark: #EFEBE9;      /* Off-White Text */
-  --palette-text-muted-dark: #BCAAA4;     /* Muted Tan */
-
-  /* Borders */
-  --palette-border-light: #D7CCC8;        /* Light Brown Border */
-  --palette-border-dark: #4E342E;         /* Dark Brown Border */
-
-  /* Map Viewer Specifics (Always Dark for contrast) */
-  --palette-viewer-bg: #111111;
-  --palette-viewer-border: #444444;
-  --palette-grid-red: rgba(255, 0, 0, 0.6); /* Kept red for visibility */
-  
-  /* System/Status */
-  --palette-success: #6B8E23;             /* Palm Green */
-  --palette-danger: #D32F2F;              /* Alert Red */
-  --palette-white: #ffffff;
-}
-
-/* ============================================
-   2. THEME APPLICATION (Semantic Tokens)
-   Mapping Palette -> Usage
-   ============================================ */
-:root {
-  /* Core */
-  --color-primary: var(--palette-brand-main);
-  --color-secondary: var(--palette-brand-accent);
-  --color-highlight: var(--palette-brand-highlight);
-  
-  /* Layout */
-  --color-bg-page: var(--palette-bg-page-light);
-  --color-bg-card: var(--palette-bg-card-light);
-  --color-bg-controls: var(--palette-bg-controls-light);
-  
-  /* Text */
-  --color-text: var(--palette-text-main-light);
-  --color-text-muted: var(--palette-text-muted-light);
-  
-  /* Borders */
-  --color-border: var(--palette-border-light);
-  
-  /* Components */
-  --color-btn-text: var(--palette-white);
-  --color-input-bg: var(--palette-white);
-  
-  /* Spacing */
-  --border-radius: 8px; /* Slightly rounder for organic feel */
-  --spacing-md: 20px;
-}
-
-/* ============================================
-   3. THEME OVERRIDES (Dark Mode Ready)
-   ============================================ */
-[data-theme="dark"] {
-  --color-primary: var(--palette-brand-highlight); /* Tan looks better on dark */
-  --color-secondary: var(--palette-brand-accent);
-  
-  --color-bg-page: var(--palette-bg-page-dark);
-  --color-bg-card: var(--palette-bg-card-dark);
-  --color-bg-controls: var(--palette-bg-controls-dark);
-  
-  --color-text: var(--palette-text-main-dark);
-  --color-text-muted: var(--palette-text-muted-dark);
-  
-  --color-border: var(--palette-border-dark);
-  --color-input-bg: #2A1F1A;
-}
-
-/* ============================================
-   4. GLOBAL RESETS & BASE STYLES
-   ============================================ */
-body {
-  font-family: 'Nunito', system-ui, sans-serif; /* Rounded font fits the theme well */
-  background-color: var(--color-bg-page);
-  color: var(--color-text);
-  line-height: 1.6;
-  margin: 0;
-  transition: background-color 0.3s, color 0.3s;
-}
-
-a { color: var(--palette-brand-accent); text-decoration: none; font-weight: bold; }
-a:hover { text-decoration: underline; color: var(--palette-brand-main); }
-
-.intro-wrapper {
-  text-align: center;
-  padding: 40px 20px;
-  background: var(--color-bg-card);
-  border-bottom: 4px solid var(--palette-brand-accent); /* Accent Border */
-  margin-bottom: 20px;
-  box-shadow: 0 2px 10px rgba(74, 51, 42, 0.05);
-}
-
-.intro-wrapper h1 { margin-top: 0; color: var(--palette-brand-main); font-size: 2.5rem; }
-.intro-wrapper p { color: var(--color-text-muted); max-width: 700px; margin: 10px auto; }
-
-/* ============================================
-   5. INPUTS & BUTTONS
+   4. INPUTS & BUTTONS
    ============================================ */
 input[type="text"], 
 input[type="url"], 
@@ -243,7 +215,9 @@ input:focus {
   box-shadow: 0 0 0 3px rgba(107, 142, 35, 0.2);
 }
 
-/* Primary Submit Button */
+button { font-family: inherit; }
+
+/* Primary Action Button */
 button#submit-btn {
   background: var(--palette-brand-main);
   color: var(--palette-white); 
@@ -260,7 +234,7 @@ button#submit-btn {
 button#submit-btn:disabled { background: #ccc; cursor: not-allowed; }
 button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent); }
 
-/* Tool/Utility Buttons */
+/* Utility Button */
 .tool-btn { 
   background: var(--color-bg-controls); 
   border: 1px solid var(--color-border);
@@ -278,7 +252,7 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
   border-color: var(--palette-brand-accent);
 }
 
-/* Discord Login Button */
+/* Discord Button */
 .discord-btn {
   background-color: var(--palette-brand-discord); 
   color: var(--palette-white); 
@@ -294,18 +268,73 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
 }
 .discord-btn:hover { background-color: var(--palette-brand-discord-dark); }
 
-/* ============================================
-   6. MAP INDEX (GALLERY) - GRID VIEW
-   ============================================ */
-.map-search-wrapper {
-  max-width: 800px;
-  margin: 0 auto 30px;
-  padding: 0 20px;
+.edit-btn {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  margin-top: 10px;
+  background: var(--color-bg-controls);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  text-align: center;
+  text-decoration: none;
+  font-size: 0.9em;
+  border-radius: var(--border-radius);
+  font-weight: bold;
+  transition: all 0.2s;
+}
+.edit-btn:hover {
+  background: var(--palette-brand-highlight);
+  color: var(--palette-brand-main);
+  border-color: var(--palette-brand-main);
 }
 
+/* ============================================
+   5. SEARCH BAR & MAP INDEX
+   ============================================ */
+.map-search-wrapper {
+  max-width: 900px;
+  margin: 0 auto 30px;
+  padding: 0 20px;
+  display: flex;       /* Row Layout */
+  align-items: center; 
+  gap: 10px;           
+  flex-wrap: nowrap;   /* Single Line */
+}
+
+/* The Search Input (Specific Override) */
+.map-search-wrapper input[type="text"] {
+  width: auto;
+  flex-grow: 1;      /* Fill space */
+  margin: 0;         
+  height: 44px;      
+}
+
+/* The Submit Button (Specific Override) */
+.map-search-wrapper .tool-btn {
+  flex-shrink: 0;    
+  white-space: nowrap; 
+  padding: 0 20px;  
+  margin: 0;
+  height: 44px;      
+  background-color: var(--palette-brand-main);
+  color: var(--palette-white);
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 0.95em;
+}
+.map-search-wrapper .tool-btn:hover {
+  background-color: var(--palette-brand-accent);
+  transform: translateY(-1px);
+}
+
+/* Map Gallery Grid */
 .map-gallery {
   display: grid;
-  /* Auto-fill columns, minimum width 300px */
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 25px;
   padding: 20px;
@@ -319,13 +348,13 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
   border-radius: var(--border-radius);
   overflow: hidden;
   display: flex;
-  flex-direction: column; /* Image on Top, Content Below */
+  flex-direction: column;
   transition: transform 0.2s, box-shadow 0.2s;
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
 .map-card:hover { 
-  transform: translateY(-5px); /* Lift up effect */
+  transform: translateY(-5px); 
   box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
   border-color: var(--color-primary);
 }
@@ -333,8 +362,7 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
 .map-thumbnail-link {
   display: block;
   width: 100%;
-  /* Forces the container to always be a square */
-  aspect-ratio: 1 / 1; 
+  aspect-ratio: 1 / 1; /* Square Image */
   overflow: hidden;
   background: var(--color-bg-controls);
   position: relative;
@@ -344,13 +372,11 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
 .map-thumbnail {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Ensures image fills the square without stretching */
+  object-fit: cover;
   transition: transform 0.3s;
 }
 
-.map-card:hover .map-thumbnail {
-  transform: scale(1.05);
-}
+.map-card:hover .map-thumbnail { transform: scale(1.05); }
 
 .map-card-info { 
   padding: 20px; 
@@ -368,7 +394,7 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
 
 .map-card-info p { margin: 5px 0; color: var(--color-text); }
 
-/* Copy Blocks */
+/* Copy Code Blocks */
 .copy-wrapper {
   display: flex;
   background: var(--color-bg-controls);
@@ -400,30 +426,8 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
 }
 .copy-button:hover { background: var(--color-primary); color: white; }
 
-.edit-btn {
-  display: block;
-  width: 100%;
-  padding: 8px;
-  margin-top: 10px;
-  background: var(--color-bg-controls);
-  border: 1px solid var(--color-border);
-  color: var(--color-text);
-  text-align: center;
-  text-decoration: none;
-  font-size: 0.9em;
-  border-radius: var(--border-radius);
-  font-weight: bold;
-  transition: all 0.2s;
-}
-
-.edit-btn:hover {
-  background: var(--palette-brand-highlight);
-  color: var(--palette-brand-main);
-  border-color: var(--palette-brand-main);
-}
-
 /* ============================================
-   7. SUBMISSION TOOL LAYOUT
+   6. SUBMISSION & EDIT TOOLS
    ============================================ */
 .submit-container { 
   display: grid; 
@@ -437,7 +441,6 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
   .submit-container { grid-template-columns: 1fr; height: auto; } 
 }
 
-/* Sidebar Controls */
 .controls { 
   background: var(--color-bg-controls); 
   padding: 20px; 
@@ -487,7 +490,7 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
 
 .generated-cmd { 
   background: #2c2c2c; 
-  color: #4ade80; /* Terminal Green */
+  color: #4ade80; 
   font-family: monospace; 
   padding: 15px; 
   word-break: break-all; 
@@ -499,9 +502,8 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
 
 #statusMsg { margin-top: 10px; font-weight: bold; text-align: center; font-size: 0.9em; }
 
-
 /* ============================================
-   8. MAP VIEWER COMPONENT
+   7. MAP VIEWER COMPONENT
    ============================================ */
 .map-viewer { 
   position: relative; 
@@ -532,7 +534,6 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
   transition: transform 0.1s linear; 
 }
 
-/* The Red Grid Overlay */
 #grid-overlay {
   position: absolute; 
   top: 25px; left: 30px; 
@@ -546,7 +547,6 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
     linear-gradient(to bottom, rgba(255, 0, 0, 0.6) 1px, transparent 1px);
 }
 
-/* Rulers */
 .axis-label {
   position: absolute; font-family: monospace; font-size: 10px;
   color: #aaa; display: flex; align-items: center; justify-content: center; pointer-events: none;
@@ -560,4 +560,10 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
   left: 0; width: 30px; height: 28px; 
   border-bottom: 1px solid var(--palette-viewer-border); 
   background: var(--palette-viewer-bg); 
+}
+
+/* Mobile */
+@media (max-width: 500px) {
+  .map-search-wrapper { flex-direction: column; align-items: stretch; }
+  .map-search-wrapper .tool-btn { width: 100%; }
 }
