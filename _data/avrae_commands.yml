@@ -1,23 +1,32 @@
-- title: "Basic Attack"
-  syntax: "!a <weapon>"
-  example: "!a dagger"
-  tags: "combat attack action basic"
-  category: "Combat"
+- title: "Import your character sheet"
+  syntax: "!import <link to your character sheet>"
+  example: "!import www.dndbeyond.com/characters/154162856/gQSD4S"
+  tags: "setup import character sheet"
+  category: "Setup"
   type: "Player"
-  image: "" # Optional URL to a gif
-
-- title: "Attack with Advantage"
-  syntax: "!a <weapon> adv"
-  example: "!a longsword adv"
-  tags: "combat attack bonus advantage"
-  category: "Combat"
+  note: "Compatible Character sheet formats: DnD Beyond (recommended - make sure link is public), Dicecloud, Google Sheets (you must share with avrae-320@avrae-bot.iam.gserviceaccount.com)"
+  
+- title: "Set your character as the one in use Globally (all servers)"
+  syntax: "!char <your character's name>
+  example: "!char Robin Hood"
+  tags: "setup character sheet global"
+  category: "Setup"
   type: "Player"
   image: ""
 
-- title: "Move Token on Map"
-  syntax: "!m move <location>"
-  example: "!m move C3"
-  tags: "map movement token otfbm"
-  category: "Map"
+- title: "Set your character as the one in use for this server"
+  syntax: "!char server <your character's name>
+  example: "!char server Robin Hood"
+  tags: "setup character sheet server"
+  category: "Setup"
   type: "Player"
-  image: "/assets/gifs/map-move.gif" # Example of a visual demo
+  image: ""
+
+- title: "Set your character as the one in use for this channel on the server"
+  note: "useful if you're in multiple PBP games on the same server"
+  syntax: "!char channel <your character's name>
+  example: "!char channel Robin Hood"
+  tags: "setup character sheet channel"
+  category: "Setup"
+  type: "Player"
+  image: ""
