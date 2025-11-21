@@ -1112,69 +1112,82 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
 }
 
 /* ============================================
-   MARKDOWN TABLES
+   MARKDOWN TABLES (D&D Handbook Style)
    ============================================ */
+.table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 25px;
+  border-radius: 6px;
+  /* The Outer Border - Looks like a book binding */
+  border: 2px solid var(--palette-brand-main); 
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
-  margin: 25px 0;
   font-size: 0.95em;
-  background-color: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius);
-  overflow: hidden; /* Clips corners for border-radius */
-  box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+  /* Parchment Background */
+  background-color: var(--palette-bg-page-light); 
+  color: var(--palette-text-main-light);
 }
 
 thead {
-  background-color: var(--color-bg-controls);
-  border-bottom: 2px solid var(--color-border);
+  /* The "Leather Header" look */
+  background-color: var(--palette-brand-main); 
+  border-bottom: 3px solid var(--palette-brand-accent); /* Accent stripe */
 }
 
 th {
-  padding: 12px 15px;
+  padding: 14px 18px;
   text-align: left;
-  font-weight: 800;
-  color: var(--color-primary);
-  text-transform: uppercase;
-  font-size: 0.85em;
+  
+  /* Typography: Gold text, Small Caps */
+  color: var(--palette-brand-highlight); 
+  font-family: serif; /* Serif font feels more "fantasy" */
+  font-variant: small-caps;
+  font-weight: bold;
+  font-size: 1.1em;
   letter-spacing: 0.5px;
+  text-shadow: 1px 1px 0px rgba(0,0,0,0.3);
 }
 
 td {
-  padding: 12px 15px;
-  border-bottom: 1px solid var(--color-border);
-  color: var(--color-text);
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--palette-border-light);
   vertical-align: top;
 }
 
-/* Last row needs no border */
+/* Remove border from bottom row so it doesn't clash with container */
 tr:last-child td {
   border-bottom: none;
 }
 
-/* Zebra Striping */
+/* Zebra Striping: Subtle organic tint */
 tr:nth-child(even) {
-  background-color: rgba(0, 0, 0, 0.02); /* Subtle stripe */
+  background-color: rgba(74, 51, 42, 0.03); /* Extremely faint brown */
+}
+
+/* Hover Effect: Highlight the row being read */
+tbody tr:hover {
+  background-color: rgba(107, 142, 35, 0.1); /* Faint Palm Green */
+}
+
+/* --- DARK MODE ADAPTATION --- */
+[data-theme="dark"] table {
+  background-color: var(--palette-bg-card-dark);
+  color: var(--palette-text-main-dark);
+}
+[data-theme="dark"] th {
+  color: var(--palette-brand-highlight);
 }
 [data-theme="dark"] tr:nth-child(even) {
   background-color: rgba(255, 255, 255, 0.03);
-}
-
-/* Hover Effect */
-tbody tr:hover {
-  background-color: rgba(0, 0, 0, 0.04);
 }
 [data-theme="dark"] tbody tr:hover {
   background-color: rgba(255, 255, 255, 0.05);
 }
 
-/* Responsive Wrapper (For mobile scrolling) */
-.table-wrapper {
-  overflow-x: auto;
-  margin-bottom: 20px;
-  border: 1px solid;
-}
 /* ============================================
    2. GLOBAL RESETS & BACKGROUND
    ============================================ */
