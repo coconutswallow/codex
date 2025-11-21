@@ -17,16 +17,36 @@
     
     <header class="site-header">
         <div class="header-content">
-            <a href="{{ '/' | relative_url }}" class="site-logo" style="text-decoration:none;">
+            <button id="menu-toggle" aria-label="Toggle Navigation">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+
+            <a href="{{ '/' | relative_url }}" class="site-logo">
                 <img src="{{ '/assets/thumbnails/guild-icon.png' | relative_url }}" class="guild-icon" style="height:30px; margin-right:10px;" onerror="this.style.display='none'">
-                {{ site.title | default: "Coconut Codex" }}
+                {{ site.title }}
             </a>
             
             <button id="theme-toggle" class="tool-btn" aria-label="Toggle Dark Mode" style="margin-left:auto;">
-                <span class="icon-text">🌗 Theme</span>
+                <span class="icon-text">🌗</span>
             </button>
         </div>
     </header>
+
+    <div id="sidebar-menu">
+        <div class="sidebar-header">
+            <h3>Navigation</h3>
+            <button id="close-menu" aria-label="Close Menu">&times;</button>
+        </div>
+        <nav class="sidebar-links">
+            {% for item in site.navigation %}
+                <a href="{{ item.url | relative_url }}" class="nav-link">{{ item.title }}</a>
+            {% endfor %}
+        </nav>
+    </div>
+    
+    <div id="menu-overlay"></div>
 
     <main class="page-content">
         {{ content }}
@@ -34,23 +54,43 @@
     
     <footer class="site-footer">
         <div class="footer-content">
+            <p>&copy; {{ "now" | date: "%Y" }} {{ site.title }}.</p>
         </div>
     </footer>
 
     <script>
     (function() {
+        /* --- THEME TOGGLE --- */
         const themeToggle = document.getElementById('theme-toggle');
         const htmlElement = document.documentElement;
         const currentTheme = localStorage.getItem('theme') || 'light';
         htmlElement.setAttribute('data-theme', currentTheme);
         
-        function toggleTheme() {
-            const currentTheme = htmlElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            htmlElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = htmlElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                htmlElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+            });
         }
-        if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+
+        /* --- HAMBURGER MENU LOGIC --- */
+        const menuToggle = document.getElementById('menu-toggle');
+        const closeMenu = document.getElementById('close-menu');
+        const sidebar = document.getElementById('sidebar-menu');
+        const overlay = document.getElementById('menu-overlay');
+
+        function toggleMenu() {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+
+        if(menuToggle) {
+            menuToggle.addEventListener('click', toggleMenu);
+            closeMenu.addEventListener('click', toggleMenu);
+            overlay.addEventListener('click', toggleMenu);
+        }
     })();
     </script>
 </body>

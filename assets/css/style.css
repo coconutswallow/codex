@@ -150,7 +150,7 @@ a:hover { text-decoration: underline; color: var(--palette-brand-main); }
 
 .site-nav a:hover { 
   background-color: var(--palette-brand-highlight); 
-  color: var(--palette-brand-main);
+  color: var(--palette-text-main-dark);
   text-decoration: none;
 }
 
@@ -177,6 +177,7 @@ a:hover { text-decoration: underline; color: var(--palette-brand-main); }
 }
 
 [data-theme="dark"] .hero-block {
+  color: var(--palette-brand-main);
   background-color: var(--palette-bg-card-dark);
 }
 
@@ -189,6 +190,108 @@ a:hover { text-decoration: underline; color: var(--palette-brand-main); }
   margin: 0 auto; 
   color: var(--color-text-muted); 
   font-size: 0.95em;
+}
+/* ============================================
+   SIDEBAR NAVIGATION & HAMBURGER
+   ============================================ */
+
+/* The Hamburger Button */
+#menu-toggle {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  margin-right: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+#menu-toggle .bar {
+  width: 25px;
+  height: 3px;
+  background-color: var(--palette-brand-main);
+  border-radius: 2px;
+  transition: 0.3s;
+}
+
+/* The Sidebar (Hidden by default via transform) */
+#sidebar-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100%;
+  background-color: var(--color-bg-card);
+  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  z-index: 2000;
+  transform: translateX(-100%); /* Push off screen */
+  transition: transform 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+}
+
+#sidebar-menu.active {
+  transform: translateX(0); /* Slide in */
+}
+
+.sidebar-header {
+  padding: 20px;
+  background-color: var(--color-bg-controls);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  color: var(--color-primary);
+}
+
+#close-menu {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--color-text);
+}
+
+.sidebar-links {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: var(--color-text);
+  padding: 10px;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.nav-link:hover {
+  background-color: var(--palette-brand-highlight);
+  color: var(--palette-brand-main);
+}
+
+/* Dark Overlay (Backdrop) */
+#menu-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 1900;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s;
+}
+
+#menu-overlay.active {
+  opacity: 1;
+  visibility: visible;
 }
 
 /* ============================================
