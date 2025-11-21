@@ -1,6 +1,6 @@
 ---
 layout: doc
-title: Kalaman Quests: Autumn Fires
+title: Kalaman Quests Autumn Fires
 permalink: /session-assets/SOTDQ/kalaman-quests/
 ---
 
