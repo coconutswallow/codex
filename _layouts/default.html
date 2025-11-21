@@ -6,108 +6,37 @@
     <title>{{ page.title | default: site.title }}</title>
     
     <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
-    <link rel="stylesheet" href="{{ '/assets/css/search.css' | relative_url }}"> 
-    <link rel="stylesheet" href="{{ '/assets/css/home.css' | relative_url }}">
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <script src="{{ '/assets/js/heading-links.js' | relative_url }}"></script>
-    
     {% for stylesheet in page.extra_css %}
         <link rel="stylesheet" href="{{ stylesheet | relative_url }}">
     {% endfor %}
 </head>
-<body class="{{ page.body_class }} {{ layout.body_class }}" {% if page.background_image or layout.background_image %}style="--page-bg-image: url('{{ page.background_image | default: layout.background_image | relative_url }}')"{% endif %}>
+<body class="{{ page.body_class }} {{ layout.body_class }}">
     
     <header class="site-header">
         <div class="header-content">
-            <button id="menu-toggle" aria-label="Toggle Navigation Menu">
-                <span class="bar"></span>
-                <span class="bar"></span>
-                <span class="bar"></span>
-            </button>
-            <h1 class="site-title">
-                <a href="{{ '/' | relative_url }}" class="home-link">
-                    <img src="{{ '/assets/thumbnails/guild-icon.png' | relative_url }}" class="guild-icon" onerror="this.style.display='none'">
-                    {{ site.title | default: "Codex" }}
-                </a>
-            </h1>
+            <a href="{{ '/' | relative_url }}" class="site-logo" style="text-decoration:none;">
+                <img src="{{ '/assets/thumbnails/guild-icon.png' | relative_url }}" class="guild-icon" style="height:30px; margin-right:10px;" onerror="this.style.display='none'">
+                {{ site.title | default: "Codex" }}
+            </a>
             
-            <div class="header-search-container">
-                <input type="text" id="search-input" placeholder="Search docs..." aria-label="Search documents">
-            </div>
+            <button id="theme-toggle" class="tool-btn" aria-label="Toggle Dark Mode" style="margin-left:auto;">
+                <span class="icon-text">🌗 Theme</span>
+            </button>
         </div>
     </header>
 
-    <div id="sidebar-menu">
-        <div class="sidebar-header">
-            <h4 class="sidebar-title">Navigation</h4>
-            <button id="close-menu-btn" class="close-btn" aria-label="Close Menu">&times;</button>
-        </div>
-        <div class="sidebar-nav">
-            {% for nav_item in site.navigation %}
-                {% if nav_item.url %}
-                    <a href="{{ nav_item.url | relative_url }}" class="nav-link">{{ nav_item.title }}</a>
-                {% elsif nav_item.links %}
-                    <div class="nav-section">
-                        <button class="nav-section-toggle" aria-expanded="false">
-                            <span class="toggle-icon">▶</span>
-                            {{ nav_item.title }}
-                        </button>
-                        <div class="nav-submenu">
-                            {% for link in nav_item.links %}
-                                <a href="{{ link.url | relative_url }}">{{ link.title }}</a>
-                            {% endfor %}
-                        </div>
-                    </div>
-                {% endif %}
-            {% endfor %}
-        </div>
-    </div>
-
-    <div id="menu-overlay"></div>
-    <ul id="search-results"></ul>
-
-    <div class="page">
+    <main class="page-content">
         {{ content }}
-    </div>
+    </main>
     
     <footer class="site-footer">
         <div class="footer-content">
-            <p>&copy; {{ "now" | date: "%Y" }} Codex Library.</p>
-            <div class="footer-icons">
-                <a href="#" target="_blank" aria-label="Discord">Discord</a>
-            </div>
+            <p>&copy; {{ "now" | date: "%Y" }} Codex Library. Unofficial fan content.</p>
         </div>
     </footer>
-
-    <script>
-        const BASE_URL = "{{ site.baseurl }}"; 
-        const menuToggle = document.getElementById('menu-toggle');
-        const sidebarMenu = document.getElementById('sidebar-menu');
-        const closeMenuBtn = document.getElementById('close-menu-btn');
-        const menuOverlay = document.getElementById('menu-overlay');
-
-        if (menuToggle && sidebarMenu && closeMenuBtn && menuOverlay) {
-            function toggleMenu() {
-                sidebarMenu.classList.toggle('active');
-                menuOverlay.classList.toggle('active');
-                document.body.classList.toggle('menu-open');
-            }
-            menuToggle.addEventListener('click', toggleMenu);
-            closeMenuBtn.addEventListener('click', toggleMenu);
-            menuOverlay.addEventListener('click', toggleMenu);
-        }
-    </script>
-    
-    <script src="{{ '/assets/js/lunr.js' | relative_url }}"></script> 
-    <script src="{{ '/assets/js/search.js' | relative_url }}"></script>
-    <script src="{{ '/assets/js/sidebar.js' | relative_url }}"></script> 
-
-    <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Dark Mode">
-        <span class="sun-icon">☀️</span>
-        <span class="moon-icon">🌙</span>
-    </button>
 
     <script>
     (function() {
