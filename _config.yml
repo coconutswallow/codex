@@ -15,9 +15,9 @@ collections:
   avrae_guide:
     output: true
     permalink: /avrae/:path/
-#  session_assets:
-#    output: true
-#    permalink: /session-assets/:path/
+  session_assets:
+    output: true
+    permalink: /session-assets/:path/
 #  other_assets:
 #    output: true
 #    permalink: /other-assets/:path/
@@ -35,7 +35,7 @@ navigation:
   - title: "Useful Links for DMs"
     url: "/dm-links"
   - title: "Session Assets"
-#    url: "/session-assets/"
+    url: "/session-assets/"
 #  - title: "Other Assets"
 #    url: "/other-assets/"
 
