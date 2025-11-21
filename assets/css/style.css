@@ -676,47 +676,38 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
    ============================================ */
 .avrae-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); /* Wider, shorter cards */
-  gap: 15px;
+  /* Responsive Grid: Fits as many as possible, minimum 300px wide */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
 }
 
-.cmd-note {
-  font-size: 0.85em;
-  color: var(--color-text-muted);
-  background: var(--color-bg-controls);
-  padding: 8px 12px;
-  border-radius: 4px;
-  margin-bottom: 5px; /* Space before footer */
-  font-style: italic;
-  border-left: 3px solid var(--palette-brand-highlight); /* visual accent */
-}
-
 .cmd-card {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
-  border-left: 4px solid var(--color-border); /* Accent left border */
-  border-radius: 6px;
-  padding: 15px;
+  border-left: 4px solid var(--color-border);
+  border-radius: 8px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .cmd-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  border-left-color: var(--palette-brand-accent); /* Highlight on hover */
+  border-left-color: var(--palette-brand-accent);
 }
 
-/* Top Row: Title + Category Badge */
+/* Header */
 .cmd-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 5px;
 }
 
 .cmd-title {
@@ -736,7 +727,16 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
   font-weight: bold;
 }
 
-/* Middle: The Code Block */
+/* Labels (Syntax/Example) */
+.cmd-label {
+  font-size: 0.75em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  font-weight: bold;
+  margin-top: 5px;
+}
+
+/* Code Blocks */
 .cmd-syntax-wrapper {
   background: var(--color-bg-controls);
   border: 1px solid var(--color-border);
@@ -745,33 +745,35 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
   overflow: hidden;
 }
 
+/* Subtle difference for Example box */
+.cmd-syntax-wrapper.example-box {
+  background: var(--color-bg-page); /* Slightly lighter/different */
+  border-style: dashed;
+}
+
 .cmd-code {
   flex-grow: 1;
   font-family: monospace;
   padding: 8px 12px;
   font-size: 0.9em;
-  color: var(--palette-brand-discord); /* Discord Blurple for code */
-  white-space: nowrap;
-  overflow-x: auto;
+  color: var(--palette-brand-discord);
+  white-space: pre-wrap; /* Allows text to wrap if too long */
+  word-break: break-all;
 }
 
-.cmd-copy-btn {
-  background: transparent;
-  border: none;
-  border-left: 1px solid var(--color-border);
-  cursor: pointer;
-  padding: 0 15px;
-  font-size: 1.2em;
+/* Notes */
+.cmd-note {
+  font-size: 0.9em;
+  color: var(--color-text);
+  margin-top: 5px;
+  line-height: 1.4;
 }
-.cmd-copy-btn:hover { background: var(--palette-brand-highlight); }
 
-/* Bottom: Description/Example + Actions */
+/* Footer */
 .cmd-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.85em;
-  color: var(--color-text-muted);
+  margin-top: auto; /* Pushes footer to bottom */
+  padding-top: 10px;
+  text-align: right;
 }
 
 .demo-link {
@@ -779,26 +781,41 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
   color: var(--palette-brand-accent);
   font-weight: bold;
   text-decoration: underline;
+  font-size: 0.85em;
 }
 
-/* Modal for Image Preview */
-.modal-overlay {
-  display: none;
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.8);
-  z-index: 2000;
-  justify-content: center;
-  align-items: center;
-}
-.modal-content {
-  background: white;
-  padding: 10px;
-  border-radius: 8px;
-  max-width: 90%;
-  max-height: 90%;
-}
-.modal-content img {
-  max-width: 100%;
-  max-height: 80vh;
-  display: block;
+/* ============================================
+   MOBILE RESPONSIVENESS
+   ============================================ */
+@media (max-width: 600px) {
+  /* 1. Force Single Column for Grids */
+  .map-gallery, 
+  .avrae-grid {
+    grid-template-columns: 1fr;
+    padding: 10px;
+  }
+
+  /* 2. Adjust Search Bar */
+  .map-search-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0 10px;
+  }
+  
+  /* 3. Sidebar & Header */
+  .header-content {
+    padding: 0 15px;
+  }
+  
+  /* 4. Cards */
+  .map-card {
+    flex-direction: column; /* Stack map image on top of text */
+  }
+  
+  .map-thumbnail-link {
+    width: 100%;
+    height: 200px;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
 }
