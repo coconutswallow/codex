@@ -50,6 +50,33 @@
   type: "Player"
   image: ""
 
+- title: "Get Character Token"
+  note: "After right-click, copy image link"
+  syntax: "!token -border none"
+  example: "!token -border none"
+  tags: "map token"
+  category: "01 Setup"
+  type: "Player"
+  image: ""
+
+- title: "Get Token Code"
+  note: "Generates Token Code for Map"
+  syntax: "!map -tokenimport <url>"
+  example: "!map -tokenimport https://myimage.jpg"
+  tags: "map token"
+  category: "01 Setup"
+  type: "Player"
+  image: ""
+
+- title: "Set Character Token"
+  note: "Retrieves character token from character sheet"
+  syntax: "!map -token <token code>"
+  example: "!map -token pgs27"
+  tags: "map token"
+  category: "01 Setup"
+  type: "Player"
+  image: ""
+
 - title: "Long Rest"
   syntax: "!g lr"
   example: "!g lr"
@@ -219,6 +246,15 @@
   type: "Player"
   image: ""
 
+- title: "Cast spell"
+  note: "ignoring prerequisites like spell slots/class/level"
+  syntax: "!cast <spell name> -i"
+  example: "!cast wish -l 3"
+  tags: "cast spell"
+  category: "06 Spellcasting"
+  type: "Player"
+  image: ""
+
 - title: "Upcast Spell"
   syntax: "!cast <spell name> -t <target> -l <spell level>"
   example: "!cast bless -l 3"
@@ -227,11 +263,5 @@
   type: "Player"
   image: ""
 
-- title: "Cast spell ignoring requirements/spellslots"
-  syntax: "!cast <spell name> -i"
-  example: "!cast wish -l 3"
-  tags: "cast spell"
-  category: "06 Spellcasting"
-  type: "Player"
-  image: ""
+
 
