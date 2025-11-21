@@ -1,0 +1,20 @@
+- title: "Basic Attack"
+  syntax: "!a <weapon>"
+  example: "!a dagger"
+  tags: "combat attack action basic"
+  category: "Combat"
+  image: "" # Optional URL to a gif
+
+- title: "Attack with Advantage"
+  syntax: "!a <weapon> adv"
+  example: "!a longsword adv"
+  tags: "combat attack bonus advantage"
+  category: "Combat"
+  image: ""
+
+- title: "Move Token on Map"
+  syntax: "!m move <location>"
+  example: "!m move C3"
+  tags: "map movement token otfbm"
+  category: "Map"
+  image: "/assets/gifs/map-move.gif" # Example of a visual demo
