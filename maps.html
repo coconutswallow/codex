@@ -5,13 +5,20 @@ title: Map Index
 
 <div class="hero-block">
   <h1>Curated D&D Battle Maps</h1>
-  <p>Curated battle maps fast search index and optional Avrae map commands. All maps are free to use.</p>
+  <p>
+    Curated battle maps with fast search and optional Avrae commands.
+    <br>
+    <a href="/codex/map-submit" class="tool-btn" style="display:inline-block; margin-top:10px; padding: 8px 16px; font-size: 1em; text-decoration: none;">
+      + Submit a New Map
+    </a>
+  </p>
   
-  <div id="auth-ui" style="margin-top: 15px; font-size: 0.9em;">
-    <button id="login-btn" onclick="login()" class="tool-btn" style="display:none;">Login to Edit</button>
+  <div id="auth-ui" style="margin-top: 20px; font-size: 0.9em; border-top: 1px dashed var(--color-border); padding-top: 15px; display: inline-block;">
+    <button id="login-btn" onclick="login()" class="tool-btn" style="display:none; background:var(--palette-brand-discord); border-color:var(--palette-brand-discord);">Login to Edit</button>
+    
     <div id="user-info" style="display:none;">
-      <span>Logged in as: <strong id="username-display"></strong></span>
-      <button onclick="logout()" class="tool-btn">Logout</button>
+      <span style="margin-right:10px;">Logged in as: <strong id="username-display"></strong></span>
+      <button onclick="logout()" class="tool-btn" style="font-size: 0.8em;">Logout</button>
     </div>
   </div>
 </div>
@@ -22,27 +29,38 @@ title: Map Index
 </div>
 
 <div class="map-gallery" id="gallery-container">
-  <p style="text-align:center; color:#666; margin-top: 50px;">Loading library...</p>
+  <p id="loading-text" style="text-align:center; color:#666; margin-top: 50px;">Loading library...</p>
 </div>
 
 <script>
   /* --- CONFIGURATION --- */
   const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
+  /* 🔴 YOUR KEY HERE 🔴 */
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'; 
-  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+  
+  let db;
   let currentUser = null;
 
-  /* --- AUTH & INIT --- */
-  document.addEventListener('DOMContentLoaded', () => {
-    initAuth();
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      // Initialize Supabase
+      db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      initAuth();
+    } catch (err) {
+      console.error("Critical Init Error:", err);
+      document.getElementById('gallery-container').innerHTML = 
+        `<p style="color:red; text-align:center;">Failed to initialize database.<br>${err.message}</p>`;
+    }
   });
 
   function initAuth() {
+    db.auth.getSession().then(({ data }) => {
+      handleSession(data.session);
+    });
+
     db.auth.onAuthStateChange((event, session) => {
       handleSession(session);
     });
-    db.auth.getSession().then(({data}) => handleSession(data.session));
   }
 
   function handleSession(session) {
@@ -55,19 +73,19 @@ title: Map Index
       userInfo.style.display = 'block';
       
       const meta = currentUser.user_metadata;
-      document.getElementById('username-display').innerText = meta.full_name || meta.name || "User";
+      const name = meta.full_name || meta.custom_claims?.global_name || meta.name || "User";
+      document.getElementById('username-display').innerText = name;
     } else {
       currentUser = null;
       loginBtn.style.display = 'inline-block';
       userInfo.style.display = 'none';
     }
     
-    // Re-render maps to show/hide Edit buttons based on login state
     fetchAndRenderMaps(); 
   }
 
   async function login() {
-    const redirectUrl = window.location.href; // Come back to this exact page
+    const redirectUrl = window.location.href; 
     await db.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: redirectUrl } });
   }
 
@@ -79,61 +97,72 @@ title: Map Index
   /* --- RENDER LOGIC --- */
   async function fetchAndRenderMaps() {
     const container = document.getElementById('gallery-container');
-    // Don't clear container yet to prevent flashing, but we will clear it before appending
+    
+    try {
+      const { data: maps, error } = await db
+        .from('maps')
+        .select('*')
+        .eq('is_approved', true)
+        .order('created_at', { ascending: false });
 
-    const { data: maps, error } = await db
-      .from('maps')
-      .select('*')
-      .eq('is_approved', true)
-      .order('created_at', { ascending: false });
+      if (error) throw error;
 
-    if (error) {
-      container.innerHTML = `<p style="color:var(--palette-danger); text-align:center;">Error.</p>`;
-      return;
-    }
+      if (!maps || maps.length === 0) {
+        container.innerHTML = `<p style="text-align:center;">No maps found (or none approved yet).</p>`;
+        return;
+      }
 
-    container.innerHTML = ''; // Clear now
+      container.innerHTML = '';
 
-    maps.forEach(map => {
-      const card = document.createElement('div');
-      card.className = 'map-card';
-      const searchString = `${map.name} ${map.creator} ${map.keywords || ''}`.toLowerCase();
-      card.setAttribute('data-search', searchString);
+      maps.forEach(map => {
+        const card = document.createElement('div');
+        card.className = 'map-card';
+        
+        const searchString = `${map.name} ${map.creator} ${map.keywords || ''}`.toLowerCase();
+        card.setAttribute('data-search', searchString);
 
-      const creatorDisplay = map.source_url 
-        ? `<a href="${map.source_url}" target="_blank" rel="noopener noreferrer">${map.creator}</a>` 
-        : map.creator;
+        const creatorDisplay = map.source_url 
+          ? `<a href="${map.source_url}" target="_blank" rel="noopener noreferrer">${map.creator}</a>` 
+          : map.creator;
 
-      // EDIT BUTTON LOGIC
-      // Only show if user is logged in
-      const editButtonHtml = currentUser 
-        ? `<a href="/codex/edit?id=${map.id}" class="edit-btn">✏️ Edit / Revise</a>` 
-        : '';
+        // EDIT BUTTON LOGIC
+        const editButtonHtml = currentUser 
+          ? `<a href="/codex/edit?id=${map.id}" class="edit-btn">✏️ Edit / Revise</a>` 
+          : '';
 
-      card.innerHTML = `
-        <a href="${map.image_url}" class="map-thumbnail-link" target="_blank">
-          <img src="${map.image_url}" alt="${map.name}" class="map-thumbnail" loading="lazy">
-        </a>
+        card.innerHTML = `
+          <a href="${map.image_url}" class="map-thumbnail-link" target="_blank" title="View Full Image">
+            <img src="${map.image_url}" alt="${map.name}" class="map-thumbnail" loading="lazy">
+          </a>
 
-        <div class="map-card-info">
-          <h2>${map.name}</h2>
-          <p><strong>Creator:</strong> ${creatorDisplay}</p>
-          ${ map.grid_width ? `<p><strong>Dim:</strong> ${map.grid_width}x${map.grid_height}</p>` : '' }
+          <div class="map-card-info">
+            <h2>${map.name}</h2>
+            <p><strong>Creator:</strong> ${creatorDisplay}</p>
+            
+            ${ map.grid_width ? `<p><strong>Dim:</strong> ${map.grid_width}x${map.grid_height}</p>` : '' }
 
-          <div class="copy-wrapper">
-             <code class="copy-target">${map.avrae_cmd || 'Not submitted'}</code>
-             <button class="copy-button">Copy</button>
+            <p><strong>Avrae Map Code:</strong></p>
+            <div class="copy-wrapper">
+               <code class="copy-target">${map.avrae_cmd || 'Not submitted'}</code>
+               <button class="copy-button">Copy</button>
+            </div>
+            
+            <p style="font-size:0.85em; color:var(--color-text-muted); margin-top:5px;">Tags: ${map.keywords || ''}</p>
+            
+            ${editButtonHtml}
           </div>
-          
-          <p style="font-size:0.85em; color:var(--color-text-muted); margin-top:5px;">Tags: ${map.keywords || ''}</p>
-          
-          ${editButtonHtml}
-        </div>
-      `;
-      container.appendChild(card);
-    });
+        `;
+        container.appendChild(card);
+      });
 
-    setupInteractions();
+      setupInteractions();
+
+    } catch (err) {
+      console.error("Load Error:", err);
+      container.innerHTML = `<p style="color:var(--palette-danger); text-align:center;">
+        <strong>Error loading maps:</strong><br>${err.message}
+      </p>`;
+    }
   }
 
   function setupInteractions() {
@@ -144,18 +173,27 @@ title: Map Index
         searchInput.addEventListener('keyup', () => {
           const filterText = searchInput.value.toLowerCase().trim();
           allCards.forEach(card => {
-            card.style.display = card.getAttribute('data-search').includes(filterText) ? 'flex' : 'none';
+            const cardData = card.getAttribute('data-search');
+            card.style.display = cardData.includes(filterText) ? 'flex' : 'none';
           });
         });
     }
 
     document.querySelectorAll('.copy-button').forEach(btn => {
       btn.addEventListener('click', () => {
-        navigator.clipboard.writeText(btn.previousElementSibling.innerText);
+        const codeEl = btn.previousElementSibling;
+        if(!codeEl) return;
+        
+        navigator.clipboard.writeText(codeEl.innerText);
         const oldText = btn.innerText;
+        
         btn.innerText = 'Copied!';
         btn.style.color = 'var(--palette-success)';
-        setTimeout(() => { btn.innerText = oldText; btn.style.color = ''; }, 2000);
+        
+        setTimeout(() => { 
+            btn.innerText = oldText; 
+            btn.style.color = ''; 
+        }, 2000);
       });
     });
   }
