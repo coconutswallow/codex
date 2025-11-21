@@ -13,75 +13,69 @@ title: Avrae Quick Reference
 
   <div class="filter-toggles" style="display: flex; gap: 10px; justify-content: center; width: 100%;">
     <button class="tool-btn active" onclick="setFilter('All')" id="btn-all">All</button>
-    <button class="tool-btn" onclick="setFilter('Player')" id="btn-player">Player Commands</button>
-    <button class="tool-btn" onclick="setFilter('DM')" id="btn-dm">DM Commands</button>
+    <button class="tool-btn" onclick="setFilter('Player')" id="btn-player">Player</button>
+    <button class="tool-btn" onclick="setFilter('DM')" id="btn-dm">DM Only</button>
   </div>
 </div>
 
-<div style="max-width: 1200px; margin: 0 auto; padding: 0 20px 5px; display: grid; grid-template-columns: 1.2fr 1.9fr 1.9fr; font-weight: bold; font-size: 0.8em; color: var(--color-text-muted); text-transform: uppercase;">
-    <span class="hide-mobile">Command</span>
-    <span class="hide-mobile">Syntax</span>
-    <span class="hide-mobile">Example</span>
-</div>
+<div class="avrae-list-container">
+  <div class="avrae-header-row">
+      <span>Command</span>
+      <span>Syntax</span>
+      <span>Example</span>
+  </div>
 
-<div class="avrae-list-container" style="max-width: 1200px; margin: 0 auto; padding-bottom: 40px;">
+  <div class="avrae-list" id="cmd-grid">
+    
+    {% assign grouped_commands = site.data.avrae_commands | group_by: 'category' | sort: 'name' %}
+    
+    {% for group in grouped_commands %}
+      
+      <button class="accordion-header active" onclick="toggleAccordion(this)">
+          {{ group.name }}
+      </button>
 
-  {% assign grouped_commands = site.data.avrae_commands | group_by: 'category' | sort: 'name' %}
-  
-  {% for group in grouped_commands %}
-    <button class="accordion-header active" onclick="toggleAccordion(this)">
-        {{ group.name }}
-    </button>
+      <div class="accordion-content open">
+        
+        {% for cmd in group.items %}
+          <div class="cmd-row" 
+               data-search="{{ cmd.title }} {{ cmd.tags }} {{ cmd.note }}"
+               data-type="{{ cmd.type | default: 'Both' }}">
+            
+            <div class="col-heading">
+              <div class="title-wrapper">
+                  {% if cmd.type == 'DM' %}
+                      <span class="cmd-badge" style="background:#4A332A; color:white;">DM</span>
+                  {% elsif cmd.type == 'Player' %}
+                      <span class="cmd-badge" style="background:#6B8E23; color:white;">PL</span>
+                  {% else %}
+                      <span class="cmd-badge" style="opacity:0;">--</span>
+                  {% endif %} 
+                  <div class="cmd-title">{{ cmd.title }}</div>
+              </div>
 
-    <div class="accordion-content open">
-      {% for cmd in group.items %}
-        <div class="cmd-row" 
-             data-search="{{ cmd.title }} {{ cmd.tags }} {{ cmd.note }}"
-             data-type="{{ cmd.type | default: 'Both' }}">
-             
-             </div>
-      {% endfor %}
-    </div>
-  {% endfor %}
+              {% if cmd.note %}
+                  <div class="cmd-note-text">{{ cmd.note }}</div>
+              {% endif %}
+              </div>
 
-    <div class="accordion-content">
-      {% for cmd in group.items %}
-        <div class="cmd-row" 
-             data-search="{{ cmd.title }} {{ cmd.tags }} {{ cmd.note }}"
-             data-type="{{ cmd.type | default: 'Both' }}">
-          
-          <div class="col-heading">
-            <div class="cmd-title">{{ cmd.title }}</div>
-            <div class="cmd-meta">
-                {% if cmd.type == 'DM' %}
-                    <span class="cmd-badge" style="background:#4A332A; color:white;">DM</span>
-                {% elsif cmd.type == 'Player' %}
-                    <span class="cmd-badge" style="background:#6B8E23; color:white;">PL</span>
-                {% endif %}
-                </div>
-            {% if cmd.note %}
-                <div class="cmd-note-full" style="margin-top:5px; font-size:0.8em; font-style:italic;">{{ cmd.note }}</div>
-            {% endif %}
+            <div class="col-code" data-label="Syntax">
+              {{ cmd.syntax | escape }}
+            </div>
+
+            <div class="col-code" data-label="Example" style="color: var(--color-text);">
+              {{ cmd.example | escape }}
+              
+              {% if cmd.image and cmd.image != "" %}
+                <span class="demo-link-small" onclick="openModal('{{ cmd.image | relative_url }}')">
+                  🎥 Watch Demo
+                </span>
+              {% endif %}
+              </div>
+
           </div>
-
-          <div class="col-code" data-label="Syntax">
-            {{ cmd.syntax | escape }}
-          </div>
-
-          <div class="col-code" data-label="Example" style="color: var(--color-text);">
-            {{ cmd.example | escape }}
-            {% if cmd.image and cmd.image != "" %}
-              <span class="demo-link-small" onclick="openModal('{{ cmd.image | relative_url }}')">
-                🎥 Demo
-              </span>
-            {% endif %}
-          </div>
-
-        </div>
-      {% endfor %}
-    </div>
-  {% endfor %}
-
+        {% endfor %} </div>
+    {% endfor %} </div>
 </div>
 
 <div id="demo-modal" class="modal-overlay" onclick="closeModal()">
@@ -94,14 +88,15 @@ title: Avrae Quick Reference
 </div>
 
 <style>
-    @media (max-width: 800px) { .hide-mobile { display: none; } }
+    @media (max-width: 800px) { .avrae-header-row { display: none; } }
 </style>
 
 <script>
   let currentFilter = 'All';
 
   const searchInput = document.getElementById('cmdSearchInput');
-  // Select all accordion wrappers
+  // Select all rows directly since borders are handled by container
+  const allRows = document.querySelectorAll('.cmd-row'); 
   const accordions = document.querySelectorAll('.accordion-content');
   const headers = document.querySelectorAll('.accordion-header');
 
@@ -111,14 +106,12 @@ title: Avrae Quick Reference
     'DM': document.getElementById('btn-dm')
   };
 
-  /* --- Accordion Logic --- */
   function toggleAccordion(btn) {
       btn.classList.toggle('active');
       const content = btn.nextElementSibling;
       content.classList.toggle('open');
   }
 
-  /* --- Filter Logic --- */
   function setFilter(type) {
     currentFilter = type;
     Object.values(btns).forEach(b => {
@@ -137,7 +130,7 @@ title: Avrae Quick Reference
     const terms = filterText.split(" ").filter(t => t.length > 0);
     const isSearching = (terms.length > 0 || currentFilter !== 'All');
 
-    // Loop through every Category Group
+    // Loop through groups to handle visibility
     headers.forEach((header, index) => {
         const panel = accordions[index];
         const rows = panel.querySelectorAll('.cmd-row');
@@ -147,10 +140,8 @@ title: Avrae Quick Reference
             const searchData = row.getAttribute('data-search').toLowerCase();
             const cardType = row.getAttribute('data-type'); 
 
-            // 1. Text Match
             const textMatch = terms.every(term => searchData.includes(term));
 
-            // 2. Type Match
             let typeMatch = true;
             if (currentFilter !== 'All') {
                 if (cardType !== currentFilter && cardType !== 'Both') {
@@ -158,29 +149,26 @@ title: Avrae Quick Reference
                 }
             }
 
-            const isVisible = textMatch && typeMatch;
-            row.style.display = isVisible ? 'grid' : 'none';
-            if (isVisible) visibleCount++;
+            if (textMatch && typeMatch) {
+                row.style.display = 'grid';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
         });
 
-        // Group Visibility Logic
+        // Show/Hide Category Header based on results
         if (visibleCount > 0) {
             header.style.display = 'flex';
-            
-            // If searching, auto-expand found categories
+            // Auto-expand if searching
             if (isSearching) {
                 if (!panel.classList.contains('open')) {
                     panel.classList.add('open');
                     header.classList.add('active');
                 }
-            } else {
-                // Optional: Collapse all if search is cleared? 
-                // Currently leaving them as they were
             }
         } else {
-            header.style.display = 'none'; // Hide empty categories
-            panel.classList.remove('open');
-            header.classList.remove('active');
+            header.style.display = 'none';
         }
     });
   }
