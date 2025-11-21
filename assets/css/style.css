@@ -1230,3 +1230,85 @@ a:hover { text-decoration: underline; color: var(--palette-brand-main); }
 
 /* Optional: Make the footer sit inside the frame too, or keep it separate. 
    Currently, footer is wide. To match the frame, update footer max-width if desired. */
+
+   /* ============================================
+   SESSION ASSETS (List View)
+   ============================================ */
+.assets-container {
+  max-width: 1000px;
+  margin: 0 auto 50px;
+  padding: 0 20px;
+}
+
+.asset-group-header {
+  margin-top: 40px;
+  margin-bottom: 15px;
+  padding-bottom: 5px;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.asset-group-header h2 {
+  margin: 0;
+  font-size: 1.4em;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* The List Container */
+.asset-list {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius);
+  overflow: hidden; /* Clips corners */
+}
+
+/* Individual Row Items */
+.asset-row {
+  display: flex;
+  align-items: center; /* Vertically center text */
+  padding: 15px 20px;
+  text-decoration: none;
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color 0.2s;
+}
+
+.asset-row:last-child { border-bottom: none; }
+
+.asset-row:hover {
+  background-color: var(--color-bg-row-light);
+}
+
+/* Content inside the row */
+.asset-icon {
+  font-size: 1.4em;
+  margin-right: 15px;
+  opacity: 0.6;
+}
+
+.asset-info {
+  flex-grow: 1; /* Pushes arrow to the right */
+}
+
+.asset-title {
+  margin: 0;
+  font-size: 1em;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.asset-row:hover .asset-title {
+  color: var(--color-primary);
+}
+
+.asset-desc {
+  margin: 4px 0 0 0;
+  font-size: 0.85em;
+  color: var(--color-text-muted);
+}
+
+.asset-arrow {
+  font-size: 1.2em;
+  color
