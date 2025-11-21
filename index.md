@@ -1,7 +1,7 @@
 ---
 layout: doc
 title: Coconut's House Rules
-permalink: /house-rules/
+permalink: /
 ---
 
 ## Game Rules - Applies to all games

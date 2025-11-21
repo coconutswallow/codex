@@ -15,29 +15,29 @@ collections:
   avrae_guide:
     output: true
     permalink: /avrae/:path/
-  session_assets:
-    output: true
-    permalink: /session-assets/:path/
-  other_assets:
-    output: true
-    permalink: /other-assets/:path/
+#  session_assets:
+#    output: true
+#    permalink: /session-assets/:path/
+#  other_assets:
+#    output: true
+#    permalink: /other-assets/:path/
 
 # Navigation Menu Structure
 navigation:
-  - title: "Home"
-    url: "/"
   - title: "House Rules"
-    url: "/house-rules"
+    url: "/"
+#  - title: "House Rules"
+#    url: "/house-rules"
   - title: "Avrae Quick Reference"
     url: "/avrae"
   - title: "Battle Maps"
     url: "/maps"
-  - title: "DM Links"
+  - title: "Useful Links for DMs"
     url: "/dm-links"
   - title: "Session Assets"
-    url: "/session-assets/"
-  - title: "Other Assets"
-    url: "/other-assets/"
+#    url: "/session-assets/"
+#  - title: "Other Assets"
+#    url: "/other-assets/"
 
 # Default Layouts
 defaults:
