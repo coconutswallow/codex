@@ -1,6 +1,6 @@
 ---
 layout: doc
-title: Kalaman Quests
+title: Kalaman Quests: Autumn Fires
 permalink: /session-assets/SOTDQ/kalaman-quests/
 ---
 
@@ -28,7 +28,7 @@ Note: Some quests say "not yet available" - they require an additional pre-requi
 
 | Type | Quest | Benefit | Cost (RP) |
 | :--- | :--- | :--- | :--- |
-| **Military** | **Vogler Training 1**<br>Help Darrett Training Vogler Military Recruits | Vogler NPC Combatants get +1 Attack | 3 |
+| **Military** | **Vogler Training 1**<br>Help Darrett Training Vogler Military Recruits | Vogler NPC Combatants get +1 Attack | ✅ |
 | **Military** | **Vogler Training 2**<br>Help Darrett Training Vogler Military Recruits | Vogler NPC Combatants get +1 AC | 4 |
 | **Political** | **Rally The Council Members**<br>Meet Council Members and rally support for Marshal Vedri and the defense efforts | +10% NPC Soldiers<br>*(Can be repeated up to 3 times)* | 3 each |
 | **Political** | **Rally the Merchants**<br>Meet the Guild Merchants of Kalaman to support the Vogler Refugees | *Redacted* | 4 (Not Yet Available) |
@@ -47,11 +47,9 @@ Note: Some quests say "not yet available" - they require an additional pre-requi
 
 ## Reputation Points Balance
 
-### Autumn Fires
 - **Points Earned:** 15
 - **Points Spent:** 3
 - **Remaining:** 12
-- **Side Quests Benefits Achieved:** - Vogler Combatants get +1 attack
 
 ### Darkness Descends
 - **Points Earned:** 0
