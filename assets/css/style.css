@@ -76,20 +76,26 @@
   background: var(--color-bg-card);
   border-bottom: 4px solid var(--palette-brand-accent);
   text-align: center;
-  padding: 50px 20px;
-  margin-bottom: 30px;
-  /* Texture pattern for style */
-  background-image: radial-gradient(var(--palette-brand-highlight) 1px, transparent 1px);
-  background-size: 20px 20px;
+  padding: 25px 20px; /* Much smaller height */
+  margin-bottom: 20px;
   background-color: var(--palette-bg-page-light);
-}
-[data-theme="dark"] .hero-block {
-  background-color: var(--palette-bg-card-dark);
-  background-image: radial-gradient(#333 1px, transparent 1px);
+  /* Removed background-image (dots) */
 }
 
-.hero-block h1 { margin: 0 0 10px 0; color: var(--palette-brand-main); font-size: 2.2rem; }
-.hero-block p { max-width: 600px; margin: 0 auto 20px; color: var(--color-text); opacity: 0.8; }
+[data-theme="dark"] .hero-block {
+  background-color: var(--palette-bg-card-dark);
+}
+
+.hero-block h1 { 
+  margin: 0 0 5px 0; 
+  color: var(--palette-brand-main); 
+  font-size: 2rem; 
+}
+.hero-block p { 
+  margin: 0 auto; 
+  color: var(--color-text-muted); 
+  font-size: 0.95em;
+}
 
 /* ============================================
    1. COLOR PALETTE (Design Tokens)

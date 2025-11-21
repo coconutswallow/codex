@@ -5,27 +5,24 @@ title: Map Index
 
 <div class="hero-block">
   <h1>Curated D&D Battle Maps</h1>
-  <p>
-    Curated battle maps with fast search and optional Avrae commands.
-    <br>
-    <a href="/codex/map-submit" class="tool-btn" style="display:inline-block; margin-top:10px; padding: 8px 16px; font-size: 1em; text-decoration: none;">
-      + Submit a New Map
-    </a>
-  </p>
+  <p>Curated battle maps with fast search and optional Avrae commands.</p>
   
-  <div id="auth-ui" style="margin-top: 20px; font-size: 0.9em; border-top: 1px dashed var(--color-border); padding-top: 15px; display: inline-block;">
-    <button id="login-btn" onclick="login()" class="tool-btn" style="display:none; background:var(--palette-brand-discord); border-color:var(--palette-brand-discord);">Login to Edit</button>
+  <div id="auth-ui" style="margin-top: 10px; font-size: 0.85em;">
+    <button id="login-btn" onclick="login()" class="tool-btn" style="display:none; background:var(--palette-brand-discord); border-color:var(--palette-brand-discord); padding: 4px 10px; font-size: 0.9em;">Login to Edit</button>
     
     <div id="user-info" style="display:none;">
       <span style="margin-right:10px;">Logged in as: <strong id="username-display"></strong></span>
-      <button onclick="logout()" class="tool-btn" style="font-size: 0.8em;">Logout</button>
+      <button onclick="logout()" class="tool-btn" style="padding: 2px 8px; font-size: 0.8em;">Logout</button>
     </div>
   </div>
 </div>
 
 <div class="map-search-wrapper">
-  <label for="mapSearchInput">Search Maps:</label>
   <input type="text" id="mapSearchInput" placeholder="Type keywords, name, or creator...">
+  
+  <a href="/codex/map-submit" class="tool-btn" style="display:inline-flex; align-items:center; justify-content:center; height:42px; box-sizing:border-box; text-decoration:none;">
+    + Submit Map
+  </a>
 </div>
 
 <div class="map-gallery" id="gallery-container">
@@ -43,13 +40,12 @@ title: Map Index
 
   document.addEventListener('DOMContentLoaded', async () => {
     try {
-      // Initialize Supabase
       db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
       initAuth();
     } catch (err) {
       console.error("Critical Init Error:", err);
       document.getElementById('gallery-container').innerHTML = 
-        `<p style="color:red; text-align:center;">Failed to initialize database.<br>${err.message}</p>`;
+        `<p style="color:var(--palette-danger); text-align:center;">Failed to initialize database.</p>`;
     }
   });
 
@@ -125,7 +121,6 @@ title: Map Index
           ? `<a href="${map.source_url}" target="_blank" rel="noopener noreferrer">${map.creator}</a>` 
           : map.creator;
 
-        // EDIT BUTTON LOGIC
         const editButtonHtml = currentUser 
           ? `<a href="/codex/edit?id=${map.id}" class="edit-btn">✏️ Edit / Revise</a>` 
           : '';
@@ -139,7 +134,7 @@ title: Map Index
             <h2>${map.name}</h2>
             <p><strong>Creator:</strong> ${creatorDisplay}</p>
             
-            ${ map.grid_width ? `<p><strong>Dim:</strong> ${map.grid_width}x${map.grid_height}</p>` : '' }
+            ${ map.grid_width ? `<p><strong>Dimensions:</strong> ${map.grid_width}x${map.grid_height}</p>` : '' }
 
             <p><strong>Avrae Map Code:</strong></p>
             <div class="copy-wrapper">
