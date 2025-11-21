@@ -1,4 +1,7 @@
 
+# =============================================
+# Manual Rolls
+# =============================================
 - title: "Manual Roll"
   syntax: "!r <dice and modifier>"
   example: "!r 1d20+3"
@@ -34,6 +37,9 @@
   category: "00 Manual Roll"
   image: ""
 
+# =============================================
+# Setup
+# =============================================
 
 - title: "Import your character sheet"
   syntax: "!import <link to your character sheet>"
@@ -86,6 +92,10 @@
   category: "01 Setup"
   type: "Player"
   image: ""
+
+# =============================================
+# Health
+# =============================================
 
 - title: "Long Rest"
   syntax: "!g lr"
@@ -143,6 +153,10 @@
   type: "Player"
   image: ""
 
+# =============================================
+# Skills & Checks
+# =============================================
+
 - title: "Skills Checks"
   syntax: "!c <skill name>"
   example: "!c perception"
@@ -166,6 +180,10 @@
   category: "03 Skills & Checks"
   type: "Player"
   image: ""
+
+# =============================================
+# Game Controls
+# =============================================
 
 - title: "Join Avrae Combat, Roll Initiative"
   syntax: "!i join"
@@ -200,6 +218,10 @@
   category: "04 Game Control"
   type: "Player"
   image: ""
+
+# =============================================
+# Actions / Attacks
+# =============================================
 
 - title: "Check Available Attacks"
   syntax: "!a list"
@@ -281,6 +303,10 @@
   type: "Player"
   image: ""
 
+# =============================================
+# Spells
+# =============================================
+
 - title: "Spell Book"
   syntax: "!sb"
   example: "!sb"
@@ -331,8 +357,31 @@
   type: "Player"
   image: ""
 
+# =============================================
+# Status Effects
+# =============================================
 
-- title: "Get Character Token"
+- title: "Apply a Status Effect"
+  syntax: "!i effect <target><effect name>"
+  example: "!i effect Robin Blinded"
+  tags: "status effect"
+  category: "07 Status Effects"
+  type: ""
+  image: ""
+
+- title: "Remove a Status Effect"
+  syntax: "!i re <target><effect name>"
+  example: "!i re Robin Blinded"
+  tags: "remove status effect"
+  category: "07 Status Effects"
+  type: ""
+  image: ""
+
+# =============================================
+# Movement
+# =============================================
+
+- title: "Get Character Token Image"
   note: "After right-click, copy image link"
   syntax: "!token -border none"
   example: "!token -border none"
@@ -341,7 +390,7 @@
   type: "Player"
   image: ""
 
-- title: "Get Token Code"
+- title: "Get Token Image Code"
   note: "Generates Token Code for Map"
   syntax: "!map -tokenimport <url>"
   example: "!map -tokenimport https://myimage.jpg"
@@ -350,7 +399,7 @@
   type: "Player"
   image: ""
 
-- title: "Set Character Token"
+- title: "Set Character Token Image"
   note: "Retrieves character token from character sheet"
   syntax: "!map -token <token code>"
   example: "!map -token pgs27"
@@ -385,3 +434,28 @@
   category: "10 Maps and Movement"
   type: "Player"
   image: "assets/images/tutorials/avrae-dm-7.png"
+
+- title: "Cone Overlay"
+  note: "Adds a temporary cone effect"
+  syntax: "!map -over cone <size>, <color>, <start coordinate> and <target coordinates>"
+  example: "!map -over cone,30,b,a5,e5"
+  tags: "cone effect"
+  category: "10 Maps and Movement"
+  type: "Player"
+  image: "assets/images/tutorials/avrae-dm-8.png"
+
+- title: "Beam Overlay"
+  note: "Adds a temporary beam effect"
+  syntax: "!map -over line <size>, <color>, <start coordinate> and <target coordinates>"
+  example: "!map -over line,30,5,g,a1,b2"
+  tags: "beam effect"
+  category: "10 Maps and Movement"
+  type: "Player"
+
+- title: "Circle Overlay"
+  note: "Adds a temporary circle effect"
+  syntax: "!map -over circle <size>, <color>, <center coordinate>"
+  example: "!map -over circle,20,Yellow,l9 "
+  tags: "beam effect"
+  category: "10 Maps and Movement"
+  type: "Player"
