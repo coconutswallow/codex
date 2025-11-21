@@ -17,4 +17,4 @@ permalink: /dm-links/
 |Battle Maps|	|[AtaraxianBear's Google Drive](https://drive.google.com/drive/folders/1HJgEX61tJAsf6Z6WRBqiMUatEqXRSH6Q)|	|A cartographer's free maps.  There are over 300 maps here|
 |Battle Maps|	|[Lost Atlas](https://lostatlas.co/)|	|Battle Maps Search Engine|
 |World Maps|	|[Interactive Sword Coast Map](https://www.aidedd.org/atlas/index.php?map=R&l=1)|	|Sword Coast Map (actually expands to all of Faerun)|
-|World Maps|	|[Forgotten Maps](https://forgottenmaps.web.app/map/Faerun)|	|Another Faerun Map (this one includes the Underdark!)|
+|World Maps|	|[Forgotten Maps](https://forgottenmaps.web.app/map/Faerun)|	|Another Faerun Map (this one includes the Underdark!) but requires google login|
