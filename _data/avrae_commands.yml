@@ -135,6 +135,14 @@
   type: "Player"
   image: ""
 
+- title: "Temp HP"
+  syntax: "!g thp <adjustment>"
+  example: "!g thp 15"
+  tags: "Temp HP"
+  category: "02 Health"
+  type: "Player"
+  image: ""
+
 - title: "Skills Checks"
   syntax: "!c <skill name>"
   example: "!c perception"
@@ -363,21 +371,17 @@
 - title: "Move Token"
   note: "When it's your turn in initiative"
   syntax: "!move <new coordinates>"
-  example: "!move K13"
+  example: "!move A10"
   tags: "move token"
   category: "10 Maps and Movement"
   type: "Player"
-  image: ""
+  image: "codex/assets/images/tutorials/avrae-dm-3.png"
 
 - title: "Move Token"
   note: "Use directions instead; can link multiple stops"
   syntax: "!go <unit in feet><direction>"
-  example: "!move 10NW"
+  example: "!move 5N35NE10SW"
   tags: "move token"
   category: "10 Maps and Movement"
   type: "Player"
-  image: ""
-
-
-
-
+  image: "codex/assets/images/tutorials/avrae-dm-7.png"
