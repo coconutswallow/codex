@@ -10,7 +10,7 @@ permalink: /dm-links/
 |Tool|	|[Kobold Fight Club](https://koboldplus.club/)        |	|Encounter Builder|
 |Token|	|[Too Many Tokens](https://toomanytokens.com/)|	|Big Token Database|
 |Token|	|[1st DnD Token](https://drive.google.com/drive/folders/1cyvyKO0I-C2hhtHvOP3-vBHC84l6P-9f)|	|Google Drive of downloadable tokens|
-|Token|	|[Roll Advantage Token Stamp)(https://rolladvantage.com/tokenstamp/)|	|One of many token stamp tools out there|
+|Token|	|[Roll Advantage Token Stamp](https://rolladvantage.com/tokenstamp/)|	|One of many token stamp tools out there|
 |Battle Maps|	|[Forgotten Realms Map Making Assets](https://www.forgotten-adventures.net/product/map-making/assets/core-mapmaking-pack/)|	|Assets for building your own maps|
 |Battle Maps|	|[Dice Grimorium](https://dicegrimorium.com/free-rpg-map-library/)|	|Free Battle Maps|
 |Battle Maps|	|[Angela's Maps](https://www.patreon.com/collection/25396?view=expanded)|	|Patreon with generous amount of free maps|
