@@ -2,13 +2,14 @@ title: "Coconut Codex"
 url: "https://coconutswallow.github.io"
 baseurl: "/codex"
 
-# Build settings
+# 1. CRITICAL: Makes links like /maps work (instead of /maps.html)
+permalink: pretty
+
 markdown: kramdown
 theme: minima
 plugins:
   - jekyll-feed
 
-# Collections Configuration
 collections:
   maps:
     output: true
@@ -18,16 +19,13 @@ collections:
   session_assets:
     output: true
     permalink: /session-assets/:path/
-#  other_assets:
-#    output: true
-#    permalink: /other-assets/:path/
 
-# Navigation Menu Structure
 navigation:
-  - title: "House Rules"
+  - title: "Home"
     url: "/"
-#  - title: "House Rules"
-#    url: "/house-rules"
+  # 2. FIX: Point to the specific file, not root
+  - title: "House Rules"
+    url: "/house-rules" 
   - title: "Avrae Quick Reference"
     url: "/avrae"
   - title: "Battle Maps"
@@ -36,10 +34,7 @@ navigation:
     url: "/dm-links"
   - title: "Session Assets"
     url: "/session-assets/"
-#  - title: "Other Assets"
-#    url: "/other-assets/"
 
-# Default Layouts
 defaults:
   - scope:
       path: ""
