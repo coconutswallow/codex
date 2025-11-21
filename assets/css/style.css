@@ -995,3 +995,118 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
 .accordion-content .cmd-row:last-child {
   border-bottom: 1px solid var(--color-border);
 }
+
+/* ============================================
+   DOCUMENTATION LAYOUT (_layouts/doc.html)
+   ============================================ */
+
+.doc-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  display: grid;
+  grid-template-columns: 1fr 280px; /* Content | Sidebar */
+  gap: 40px;
+  align-items: start;
+}
+
+/* If TOC is disabled, center the content */
+.doc-wrapper:not(:has(.doc-sidebar)) {
+  grid-template-columns: 1fr;
+  max-width: 900px;
+}
+
+/* --- Breadcrumbs --- */
+.breadcrumb {
+  font-size: 0.85em;
+  color: var(--color-text-muted);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+.breadcrumb a { color: var(--color-text-muted); }
+.breadcrumb a:hover { color: var(--color-primary); }
+.breadcrumb-separator { margin: 0 8px; opacity: 0.5; }
+
+/* --- Header --- */
+.doc-header { margin-bottom: 30px; border-bottom: 1px solid var(--color-border); padding-bottom: 20px; }
+.doc-title { font-size: 2.5rem; color: var(--color-primary); margin-bottom: 10px; line-height: 1.2; }
+.doc-subtitle { font-size: 1.2rem; color: var(--color-text-muted); font-weight: 300; margin: 0; }
+.doc-meta { margin-top: 10px; font-size: 0.9em; color: var(--color-text-muted); }
+
+/* --- Content Body --- */
+.doc-body {
+  font-size: 1.05em;
+  line-height: 1.7;
+}
+.doc-body h2 { 
+  margin-top: 40px; margin-bottom: 15px; 
+  color: var(--color-primary); border-bottom: 2px solid var(--color-border); 
+  padding-bottom: 5px;
+}
+.doc-body h3 { margin-top: 30px; color: var(--color-text); }
+.doc-body ul, .doc-body ol { margin-bottom: 20px; padding-left: 20px; }
+.doc-body code { 
+  background: var(--color-bg-controls); 
+  padding: 2px 6px; border-radius: 4px; 
+  font-family: monospace; font-size: 0.9em; color: var(--palette-brand-discord);
+}
+.doc-body pre {
+  background: var(--color-bg-controls);
+  padding: 15px; border-radius: 8px; border: 1px solid var(--color-border);
+  overflow-x: auto;
+}
+
+/* --- Sidebar TOC --- */
+.doc-sidebar {
+  position: relative;
+}
+.toc-sticky {
+  position: sticky;
+  top: 100px; /* Stick below header */
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 20px;
+}
+.toc-header { margin-top: 0; margin-bottom: 10px; font-size: 0.9em; text-transform: uppercase; color: var(--color-text-muted); }
+.toc-list { list-style: none; padding: 0; margin: 0; }
+.toc-item { margin-bottom: 8px; }
+.toc-item a { 
+  color: var(--color-text); display: block; 
+  text-decoration: none; font-size: 0.95em; 
+  border-left: 2px solid transparent; padding-left: 10px;
+}
+.toc-item a:hover { color: var(--palette-brand-accent); border-left-color: var(--palette-brand-accent); }
+.toc-h3 { margin-left: 15px; font-size: 0.9em; }
+
+/* --- Footer Nav (Prev/Next) --- */
+.doc-divider { margin: 50px 0 30px; border: 0; border-top: 1px solid var(--color-border); }
+.doc-footer-nav {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+}
+.nav-card-link {
+  display: block;
+  padding: 15px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  text-decoration: none;
+  background: var(--color-bg-card);
+  transition: all 0.2s;
+}
+.nav-card-link:hover {
+  border-color: var(--palette-brand-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+.nav-next { text-align: right; }
+.nav-hint { display: block; font-size: 0.8em; color: var(--color-text-muted); margin-bottom: 5px; text-transform: uppercase; }
+.nav-title { display: block; font-weight: bold; color: var(--color-primary); font-size: 1.1em; }
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 900px) {
+  .doc-wrapper { grid-template-columns: 1fr; }
+  .doc-sidebar { display: none; /* Hide TOC on mobile or move to top if preferred */ }
+  .doc-footer-nav { grid-template-columns: 1fr; }
+  .nav-next { text-align: left; margin-top: 10px;}
+}

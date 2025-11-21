@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: doc
 title: Coconut's House Rules
 permalink: /house-rules/
 ---
