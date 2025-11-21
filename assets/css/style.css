@@ -791,7 +791,6 @@ button#submit-btn:hover:not(:disabled) { background: var(--palette-brand-accent)
   font-size: 0.85em;
   color: var(--color-text-muted);
   font-style: italic;
-  margin-left: 34px; /* Indent note to align with title text (Badge width + gap) */
   line-height: 1.4;
 }
 
