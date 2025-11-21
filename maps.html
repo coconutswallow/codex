@@ -9,7 +9,7 @@ title: Map Index
   <p>Login with Discord to edit map cards or add map(s) to the collection.</p>
   
   <div id="auth-ui" style="margin-top: 10px; font-size: 0.85em;">
-    <button id="login-btn" onclick="login()" class="tool-btn" style="display:none; background:var(--palette-brand-discord); border-color:var(--palette-brand-discord); padding: 4px 10px; font-size: 0.9em;">Login to Edit</button>
+    <button id="login-btn" onclick="login()" class="tool-btn" style="display:none; background:var(--palette-brand-discord); border-color:var(--palette-brand-discord); color:var(--palette-white); padding: 4px 10px; font-size: 0.9em;">Login to Edit</button>
     
     <div id="user-info" style="display:none;">
       <span style="margin-right:10px;">Logged in as: <strong id="username-display"></strong></span>
@@ -167,10 +167,18 @@ title: Map Index
 
     if(searchInput) {
         searchInput.addEventListener('keyup', () => {
+          // 1. Split search into individual words (tokens)
           const filterText = searchInput.value.toLowerCase().trim();
+          const searchTerms = filterText.split(" ").filter(term => term.length > 0);
+
           allCards.forEach(card => {
             const cardData = card.getAttribute('data-search');
-            card.style.display = cardData.includes(filterText) ? 'flex' : 'none';
+            
+            // 2. Check if EVERY search term appears somewhere in the card data
+            // (This allows "forest green" to match "green forest")
+            const isMatch = searchTerms.every(term => cardData.includes(term));
+
+            card.style.display = isMatch ? 'flex' : 'none';
           });
         });
     }
