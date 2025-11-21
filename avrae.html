@@ -13,8 +13,8 @@ title: Avrae Quick Reference
 
   <div class="filter-toggles" style="display: flex; gap: 10px; justify-content: center; width: 100%;">
     <button class="tool-btn active" onclick="setFilter('All')" id="btn-all">All</button>
-    <button class="tool-btn" onclick="setFilter('Player')" id="btn-player">Player</button>
-    <button class="tool-btn" onclick="setFilter('DM')" id="btn-dm">DM Only</button>
+    <button class="tool-btn" onclick="setFilter('Player')" id="btn-player">Player Commands</button>
+    <button class="tool-btn" onclick="setFilter('DM')" id="btn-dm">DM Commands</button>
   </div>
 </div>
 
@@ -29,9 +29,20 @@ title: Avrae Quick Reference
   {% assign grouped_commands = site.data.avrae_commands | group_by: 'category' | sort: 'name' %}
   
   {% for group in grouped_commands %}
-    <button class="accordion-header" onclick="toggleAccordion(this)">
+    <button class="accordion-header active" onclick="toggleAccordion(this)">
         {{ group.name }}
     </button>
+
+    <div class="accordion-content open">
+      {% for cmd in group.items %}
+        <div class="cmd-row" 
+             data-search="{{ cmd.title }} {{ cmd.tags }} {{ cmd.note }}"
+             data-type="{{ cmd.type | default: 'Both' }}">
+             
+             </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
 
     <div class="accordion-content">
       {% for cmd in group.items %}
