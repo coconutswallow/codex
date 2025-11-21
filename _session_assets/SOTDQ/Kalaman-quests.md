@@ -22,7 +22,7 @@ Gaining reputation in Kalaman allows you to gain influence or support from the v
 
 Note: Some quests say "not yet available" - they require an additional pre-requisite to unlock (e.g. exploring Kalaman to meet an NPC).
 
-<div class="table-wrapper">
+<div class="table-wrapper" markdown="1">
 
 | Type | Quest | Benefit | Cost (RP) |
 | :--- | :--- | :--- | :--- |
