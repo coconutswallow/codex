@@ -3,6 +3,7 @@
   example: "!a dagger"
   tags: "combat attack action basic"
   category: "Combat"
+  type: "Player"
   image: "" # Optional URL to a gif
 
 - title: "Attack with Advantage"
@@ -10,6 +11,7 @@
   example: "!a longsword adv"
   tags: "combat attack bonus advantage"
   category: "Combat"
+  type: "Player"
   image: ""
 
 - title: "Move Token on Map"
@@ -17,4 +19,5 @@
   example: "!m move C3"
   tags: "map movement token otfbm"
   category: "Map"
+  type: "Player"
   image: "/assets/gifs/map-move.gif" # Example of a visual demo

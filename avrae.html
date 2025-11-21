@@ -8,22 +8,38 @@ title: Avrae Quick Reference
   <p>Fast search for syntax, aliases, and snippets.</p>
 </div>
 
-<div class="map-search-wrapper">
-  <input type="text" id="cmdSearchInput" placeholder="Search commands (e.g. 'attack adv', 'map move')..." autofocus>
+<div class="map-search-wrapper" style="max-width: 800px; flex-direction: column; gap: 15px;">
+  
+  <input type="text" id="cmdSearchInput" placeholder="Search commands (e.g. 'attack', 'check', 'map')..." autofocus style="width: 100%;">
+
+  <div class="filter-toggles" style="display: flex; gap: 10px; justify-content: center; width: 100%;">
+    <button class="tool-btn active" onclick="setFilter('All')" id="btn-all">All</button>
+    <button class="tool-btn" onclick="setFilter('Player')" id="btn-player">Player</button>
+    <button class="tool-btn" onclick="setFilter('DM')" id="btn-dm">DM Only</button>
+  </div>
+
 </div>
 
 <div class="avrae-grid" id="cmd-grid">
   {% for cmd in site.data.avrae_commands %}
-    <div class="cmd-card" data-search="{{ cmd.title }} {{ cmd.tags }} {{ cmd.category }}">
+    <div class="cmd-card" 
+         data-search="{{ cmd.title }} {{ cmd.tags }} {{ cmd.category }}"
+         data-type="{{ cmd.type | default: 'Both' }}">
       
       <div class="cmd-header">
         <h3 class="cmd-title">{{ cmd.title }}</h3>
-        <span class="cmd-badge">{{ cmd.category }}</span>
+        <div style="display:flex; gap:5px;">
+            {% if cmd.type == 'DM' %}
+                <span class="cmd-badge" style="background:#4A332A; color:white;">DM</span>
+            {% elsif cmd.type == 'Player' %}
+                <span class="cmd-badge" style="background:#6B8E23; color:white;">PL</span>
+            {% endif %}
+            <span class="cmd-badge">{{ cmd.category }}</span>
+        </div>
       </div>
 
       <div class="cmd-syntax-wrapper">
         <code class="cmd-code">{{ cmd.syntax }}</code>
-        <button class="cmd-copy-btn" title="Copy to Clipboard" onclick="copyText(this)">📋</button>
       </div>
 
       <div class="cmd-footer">
@@ -41,7 +57,8 @@ title: Avrae Quick Reference
 </div>
 
 <div id="demo-modal" class="modal-overlay" onclick="closeModal()">
-  <div class="modal-content" onclick="event.stopPropagation()"> <img id="modal-img" src="">
+  <div class="modal-content" onclick="event.stopPropagation()"> 
+    <img id="modal-img" src="">
     <div style="text-align:center; margin-top:10px;">
         <button class="tool-btn" onclick="closeModal()">Close</button>
     </div>
@@ -49,33 +66,64 @@ title: Avrae Quick Reference
 </div>
 
 <script>
-  /* --- 1. Search Logic (Fuzzy Match) --- */
+  let currentFilter = 'All';
+
+  /* --- Filter Logic (Search + Toggle) --- */
   const searchInput = document.getElementById('cmdSearchInput');
   const allCards = document.querySelectorAll('.cmd-card');
+  const btns = {
+    'All': document.getElementById('btn-all'),
+    'Player': document.getElementById('btn-player'),
+    'DM': document.getElementById('btn-dm')
+  };
 
-  searchInput.addEventListener('keyup', () => {
+  // 1. Handle Toggle Clicks
+  function setFilter(type) {
+    currentFilter = type;
+    
+    // Update Button Styles
+    Object.values(btns).forEach(b => {
+        b.style.background = 'var(--color-bg-controls)';
+        b.style.color = 'var(--color-text)';
+    });
+    const activeBtn = btns[type];
+    activeBtn.style.background = 'var(--palette-brand-main)';
+    activeBtn.style.color = 'var(--palette-white)';
+
+    // Re-run filter
+    runFilter();
+  }
+
+  // 2. Handle Typing
+  searchInput.addEventListener('keyup', runFilter);
+
+  // 3. Main Filter Function
+  function runFilter() {
     const filterText = searchInput.value.toLowerCase().trim();
     const terms = filterText.split(" ").filter(t => t.length > 0);
 
     allCards.forEach(card => {
       const searchData = card.getAttribute('data-search').toLowerCase();
-      // Every typed word must exist in the card data
-      const isMatch = terms.every(term => searchData.includes(term));
-      card.style.display = isMatch ? 'flex' : 'none';
-    });
-  });
+      const cardType = card.getAttribute('data-type'); // "DM", "Player", or "Both"
 
-  /* --- 2. Copy Logic --- */
-  function copyText(btn) {
-    const code = btn.previousElementSibling.innerText;
-    navigator.clipboard.writeText(code);
-    
-    const original = btn.innerText;
-    btn.innerText = "✅";
-    setTimeout(() => btn.innerText = original, 1500);
+      // Check Text Match
+      const textMatch = terms.every(term => searchData.includes(term));
+
+      // Check Type Match
+      let typeMatch = true;
+      if (currentFilter !== 'All') {
+          // If filter is 'DM', show 'DM' and 'Both'
+          // If filter is 'Player', show 'Player' and 'Both'
+          if (cardType !== currentFilter && cardType !== 'Both') {
+              typeMatch = false;
+          }
+      }
+
+      card.style.display = (textMatch && typeMatch) ? 'flex' : 'none';
+    });
   }
 
-  /* --- 3. Modal Logic --- */
+  /* --- Modal Logic --- */
   const modal = document.getElementById('demo-modal');
   const modalImg = document.getElementById('modal-img');
 
@@ -89,8 +137,10 @@ title: Avrae Quick Reference
     modalImg.src = "";
   }
   
-  // Close on Escape key
   document.addEventListener('keydown', (e) => {
     if (e.key === "Escape") closeModal();
   });
+  
+  // Initialize active state style manually on load
+  setFilter('All');
 </script>
