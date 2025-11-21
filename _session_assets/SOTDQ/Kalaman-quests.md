@@ -8,6 +8,8 @@ permalink: /session-assets/SOTDQ/kalaman-quests/
 
 Gaining reputation in Kalaman allows you to gain influence or support from the various factions in Kalaman that could benefit your party, the citizens of Vogler/Kalaman, or both. Spend Reputation Points to unlock side-quests. Note that unlocking a side quest does not automatically mean benefits are achieved - each quest involves 1-2 scenes that require role-play and skills challenge(s) to receive the benefit.
 
+![Kalaman](https://i.imgur.com/jwDqUi9.jpg)
+
 ## Earning Reputation Points
 - Your starting Reputation Points is equal to the number of villagers saved in Act 2 Invasion.
 - There are 4 major missions in this Act. Each act earns 10 Reputation Points when you complete a mission.
