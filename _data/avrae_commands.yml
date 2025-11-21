@@ -375,7 +375,7 @@
   tags: "move token"
   category: "10 Maps and Movement"
   type: "Player"
-  image: "codex/assets/images/tutorials/avrae-dm-3.png"
+  image: "assets/images/tutorials/avrae-dm-3.png"
 
 - title: "Move Token"
   note: "Use directions instead; can link multiple stops"
@@ -384,4 +384,4 @@
   tags: "move token"
   category: "10 Maps and Movement"
   type: "Player"
-  image: "codex/assets/images/tutorials/avrae-dm-7.png"
+  image: "assets/images/tutorials/avrae-dm-7.png"
