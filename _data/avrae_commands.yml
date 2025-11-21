@@ -59,8 +59,8 @@
 - title: "Skills Checks"
   syntax: "!c <skill name>"
   example: "!c perception"
-  tags: "03 Skills Abilitites checks"
-  category: "Skills & Checks"
+  tags: "Skills Abilitites checks"
+  category: "03 Skills & Checks"
   type: "Player"
   image: ""
 
@@ -87,7 +87,6 @@
   category: "04 Game Control"
   type: "Player"
   image: ""
-
 
 - title: "End Turn"
   syntax: "!i n"
