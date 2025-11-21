@@ -1173,4 +1173,47 @@ tbody tr:hover {
 .table-wrapper {
   overflow-x: auto;
   margin-bottom: 20px;
-  border: 1px solid
+  border: 1px solid;
+}
+/* ============================================
+   2. GLOBAL RESETS & BACKGROUND
+   ============================================ */
+body {
+  font-family: 'Nunito', system-ui, sans-serif;
+  color: var(--color-text);
+  line-height: 1.6;
+  margin: 0;
+  
+  /* --- BACKGROUND IMAGE SETUP --- */
+  background-color: #1a1a1a; /* Fallback color */
+  background-image: url('https://img.photouploads.com/file/PhotoUploads-com/jrjt.png');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-attachment: fixed; /* Keeps image still while you scroll */
+  background-size: cover;       /* Stretches image to fill screen */
+}
+
+a { color: var(--palette-brand-accent); text-decoration: none; font-weight: bold; }
+a:hover { text-decoration: underline; color: var(--palette-brand-main); }
+
+/* ============================================
+   3. LAYOUT (Header / Footer / Hero)
+   ============================================ */
+
+/* ... (Keep .site-header and .header-content as they were) ... */
+
+/* UPDATE THIS CLASS: The "Center Page Frame" */
+.page-content {
+  min-height: 85vh;
+  
+  /* Frame Logic */
+  max-width: 1400px;           /* Restrict width so you can see the background */
+  margin: 0 auto;              /* Center it */
+  background-color: var(--color-bg-page); /* Solid background so text is readable */
+  box-shadow: 0 0 50px rgba(0,0,0,0.5);   /* Drop shadow to make it "pop" off the background */
+  position: relative;
+  z-index: 1;
+}
+
+/* Optional: Make the footer sit inside the frame too, or keep it separate. 
+   Currently, footer is wide. To match the frame, update footer max-width if desired. */
