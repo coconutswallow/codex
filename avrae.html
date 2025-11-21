@@ -42,19 +42,6 @@ title: Avrae Quick Reference
                data-search="{{ cmd.title }} {{ cmd.tags }} {{ cmd.note }}"
                data-type="{{ cmd.type | default: 'Both' }}">
             
-            <div class="col-heading">
-              <div class="title-wrapper">
-                  {% if cmd.type == 'DM' %}
-                      <span class="cmd-badge" style="background:#4A332A; color:white;">DM</span>
-                  {% elsif cmd.type == 'Player' %}
-                      <span class="cmd-badge" style="background:#6B8E23; color:white;">PL</span>
-                  {% else %}
-                      <span class="cmd-badge" style="opacity:0;">--</span>
-                  {% endif %} 
-                  
-                  <div class="cmd-title">{{ cmd.title }}</div>
-              </div>
-
               {% if cmd.note %}
                   <div class="cmd-note-text">{{ cmd.note }}</div>
               {% endif %}
