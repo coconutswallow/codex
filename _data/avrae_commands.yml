@@ -396,7 +396,6 @@
   example: "!map -tokenimport https://myimage.jpg"
   tags: "map token"
   category: "10 Maps and Movement"
-  type: "Player"
   image: ""
 
 - title: "Set Character Token Image"
@@ -405,7 +404,6 @@
   example: "!map -token pgs27"
   tags: "map token"
   category: "10 Maps and Movement"
-  type: "Player"
   image: ""
 
 - title: "Place Your Token"
@@ -414,7 +412,6 @@
   example: "!map -t Robin|K13"
   tags: "place token"
   category: "10 Maps and Movement"
-  type: "Player"
   image: ""
 
 - title: "Move Token"
@@ -423,7 +420,6 @@
   example: "!move A10"
   tags: "move token"
   category: "10 Maps and Movement"
-  type: "Player"
   image: "assets/images/tutorials/avrae-dm-3.png"
 
 - title: "Move Token"
@@ -432,7 +428,6 @@
   example: "!move 10N30NE5SW"
   tags: "move token"
   category: "10 Maps and Movement"
-  type: "Player"
   image: "assets/images/tutorials/avrae-dm-7.png"
 
 - title: "Cone Overlay"
@@ -441,7 +436,6 @@
   example: "!map -over cone,30,b,a5,e5"
   tags: "cone effect"
   category: "10 Maps and Movement"
-  type: "Player"
   image: "assets/images/tutorials/avrae-dm-8.png"
 
 - title: "Beam Overlay"
@@ -450,7 +444,6 @@
   example: "!map -over line,30,5,g,a1,b2"
   tags: "beam effect"
   category: "10 Maps and Movement"
-  type: "Player"
 
 - title: "Circle Overlay"
   note: "Adds a temporary circle effect"
@@ -458,4 +451,4 @@
   example: "!map -over circle,20,Yellow,l9 "
   tags: "beam effect"
   category: "10 Maps and Movement"
-  type: "Player"
+  image: "assets/images/tutorials/avrae-dm-4.png"
