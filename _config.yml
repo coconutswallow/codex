@@ -23,9 +23,6 @@ collections:
 navigation:
   - title: "Home"
     url: "/"
-  # 2. FIX: Point to the specific file, not root
-  - title: "House Rules"
-    url: "/house-rules" 
   - title: "Avrae Quick Reference"
     url: "/avrae"
   - title: "Battle Maps"
