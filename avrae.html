@@ -1,0 +1,96 @@
+---
+layout: default
+title: Avrae Guide
+---
+
+<div class="hero-block">
+  <h1>Avrae Command Reference</h1>
+  <p>Fast search for syntax, aliases, and snippets.</p>
+</div>
+
+<div class="map-search-wrapper">
+  <input type="text" id="cmdSearchInput" placeholder="Search commands (e.g. 'attack adv', 'map move')..." autofocus>
+</div>
+
+<div class="avrae-grid" id="cmd-grid">
+  {% for cmd in site.data.avrae_commands %}
+    <div class="cmd-card" data-search="{{ cmd.title }} {{ cmd.tags }} {{ cmd.category }}">
+      
+      <div class="cmd-header">
+        <h3 class="cmd-title">{{ cmd.title }}</h3>
+        <span class="cmd-badge">{{ cmd.category }}</span>
+      </div>
+
+      <div class="cmd-syntax-wrapper">
+        <code class="cmd-code">{{ cmd.syntax }}</code>
+        <button class="cmd-copy-btn" title="Copy to Clipboard" onclick="copyText(this)">📋</button>
+      </div>
+
+      <div class="cmd-footer">
+        <span>Ex: <em>{{ cmd.example }}</em></span>
+        
+        {% if cmd.image %}
+          <span class="demo-link" onclick="openModal('{{ cmd.image | relative_url }}')">
+            🎥 View Demo
+          </span>
+        {% endif %}
+      </div>
+
+    </div>
+  {% endfor %}
+</div>
+
+<div id="demo-modal" class="modal-overlay" onclick="closeModal()">
+  <div class="modal-content" onclick="event.stopPropagation()"> <img id="modal-img" src="">
+    <div style="text-align:center; margin-top:10px;">
+        <button class="tool-btn" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* --- 1. Search Logic (Fuzzy Match) --- */
+  const searchInput = document.getElementById('cmdSearchInput');
+  const allCards = document.querySelectorAll('.cmd-card');
+
+  searchInput.addEventListener('keyup', () => {
+    const filterText = searchInput.value.toLowerCase().trim();
+    const terms = filterText.split(" ").filter(t => t.length > 0);
+
+    allCards.forEach(card => {
+      const searchData = card.getAttribute('data-search').toLowerCase();
+      // Every typed word must exist in the card data
+      const isMatch = terms.every(term => searchData.includes(term));
+      card.style.display = isMatch ? 'flex' : 'none';
+    });
+  });
+
+  /* --- 2. Copy Logic --- */
+  function copyText(btn) {
+    const code = btn.previousElementSibling.innerText;
+    navigator.clipboard.writeText(code);
+    
+    const original = btn.innerText;
+    btn.innerText = "✅";
+    setTimeout(() => btn.innerText = original, 1500);
+  }
+
+  /* --- 3. Modal Logic --- */
+  const modal = document.getElementById('demo-modal');
+  const modalImg = document.getElementById('modal-img');
+
+  function openModal(imgSrc) {
+    modalImg.src = imgSrc;
+    modal.style.display = 'flex';
+  }
+
+  function closeModal() {
+    modal.style.display = 'none';
+    modalImg.src = "";
+  }
+  
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === "Escape") closeModal();
+  });
+</script>
