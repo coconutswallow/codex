@@ -95,3 +95,28 @@
   category: "04 Game Control"
   type: "Player"
   image: ""
+
+- title: "Check Available Attacks"
+  syntax: "!a list"
+  example: "!a list"
+  tags: "Attack"
+  category: "05 Attacking"
+  type: "Player"
+  image: ""
+
+- title: "Attack Enemy"
+  syntax: "!a <weapon> -t <enemy>"
+  example: "!a shortsword -t goblin"
+  tags: "Attack Target"
+  category: "05 Attacking"
+  type: "Player"
+  image: ""
+
+  
+- title: "Attack Multiple Enemies"
+  syntax: "!a <weapon> -t <enemy 1> -t <enemy 1>"
+  example: "!a shortsword -t goblin1 -t goblin2"
+  tags: "Attack Target Multiple"
+  category: "05 Attacking"
+  type: "Player"
+  image: ""
