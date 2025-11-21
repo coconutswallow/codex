@@ -1231,7 +1231,7 @@ a:hover { text-decoration: underline; color: var(--palette-brand-main); }
 /* Optional: Make the footer sit inside the frame too, or keep it separate. 
    Currently, footer is wide. To match the frame, update footer max-width if desired. */
 
-   /* ============================================
+  /* ============================================
    SESSION ASSETS (List View)
    ============================================ */
 .assets-container {
@@ -1311,5 +1311,11 @@ a:hover { text-decoration: underline; color: var(--palette-brand-main); }
 
 .asset-arrow {
   font-size: 1.2em;
-  color;
+  color: var(--color-border);
+  margin-left: 15px;
+  font-weight: bold;
+}
+
+.asset-row:hover .asset-arrow {
+  color: var(--palette-brand-accent);
 }
