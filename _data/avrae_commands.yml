@@ -380,7 +380,7 @@
 - title: "Move Token"
   note: "Use directions instead; can link multiple stops"
   syntax: "!go <unit in feet><direction>"
-  example: "!move 5N35NE10SW"
+  example: "!move 10N30NE5SW"
   tags: "move token"
   category: "10 Maps and Movement"
   type: "Player"

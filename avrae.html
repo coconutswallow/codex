@@ -52,7 +52,7 @@ title: Avrae Quick Reference
 
             <div class="col-code" data-label="Syntax">{{ cmd.syntax | escape }}</div>
 
-            <div class="col-code" data-label="Example" style="color: var(--color-text);">{{ cmd.example | escape }}{% if cmd.image and cmd.image != "" %}<span class="demo-link-small" onclick="openModal('{{ cmd.image | relative_url }}')">🎥 Watch Demo</span>{% endif %}</div>
+            <div class="col-code" data-label="Example" style="color: var(--color-text);">{{ cmd.example | escape }}{% if cmd.image and cmd.image != "" %}<span class="demo-link-small" onclick="openModal('{{ cmd.image | relative_url }}')">🎥 Example</span>{% endif %}</div>
 
           </div>
         {% endfor %}
