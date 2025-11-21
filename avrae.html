@@ -24,45 +24,53 @@ title: Avrae Quick Reference
     <span class="hide-mobile">Example</span>
 </div>
 
-<div class="avrae-list" id="cmd-grid">
-  {% for cmd in site.data.avrae_commands %}
-    <div class="cmd-row" 
-         data-search="{{ cmd.title }} {{ cmd.tags }} {{ cmd.category }} {{ cmd.note }}"
-         data-type="{{ cmd.type | default: 'Both' }}">
-      
-      <div class="col-heading">
-        <div class="cmd-title">{{ cmd.title }}</div>
-        
-        <div class="cmd-meta">
-            {% if cmd.type == 'DM' %}
-                <span class="cmd-badge" style="background:#4A332A; color:white;">DM</span>
-            {% elsif cmd.type == 'Player' %}
-                <span class="cmd-badge" style="background:#6B8E23; color:white;">PL</span>
+<div class="avrae-list-container" style="max-width: 1200px; margin: 0 auto; padding-bottom: 40px;">
+
+  {% assign grouped_commands = site.data.avrae_commands | group_by: 'category' | sort: 'name' %}
+  
+  {% for group in grouped_commands %}
+    <button class="accordion-header" onclick="toggleAccordion(this)">
+        {{ group.name }}
+    </button>
+
+    <div class="accordion-content">
+      {% for cmd in group.items %}
+        <div class="cmd-row" 
+             data-search="{{ cmd.title }} {{ cmd.tags }} {{ cmd.note }}"
+             data-type="{{ cmd.type | default: 'Both' }}">
+          
+          <div class="col-heading">
+            <div class="cmd-title">{{ cmd.title }}</div>
+            <div class="cmd-meta">
+                {% if cmd.type == 'DM' %}
+                    <span class="cmd-badge" style="background:#4A332A; color:white;">DM</span>
+                {% elsif cmd.type == 'Player' %}
+                    <span class="cmd-badge" style="background:#6B8E23; color:white;">PL</span>
+                {% endif %}
+                </div>
+            {% if cmd.note %}
+                <div class="cmd-note-full" style="margin-top:5px; font-size:0.8em; font-style:italic;">{{ cmd.note }}</div>
             {% endif %}
-            <span class="cmd-badge">{{ cmd.category }}</span>
+          </div>
+
+          <div class="col-code" data-label="Syntax">
+            {{ cmd.syntax | escape }}
+          </div>
+
+          <div class="col-code" data-label="Example" style="color: var(--color-text);">
+            {{ cmd.example | escape }}
+            {% if cmd.image and cmd.image != "" %}
+              <span class="demo-link-small" onclick="openModal('{{ cmd.image | relative_url }}')">
+                🎥 Demo
+              </span>
+            {% endif %}
+          </div>
+
         </div>
-
-        {% if cmd.note %}
-            <div class="cmd-note-text">{{ cmd.note }}</div>
-        {% endif %}
-      </div>
-
-      <div class="col-code" data-label="Syntax">
-        {{ cmd.syntax | escape }}
-      </div>
-
-      <div class="col-code" data-label="Example" style="color: var(--color-text);">
-        {{ cmd.example | escape }}
-        
-        {% if cmd.image and cmd.image != "" %}
-          <span class="demo-link-small" onclick="openModal('{{ cmd.image | relative_url }}')">
-            🎥 View Demo
-          </span>
-        {% endif %}
-      </div>
-
+      {% endfor %}
     </div>
   {% endfor %}
+
 </div>
 
 <div id="demo-modal" class="modal-overlay" onclick="closeModal()">
@@ -82,13 +90,24 @@ title: Avrae Quick Reference
   let currentFilter = 'All';
 
   const searchInput = document.getElementById('cmdSearchInput');
-  const allRows = document.querySelectorAll('.cmd-row'); // Updated selector
+  // Select all accordion wrappers
+  const accordions = document.querySelectorAll('.accordion-content');
+  const headers = document.querySelectorAll('.accordion-header');
+
   const btns = {
     'All': document.getElementById('btn-all'),
     'Player': document.getElementById('btn-player'),
     'DM': document.getElementById('btn-dm')
   };
 
+  /* --- Accordion Logic --- */
+  function toggleAccordion(btn) {
+      btn.classList.toggle('active');
+      const content = btn.nextElementSibling;
+      content.classList.toggle('open');
+  }
+
+  /* --- Filter Logic --- */
   function setFilter(type) {
     currentFilter = type;
     Object.values(btns).forEach(b => {
@@ -105,24 +124,57 @@ title: Avrae Quick Reference
   function runFilter() {
     const filterText = searchInput.value.toLowerCase().trim();
     const terms = filterText.split(" ").filter(t => t.length > 0);
+    const isSearching = (terms.length > 0 || currentFilter !== 'All');
 
-    allRows.forEach(row => {
-      const searchData = row.getAttribute('data-search').toLowerCase();
-      const cardType = row.getAttribute('data-type'); 
+    // Loop through every Category Group
+    headers.forEach((header, index) => {
+        const panel = accordions[index];
+        const rows = panel.querySelectorAll('.cmd-row');
+        let visibleCount = 0;
 
-      const textMatch = terms.every(term => searchData.includes(term));
+        rows.forEach(row => {
+            const searchData = row.getAttribute('data-search').toLowerCase();
+            const cardType = row.getAttribute('data-type'); 
 
-      let typeMatch = true;
-      if (currentFilter !== 'All') {
-          if (cardType !== currentFilter && cardType !== 'Both') {
-              typeMatch = false;
-          }
-      }
+            // 1. Text Match
+            const textMatch = terms.every(term => searchData.includes(term));
 
-      row.style.display = (textMatch && typeMatch) ? 'grid' : 'none'; // Use Grid display
+            // 2. Type Match
+            let typeMatch = true;
+            if (currentFilter !== 'All') {
+                if (cardType !== currentFilter && cardType !== 'Both') {
+                    typeMatch = false;
+                }
+            }
+
+            const isVisible = textMatch && typeMatch;
+            row.style.display = isVisible ? 'grid' : 'none';
+            if (isVisible) visibleCount++;
+        });
+
+        // Group Visibility Logic
+        if (visibleCount > 0) {
+            header.style.display = 'flex';
+            
+            // If searching, auto-expand found categories
+            if (isSearching) {
+                if (!panel.classList.contains('open')) {
+                    panel.classList.add('open');
+                    header.classList.add('active');
+                }
+            } else {
+                // Optional: Collapse all if search is cleared? 
+                // Currently leaving them as they were
+            }
+        } else {
+            header.style.display = 'none'; // Hide empty categories
+            panel.classList.remove('open');
+            header.classList.remove('active');
+        }
     });
   }
 
+  /* --- Modal Logic --- */
   const modal = document.getElementById('demo-modal');
   const modalImg = document.getElementById('modal-img');
 
