@@ -74,4 +74,47 @@ layout: default
 
     {% if page.toc %}
     <aside class="doc-sidebar">
-        <div class="toc-sticky
+        <div class="toc-sticky">
+            <h4 class="toc-header">On This Page</h4>
+            <div id="toc-container"></div>
+        </div>
+    </aside>
+    {% endif %}
+
+</div>
+
+{% if page.toc %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const content = document.querySelector('.doc-body');
+    const tocContainer = document.getElementById('toc-container');
+    
+    if (!content || !tocContainer) return;
+    
+    const headers = content.querySelectorAll('h2, h3');
+    if (headers.length === 0) {
+        document.querySelector('.doc-sidebar').style.display = 'none';
+        return;
+    }
+    
+    const toc = document.createElement('ul');
+    toc.className = 'toc-list';
+    
+    headers.forEach((header, index) => {
+        if (!header.id) header.id = 'section-' + index;
+        
+        const li = document.createElement('li');
+        li.className = 'toc-item toc-' + header.tagName.toLowerCase();
+        
+        const link = document.createElement('a');
+        link.href = '#' + header.id;
+        link.textContent = header.textContent;
+        
+        li.appendChild(link);
+        toc.appendChild(li);
+    });
+    
+    tocContainer.appendChild(toc);
+});
+</script>
+{% endif %}
