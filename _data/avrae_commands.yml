@@ -394,6 +394,7 @@
   note: "Generates Token Code for Map"
   syntax: "!map -tokenimport <url>"
   example: "!map -tokenimport https://myimage.jpg"
+  type: "Player"
   tags: "map token"
   category: "10 Maps and Movement"
   image: ""
@@ -403,6 +404,7 @@
   syntax: "!map -token <token code>"
   example: "!map -token pgs27"
   tags: "map token"
+  type: "Player"
   category: "10 Maps and Movement"
   image: ""
 
@@ -411,6 +413,7 @@
   syntax: "!map -t <character name>|<coordinates>"
   example: "!map -t Robin|K13"
   tags: "place token"
+  type: "Player"
   category: "10 Maps and Movement"
   image: ""
 
@@ -452,3 +455,24 @@
   tags: "beam effect"
   category: "10 Maps and Movement"
   image: "assets/images/tutorials/avrae-dm-4.png"
+
+
+# =============================================
+# DM Combat Setup
+# =============================================
+- title: "Start Avrae Combat Tracking"
+  syntax: "!i begin"
+  example: "!i begin"
+  tags: "Start Combat"
+  category: "20 DM Combat Setup"
+  type: "DM"
+  image: ""
+
+- title: "Re-roll intiatives"
+  syntax: "!i shuffle"
+  example: "!i shuffle"
+  tags: "Reroll initiative"
+  category: "20 DM Combat Setup"
+  type: "DM"
+  image: ""
+
