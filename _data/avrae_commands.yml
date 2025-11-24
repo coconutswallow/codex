@@ -211,13 +211,22 @@
   type: "Player"
   image: ""
 
-- title: "End Turn"
+- title: "Jump to a combatant turn"
+  syntax: "!i goto <character name, or init #>"
+  example: "!i goto Goblin"
+  tags: "Change Jump Turn"
+  category: "04 Game Control"
+  type: "DM"
+  image: ""
+
+- title: "Jump to Combatant Turn"
   syntax: "!i n"
   example: "!i n"
   tags: "EOT End of Turn"
   category: "04 Game Control"
   type: "Player"
   image: ""
+
 
 # =============================================
 # Actions / Attacks
@@ -476,3 +485,80 @@
   type: "DM"
   image: ""
 
+- title: "Add a monster"
+  syntax: "!i madd <monster name>"
+  example: "!i madd goblin warrior"
+  tags: "Add monster"
+  category: "20 DM Combat Setup"
+  type: "DM"
+  image: ""
+
+- title: "Add a monster, custom stats"
+  syntax: "!i madd <monster name> -AC <armor class> -HP <hit points>"
+  example: "!i madd goblin warrior -AC 12 -HP 10"
+  tags: "Add monster"
+  category: "20 DM Combat Setup"
+  type: "DM"
+  image: ""
+
+- title: "Set combatant controller"
+  syntax: "!i opt CreatureName -controller @pingthem"
+  example: "!opt Familiar -controller Coconut"
+  tags: "Add monster"
+  category: "20 DM Combat Setup"
+  type: "DM"
+  image: ""
+
+- title: "Change initiative"
+  syntax: "i opt <character> -p <init number>"
+  example: "!opt Familiar -p 12"
+  tags: "Change initiative"
+  category: "20 DM Combat Setup"
+  type: "DM"
+  image: ""
+
+- title: "Remove Combatant"
+  syntax: "!i remove <name>"
+  example: "!i remove Goblin"
+  tags: "Remove Combatant"
+  category: "20 DM Combat Setup"
+  type: "DM"
+  image: ""
+
+# =============================================
+# 21 DM Map Setup
+# =============================================
+
+- title: "Add DM (mandatory for map)"
+  note: "Required for Map use"
+  syntax: "!i add 50 DM -p"
+  example: "!i add 50 DM -p"
+  tags: "Add DM before map command"
+  category: "25 Map Setup"
+  type: "DM"
+  image: ""
+
+- title: "Add a Map background"
+  note: "See my battle maps for preset maps"
+  syntax: "!map -bg <url> -mapsize <dimensions> -options dc50 -t DM"
+  example: "!map -bg https://img.photouploads.com/file/PhotoUploads-com/jMRT.jpg -mapsize 23x17 -options dc50 -t DM"
+  tags: "Set map background image"
+  category: "25 Map Setup"
+  type: "DM"
+  image: ""
+
+- title: "Change Map View (e.g. zoom in)"
+  syntax: "!view X:Y"
+  example: "!view D2:M15"
+  tags: "Change Map View"
+  category: "25 Map Setup"
+  type: "DM"
+  image: ""
+
+- title: "Reset Map View"
+  syntax: "!view reset	"
+  example: "!view reset"
+  tags: "Change Map View"
+  category: "25 Map Setup"
+  type: "DM"
+  image: ""
