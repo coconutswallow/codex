@@ -233,7 +233,29 @@ title: Map Index
     const redirectUrl = window.location.href; 
     await db.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: redirectUrl } });
   }
-
+  function setupInteractions(container) {
+    // Finds all 'Copy' buttons inside the newly loaded cards
+    container.querySelectorAll('.copy-button').forEach(btn => {
+      btn.onclick = () => {
+        const codeEl = btn.previousElementSibling;
+        if(!codeEl) return;
+        
+        // Copy text to clipboard
+        navigator.clipboard.writeText(codeEl.innerText);
+        
+        // Visual feedback
+        const oldText = btn.innerText;
+        btn.innerText = 'Copied!';
+        btn.style.color = 'var(--palette-success)';
+        
+        // Reset after 2 seconds
+        setTimeout(() => { 
+            btn.innerText = oldText; 
+            btn.style.color = ''; 
+        }, 2000);
+      };
+    });
+  }
   async function logout() {
     await db.auth.signOut();
     window.location.reload();
