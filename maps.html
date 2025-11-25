@@ -189,6 +189,7 @@ title: Map Index
         const card = document.createElement('div');
         card.className = 'map-card';
         
+        // 1. Define variables BEFORE starting the HTML string
         const creatorDisplay = map.source_url 
           ? `<a href="${map.source_url}" target="_blank" rel="noopener noreferrer">${map.creator}</a>` 
           : map.creator;
@@ -197,13 +198,13 @@ title: Map Index
           ? `<a href="/codex/edit?id=${map.id}" class="edit-btn">✏️ Edit / Revise</a>` 
           : '';
 
+        // 2. Create the optimized thumbnail URL
+        const thumbUrl = `https://wsrv.nl/?url=${encodeURIComponent(map.image_url)}&w=400&output=webp`;
+
+        // 3. Now build the HTML using those variables
         card.innerHTML = `
           <a href="${map.image_url}" class="map-thumbnail-link" target="_blank" title="View Full Image">
-            const thumbUrl = `https://wsrv.nl/?url=${encodeURIComponent(map.image_url)}&w=400&output=webp`;
-            card.innerHTML = `
-              <a href="${map.image_url}" class="map-thumbnail-link" target="_blank" title="View Full Image">
-                <img src="${thumbUrl}" alt="${map.name}" class="map-thumbnail" loading="lazy">
-              </a>
+            <img src="${thumbUrl}" alt="${map.name}" class="map-thumbnail" loading="lazy">
           </a>
 
           <div class="map-card-info">
@@ -226,29 +227,6 @@ title: Map Index
     });
 
     setupInteractions(container);
-  }
-
-  function setupInteractions(container) {
-    // Only target buttons inside the newly added container (or globally is fine)
-    container.querySelectorAll('.copy-button').forEach(btn => {
-      // Prevent duplicate listeners by checking a flag or removing old ones (optional)
-      // Since we recreate buttons, simple addEventListener is fine.
-      btn.onclick = () => {
-        const codeEl = btn.previousElementSibling;
-        if(!codeEl) return;
-        
-        navigator.clipboard.writeText(codeEl.innerText);
-        const oldText = btn.innerText;
-        
-        btn.innerText = 'Copied!';
-        btn.style.color = 'var(--palette-success)';
-        
-        setTimeout(() => { 
-            btn.innerText = oldText; 
-            btn.style.color = ''; 
-        }, 2000);
-      };
-    });
   }
 
   async function login() {
