@@ -27,8 +27,9 @@ title: Map Index
 </div>
 
 <div class="map-gallery" id="gallery-container">
-  <p id="loading-text" style="text-align:center; color:#666; margin-top: 50px;">Loading library...</p>
-</div>
+  </div>
+
+<button id="load-more-btn" class="tool-btn" onclick="fetchMaps()" style="display:none; margin: 20px auto; padding: 10px 20px;">Load More Maps</button>
 
 <script>
   /* --- CONFIGURATION --- */
@@ -104,23 +105,15 @@ title: Map Index
   
   function resetGallery() {
       const container = document.getElementById('gallery-container');
-      container.innerHTML = ''; // Clear existing
+      const loadMoreBtn = document.getElementById('load-more-btn');
+      
+      container.innerHTML = ''; // Clear existing maps
       currentPage = 0;
       reachedEnd = false;
       
-      // Add a Load More button container that we can move to the bottom
-      const loadMoreBtn = document.createElement('button');
-      loadMoreBtn.id = "load-more-btn";
-      loadMoreBtn.className = "tool-btn";
-      loadMoreBtn.style.cssText = "display:none; margin: 20px auto; display:block;";
-      loadMoreBtn.innerText = "Load More Maps";
-      loadMoreBtn.onclick = () => fetchMaps();
-      
-      // We append items before this button
-      container.parentNode.appendChild(loadMoreBtn); 
-      // Actually, cleaner to keep button outside gallery-container or append it after.
-      // Let's just call fetchMaps immediately.
-      
+      // HIDE the button initially so it doesn't float there empty while we load
+      if(loadMoreBtn) loadMoreBtn.style.display = 'none';
+
       fetchMaps();
   }
 
