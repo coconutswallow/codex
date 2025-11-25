@@ -33,20 +33,39 @@ title: Map Index
 <script>
   /* --- CONFIGURATION --- */
   const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
-  /* 🔴 YOUR KEY HERE 🔴 */
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'; 
   
   let db;
   let currentUser = null;
+  
+  // PAGINATION SETTINGS
+  let currentPage = 0;
+  const PAGE_SIZE = 24; // How many maps to load at once
+  let currentSearch = "";
+  let isLoading = false;
+  let reachedEnd = false;
 
   document.addEventListener('DOMContentLoaded', async () => {
     try {
       db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      
+      // Setup Search Listener with Debounce (wait until user stops typing)
+      const searchInput = document.getElementById('mapSearchInput');
+      let timeout = null;
+      
+      if(searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                currentSearch = e.target.value.trim();
+                resetGallery(); // Clear current maps and reload with new search
+            }, 500); // Wait 500ms after typing stops
+        });
+      }
+
       initAuth();
     } catch (err) {
       console.error("Critical Init Error:", err);
-      document.getElementById('gallery-container').innerHTML = 
-        `<p style="color:var(--palette-danger); text-align:center;">Failed to initialize database.</p>`;
     }
   });
 
@@ -68,7 +87,6 @@ title: Map Index
       currentUser = session.user;
       loginBtn.style.display = 'none';
       userInfo.style.display = 'block';
-      
       const meta = currentUser.user_metadata;
       const name = meta.full_name || meta.custom_claims?.global_name || meta.name || "User";
       document.getElementById('username-display').innerText = name;
@@ -78,46 +96,106 @@ title: Map Index
       userInfo.style.display = 'none';
     }
     
-    fetchAndRenderMaps(); 
+    // Initial Load
+    resetGallery();
   }
 
-  async function login() {
-    const redirectUrl = window.location.href; 
-    await db.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: redirectUrl } });
+  /* --- DATA FETCHING --- */
+  
+  function resetGallery() {
+      const container = document.getElementById('gallery-container');
+      container.innerHTML = ''; // Clear existing
+      currentPage = 0;
+      reachedEnd = false;
+      
+      // Add a Load More button container that we can move to the bottom
+      const loadMoreBtn = document.createElement('button');
+      loadMoreBtn.id = "load-more-btn";
+      loadMoreBtn.className = "tool-btn";
+      loadMoreBtn.style.cssText = "display:none; margin: 20px auto; display:block;";
+      loadMoreBtn.innerText = "Load More Maps";
+      loadMoreBtn.onclick = () => fetchMaps();
+      
+      // We append items before this button
+      container.parentNode.appendChild(loadMoreBtn); 
+      // Actually, cleaner to keep button outside gallery-container or append it after.
+      // Let's just call fetchMaps immediately.
+      
+      fetchMaps();
   }
 
-  async function logout() {
-    await db.auth.signOut();
-    window.location.reload();
-  }
+  async function fetchMaps() {
+    if(isLoading || reachedEnd) return;
+    isLoading = true;
 
-  /* --- RENDER LOGIC --- */
-  async function fetchAndRenderMaps() {
     const container = document.getElementById('gallery-container');
+    const loadMoreBtn = document.getElementById('load-more-btn');
     
+    // Show loading state if needed
+    if(loadMoreBtn) loadMoreBtn.innerText = "Loading...";
+
     try {
-      const { data: maps, error } = await db
+      // 1. Base Query
+      let query = db
         .from('maps')
         .select('*')
         .eq('is_approved', true)
         .order('created_at', { ascending: false });
 
+      // 2. Apply Search (Server-side) if text exists
+      if (currentSearch) {
+        // Searches if name, creator, OR keywords contain the search term
+        // Syntax: column.ilike.%term%
+        const term = `%${currentSearch}%`;
+        query = query.or(`name.ilike.${term},creator.ilike.${term},keywords.ilike.${term}`);
+      }
+
+      // 3. Apply Pagination
+      const from = currentPage * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      query = query.range(from, to);
+
+      const { data: maps, error } = await query;
+
       if (error) throw error;
 
-      if (!maps || maps.length === 0) {
-        container.innerHTML = `<p style="text-align:center;">No maps found (or none approved yet).</p>`;
+      // 4. Handle Empty State
+      if (currentPage === 0 && (!maps || maps.length === 0)) {
+        container.innerHTML = `<p style="text-align:center; width:100%;">No maps found matching "${currentSearch}".</p>`;
+        if(loadMoreBtn) loadMoreBtn.style.display = 'none';
         return;
       }
 
-      container.innerHTML = '';
+      // 5. Check if we reached the end
+      if (maps.length < PAGE_SIZE) {
+          reachedEnd = true;
+          if(loadMoreBtn) loadMoreBtn.style.display = 'none'; // Hide button if no more data
+      } else {
+          if(loadMoreBtn) {
+              loadMoreBtn.style.display = 'block';
+              loadMoreBtn.innerText = "Load More Maps";
+          }
+      }
 
-      maps.forEach(map => {
+      // 6. Render
+      renderMapCards(maps);
+      currentPage++; // Increment for next time
+
+    } catch (err) {
+      console.error("Load Error:", err);
+      container.innerHTML += `<p style="color:var(--palette-danger); text-align:center;">Error loading maps.</p>`;
+    } finally {
+        isLoading = false;
+    }
+  }
+
+  function renderMapCards(maps) {
+    const container = document.getElementById('gallery-container');
+    
+    maps.forEach(map => {
         const card = document.createElement('div');
         card.className = 'map-card';
         
-        const searchString = `${map.name} ${map.creator} ${map.keywords || ''}`.toLowerCase();
-        card.setAttribute('data-search', searchString);
-
         const creatorDisplay = map.source_url 
           ? `<a href="${map.source_url}" target="_blank" rel="noopener noreferrer">${map.creator}</a>` 
           : map.creator;
@@ -144,47 +222,21 @@ title: Map Index
             </div>
             
             <p style="font-size:0.85em; color:var(--color-text-muted); margin-top:5px;">Tags: ${map.keywords || ''}</p>
-            
             ${editButtonHtml}
           </div>
         `;
         container.appendChild(card);
-      });
+    });
 
-      setupInteractions();
-
-    } catch (err) {
-      console.error("Load Error:", err);
-      container.innerHTML = `<p style="color:var(--palette-danger); text-align:center;">
-        <strong>Error loading maps:</strong><br>${err.message}
-      </p>`;
-    }
+    setupInteractions(container);
   }
 
-  function setupInteractions() {
-    const searchInput = document.getElementById('mapSearchInput');
-    const allCards = document.querySelectorAll('.map-card');
-
-    if(searchInput) {
-        searchInput.addEventListener('keyup', () => {
-          // 1. Split search into individual words (tokens)
-          const filterText = searchInput.value.toLowerCase().trim();
-          const searchTerms = filterText.split(" ").filter(term => term.length > 0);
-
-          allCards.forEach(card => {
-            const cardData = card.getAttribute('data-search');
-            
-            // 2. Check if EVERY search term appears somewhere in the card data
-            // (This allows "forest green" to match "green forest")
-            const isMatch = searchTerms.every(term => cardData.includes(term));
-
-            card.style.display = isMatch ? 'flex' : 'none';
-          });
-        });
-    }
-
-    document.querySelectorAll('.copy-button').forEach(btn => {
-      btn.addEventListener('click', () => {
+  function setupInteractions(container) {
+    // Only target buttons inside the newly added container (or globally is fine)
+    container.querySelectorAll('.copy-button').forEach(btn => {
+      // Prevent duplicate listeners by checking a flag or removing old ones (optional)
+      // Since we recreate buttons, simple addEventListener is fine.
+      btn.onclick = () => {
         const codeEl = btn.previousElementSibling;
         if(!codeEl) return;
         
@@ -198,7 +250,17 @@ title: Map Index
             btn.innerText = oldText; 
             btn.style.color = ''; 
         }, 2000);
-      });
+      };
     });
+  }
+
+  async function login() {
+    const redirectUrl = window.location.href; 
+    await db.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: redirectUrl } });
+  }
+
+  async function logout() {
+    await db.auth.signOut();
+    window.location.reload();
   }
 </script>
