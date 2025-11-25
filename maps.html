@@ -199,7 +199,11 @@ title: Map Index
 
         card.innerHTML = `
           <a href="${map.image_url}" class="map-thumbnail-link" target="_blank" title="View Full Image">
-            <img src="${map.image_url}" alt="${map.name}" class="map-thumbnail" loading="lazy">
+            const thumbUrl = `https://wsrv.nl/?url=${encodeURIComponent(map.image_url)}&w=400&output=webp`;
+            card.innerHTML = `
+              <a href="${map.image_url}" class="map-thumbnail-link" target="_blank" title="View Full Image">
+                <img src="${thumbUrl}" alt="${map.name}" class="map-thumbnail" loading="lazy">
+              </a>
           </a>
 
           <div class="map-card-info">
