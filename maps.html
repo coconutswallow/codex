@@ -189,7 +189,6 @@ title: Map Index
         const card = document.createElement('div');
         card.className = 'map-card';
         
-        // 1. Define variables BEFORE starting the HTML string
         const creatorDisplay = map.source_url 
           ? `<a href="${map.source_url}" target="_blank" rel="noopener noreferrer">${map.creator}</a>` 
           : map.creator;
@@ -198,13 +197,19 @@ title: Map Index
           ? `<a href="/codex/edit?id=${map.id}" class="edit-btn">✏️ Edit / Revise</a>` 
           : '';
 
-        // 2. Create the optimized thumbnail URL
+        // Generate the "Light" thumbnail URL
         const thumbUrl = `https://wsrv.nl/?url=${encodeURIComponent(map.image_url)}&w=400&output=webp`;
 
-        // 3. Now build the HTML using those variables
         card.innerHTML = `
           <a href="${map.image_url}" class="map-thumbnail-link" target="_blank" title="View Full Image">
-            <img src="${thumbUrl}" alt="${map.name}" class="map-thumbnail" loading="lazy">
+            <img 
+                src="${thumbUrl}" 
+                data-original="${map.image_url}"
+                alt="${map.name}" 
+                class="map-thumbnail" 
+                loading="lazy"
+                onerror="this.onerror=null; this.src=this.dataset.original;"
+            >
           </a>
 
           <div class="map-card-info">
