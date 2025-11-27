@@ -526,7 +526,35 @@
   image: ""
 
 # =============================================
-# 21 DM Map Setup
+# 21 DM Running Combat
+# =============================================
+- title: "Attack on behalf of a monster"
+  note: "with the !i in front, you take action for whichever monster's turn it is"
+  syntax: "!i a <weapon>"
+  example: "!i a shortsword -t player1"
+  tags: "monster attack"
+  category: "21 Running Combat"
+  type: "DM"
+  image: ""
+
+- title: "Monster Attack of Opportunity"
+  syntax: "!i aoo <combatant name> <attack name> -t <target name>"
+  example: "!i aoo shortsword -t player1"
+  tags: "attack of opportunity AOO"
+  category: "21 Running Combat"
+  type: "DM"
+  image: ""
+
+- title: "Monster Reaction"
+  syntax: "!i rc <combatant name> <spell name> [-t <target name>]"
+  example: "!i rc 'hellish rebuke' -t player1"
+  tags: "attack of opportunity AOO reaction"
+  category: "21 Running Combat"
+  type: "DM"
+  image: ""
+
+# =============================================
+# 25 DM Map Setup
 # =============================================
 
 - title: "Add DM (mandatory for map)"
