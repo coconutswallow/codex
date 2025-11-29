@@ -31,119 +31,125 @@ title: Map Index
 
 <button id="load-more-btn" class="tool-btn" onclick="fetchMaps()" style="display:none; margin: 20px auto; padding: 10px 20px;">Load More Maps</button>
 
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/path/to/auth-manager.js"></script>
+
 <script>
-  /* --- CONFIGURATION --- */
-  const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'; 
-  
-  let db;
+  /* --- GLOBAL VARIABLES --- */
+  let db; 
   let currentUser = null;
   
   // PAGINATION SETTINGS
   let currentPage = 0;
-  const PAGE_SIZE = 24; // How many maps to load at once
+  const PAGE_SIZE = 24;
   let currentSearch = "";
   let isLoading = false;
   let reachedEnd = false;
 
+  /* --- INITIALIZATION --- */
   document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      
-      // Setup Search Listener with Debounce (wait until user stops typing)
-      const searchInput = document.getElementById('mapSearchInput');
-      let timeout = null;
-      
-      if(searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                currentSearch = e.target.value.trim();
-                resetGallery(); // Clear current maps and reload with new search
-            }, 500); // Wait 500ms after typing stops
+    
+    // 1. Initialize the Auth Manager
+    // This handles the connection, user session, and UI updates automatically
+    if (window.authManager) {
+        window.authManager.init((user) => {
+            currentUser = user;
+            db = window.authManager.getClient(); // Get the DB connection
+            
+            updateAuthUI(user);
+            
+            // If the gallery is empty (first load), fetch maps
+            const container = document.getElementById('gallery-container');
+            if (!container.innerHTML.trim()) {
+                resetGallery();
+            }
         });
-      }
+    } else {
+        console.error("Auth Manager not loaded! Check script tags.");
+    }
 
-      initAuth();
-    } catch (err) {
-      console.error("Critical Init Error:", err);
+    // 2. Setup Search Listener
+    const searchInput = document.getElementById('mapSearchInput');
+    let timeout = null;
+    
+    if(searchInput) {
+      searchInput.addEventListener('input', (e) => {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => {
+              currentSearch = e.target.value.trim();
+              resetGallery(); 
+          }, 500); 
+      });
     }
   });
 
-  function initAuth() {
-    db.auth.getSession().then(({ data }) => {
-      handleSession(data.session);
-    });
-
-    db.auth.onAuthStateChange((event, session) => {
-      handleSession(session);
-    });
-  }
-
-  function handleSession(session) {
+  /* --- AUTH UI UPDATES --- */
+  function updateAuthUI(user) {
     const loginBtn = document.getElementById('login-btn');
     const userInfo = document.getElementById('user-info');
 
-    if (session) {
-      currentUser = session.user;
+    if (user) {
       loginBtn.style.display = 'none';
       userInfo.style.display = 'block';
-      const meta = currentUser.user_metadata;
-      const name = meta.full_name || meta.custom_claims?.global_name || meta.name || "User";
-      document.getElementById('username-display').innerText = name;
+      
+      // Get name from the manager helper
+      document.getElementById('username-display').innerText = window.authManager.getUserName();
     } else {
       currentUser = null;
       loginBtn.style.display = 'inline-block';
       userInfo.style.display = 'none';
     }
-    
-    // Initial Load
-    resetGallery();
+
+    // Re-render gallery to show/hide Edit buttons if user state changed
+    const container = document.getElementById('gallery-container');
+    if (container.children.length > 0) {
+        // We clear and reload to ensure "Edit" buttons appear/disappear correctly
+        resetGallery();
+    }
   }
 
-  /* --- DATA FETCHING --- */
+  // Connect HTML buttons to the Manager
+  window.login = () => window.authManager.login();
+  window.logout = () => window.authManager.logout();
+
+  /* --- DATA FETCHING (Same logic as before, just using 'db') --- */
   
   function resetGallery() {
       const container = document.getElementById('gallery-container');
       const loadMoreBtn = document.getElementById('load-more-btn');
       
-      container.innerHTML = ''; // Clear existing maps
+      container.innerHTML = ''; 
       currentPage = 0;
       reachedEnd = false;
       
-      // HIDE the button initially so it doesn't float there empty while we load
       if(loadMoreBtn) loadMoreBtn.style.display = 'none';
 
-      fetchMaps();
+      // Ensure DB is ready before fetching
+      if(db) fetchMaps();
   }
 
   async function fetchMaps() {
-    if(isLoading || reachedEnd) return;
+    if(isLoading || reachedEnd || !db) return;
     isLoading = true;
 
     const container = document.getElementById('gallery-container');
     const loadMoreBtn = document.getElementById('load-more-btn');
     
-    // Show loading state if needed
     if(loadMoreBtn) loadMoreBtn.innerText = "Loading...";
 
     try {
-      // 1. Base Query
       let query = db
         .from('maps')
         .select('*')
         .eq('is_approved', true)
         .order('created_at', { ascending: false });
 
-      // 2. Apply Search (Server-side) if text exists
       if (currentSearch) {
-        // Searches if name, creator, OR keywords contain the search term
-        // Syntax: column.ilike.%term%
         const term = `%${currentSearch}%`;
         query = query.or(`name.ilike.${term},creator.ilike.${term},keywords.ilike.${term}`);
       }
 
-      // 3. Apply Pagination
       const from = currentPage * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
       query = query.range(from, to);
@@ -152,17 +158,15 @@ title: Map Index
 
       if (error) throw error;
 
-      // 4. Handle Empty State
       if (currentPage === 0 && (!maps || maps.length === 0)) {
         container.innerHTML = `<p style="text-align:center; width:100%;">No maps found matching "${currentSearch}".</p>`;
         if(loadMoreBtn) loadMoreBtn.style.display = 'none';
         return;
       }
 
-      // 5. Check if we reached the end
       if (maps.length < PAGE_SIZE) {
           reachedEnd = true;
-          if(loadMoreBtn) loadMoreBtn.style.display = 'none'; // Hide button if no more data
+          if(loadMoreBtn) loadMoreBtn.style.display = 'none'; 
       } else {
           if(loadMoreBtn) {
               loadMoreBtn.style.display = 'block';
@@ -170,9 +174,8 @@ title: Map Index
           }
       }
 
-      // 6. Render
       renderMapCards(maps);
-      currentPage++; // Increment for next time
+      currentPage++; 
 
     } catch (err) {
       console.error("Load Error:", err);
@@ -193,11 +196,11 @@ title: Map Index
           ? `<a href="${map.source_url}" target="_blank" rel="noopener noreferrer">${map.creator}</a>` 
           : map.creator;
 
+        // Check currentUser to decide if we show the edit button
         const editButtonHtml = currentUser 
           ? `<a href="/codex/edit?id=${map.id}" class="edit-btn">✏️ Edit / Revise</a>` 
           : '';
 
-        // Generate the "Light" thumbnail URL
         const thumbUrl = `https://wsrv.nl/?url=${encodeURIComponent(map.image_url)}&w=400&output=webp`;
 
         card.innerHTML = `
@@ -234,35 +237,20 @@ title: Map Index
     setupInteractions(container);
   }
 
-  async function login() {
-    const redirectUrl = window.location.href; 
-    await db.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: redirectUrl } });
-  }
   function setupInteractions(container) {
-    // Finds all 'Copy' buttons inside the newly loaded cards
     container.querySelectorAll('.copy-button').forEach(btn => {
       btn.onclick = () => {
         const codeEl = btn.previousElementSibling;
         if(!codeEl) return;
-        
-        // Copy text to clipboard
         navigator.clipboard.writeText(codeEl.innerText);
-        
-        // Visual feedback
         const oldText = btn.innerText;
         btn.innerText = 'Copied!';
         btn.style.color = 'var(--palette-success)';
-        
-        // Reset after 2 seconds
         setTimeout(() => { 
             btn.innerText = oldText; 
             btn.style.color = ''; 
         }, 2000);
       };
     });
-  }
-  async function logout() {
-    await db.auth.signOut();
-    window.location.reload();
   }
 </script>

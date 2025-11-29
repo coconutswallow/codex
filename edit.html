@@ -81,13 +81,12 @@ title: Edit Map
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/auth-manager.js"></script>
+
 <script>
-  const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
-  /* 🔴 YOUR KEY HERE 🔴 */
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'; 
-  
-  const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  
+  /* --- GLOBAL VARIABLES --- */
+  let db;
   let currentUser = null;
   let originalMapId = null;
   
@@ -95,34 +94,47 @@ title: Edit Map
   const img = document.getElementById('preview-img');
   const overlay = document.getElementById('grid-overlay');
 
+  /* --- INITIALIZATION --- */
   document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Check Login
-    const { data } = await db.auth.getSession();
-    if (!data.session) {
-        alert("You must be logged in to edit.");
-        window.location.href = "/codex/maps/"; 
-        return;
-    }
-    currentUser = data.session.user;
-
-    // 2. Get ID from URL
+    // 1. Get Map ID from URL immediately
     const params = new URLSearchParams(window.location.search);
     originalMapId = params.get('id');
-    
-    if(!originalMapId) {
-        alert("No map ID provided.");
+
+    // 2. Initialize Auth Manager
+    if (!window.authManager) {
+        console.error("Auth Manager not found.");
         return;
     }
 
-    // 3. Fetch Data
-    loadMapData(originalMapId);
+    window.authManager.init((user) => {
+        currentUser = user;
+        db = window.authManager.getClient(); // Get the DB client
+
+        // 3. Security Guard: Redirect if not logged in
+        if (!user) {
+            alert("You must be logged in to edit.");
+            window.location.href = "/codex/maps/"; 
+            return;
+        }
+
+        // 4. Load Data if ID exists
+        if(originalMapId) {
+             loadMapData(originalMapId);
+        } else {
+             alert("No map ID provided.");
+        }
+    });
   });
 
+  /* --- DATA LOADING --- */
   async function loadMapData(id) {
+      if(!db) return;
+
       const { data, error } = await db.from('maps').select('*').eq('id', id).single();
       
       if(error || !data) {
           alert("Error loading map data.");
+          console.error(error);
           return;
       }
 
@@ -151,11 +163,12 @@ title: Edit Map
           img.style.display = 'block';
           renderGrid();
       };
+      img.onerror = () => {
+          alert("Could not load original image.");
+      };
   }
 
   /* --- RENDER & CALC LOGIC --- */
-  
-  // UPDATED: Added Calculation Functions
   function calcGridFromPPI() {
     if(!img.naturalWidth) return;
     const ppi = parseInt(document.getElementById('ppi_num').value);
@@ -204,14 +217,17 @@ title: Edit Map
   }
 
   /* --- VERSIONING SAVE --- */
- async function saveVersion() {
+  async function saveVersion() {
       const btn = document.getElementById('save-btn');
       const msg = document.getElementById('statusMsg');
       
+      if(!db || !currentUser) return;
+
       btn.disabled = true;
       btn.innerText = "Archiving old version...";
 
       /* 1. ARCHIVE OLD MAP */
+      // We fetch the old submitter first so we don't lose that info
       const { data: oldData, error: fetchError } = await db
           .from('maps')
           .select('submitted_by')
@@ -225,6 +241,7 @@ title: Edit Map
       if(archiveError) {
           console.error(archiveError);
           msg.innerText = "Error archiving old version.";
+          msg.style.color = "var(--palette-danger)";
           btn.disabled = false;
           return;
       }
@@ -232,8 +249,8 @@ title: Edit Map
       btn.innerText = "Saving new version...";
 
       /* 2. INSERT NEW VERSION */
-      const meta = currentUser.user_metadata;
-      const currentEditor = meta.full_name || meta.custom_claims?.global_name || meta.name || "Unknown";
+      // Use authManager helper for clean name
+      const currentEditor = window.authManager.getUserName();
       const originalSubmitter = oldData ? oldData.submitted_by : currentEditor;
 
       const payload = {
@@ -258,6 +275,7 @@ title: Edit Map
            msg.innerText = "Error saving new version: " + insertError.message;
            msg.style.color = "var(--palette-danger)";
            btn.disabled = false;
+           btn.innerText = "Save New Version";
       } else {
            msg.innerText = "Success! New version submitted.";
            msg.style.color = "var(--palette-success)";

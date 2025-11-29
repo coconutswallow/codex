@@ -123,62 +123,42 @@ title: Submit Map
   </div>
 </div>
 
-<script>
-  /* --- CONFIGURATION --- */
-  const SUPABASE_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
-  /* 🔴 YOUR KEY HERE 🔴 */
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'; 
-  
-  let db;
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/js/auth-manager.js"></script>
+
+<<script>
+  /* --- GLOBAL VARIABLES --- */
+  let db; 
   let currentUser = null;
 
   /* --- INITIALIZATION --- */
   document.addEventListener('DOMContentLoaded', () => {
-    try {
-      db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      initAuth();
-    } catch (err) { console.error("Init Error:", err); }
+    // Check if auth manager script is loaded
+    if (!window.authManager) {
+        console.error("Auth Manager not found. Check your script tags.");
+        return;
+    }
+
+    // Initialize Auth Manager
+    window.authManager.init((user) => {
+        currentUser = user;
+        db = window.authManager.getClient(); // Get the DB client for submissions
+        
+        if (user) {
+            showForm();
+        } else {
+            showLogin();
+        }
+    });
   });
 
-  function initAuth() {
-    db.auth.onAuthStateChange((event, session) => {
-      setTimeout(() => handleSession(session), 50);
-    });
-    db.auth.getSession().then(({data}) => handleSession(data.session));
-  }
-
-  function handleSession(session) {
-    if (session) {
-      currentUser = session.user;
-      try {
-        showForm();
-        if (window.location.hash && window.location.hash.includes('access_token')) {
-           const newUrl = window.location.origin + window.location.pathname;
-           window.history.replaceState(null, null, newUrl);
-        }
-      } catch (e) { showLogin(); }
-    } else {
-      showLogin();
-    }
-  }
-
-  async function login() {
-    const redirectUrl = window.location.origin + window.location.pathname;
-    await db.auth.signInWithOAuth({ provider: 'discord', options: { redirectTo: redirectUrl } });
-  }
-
-  async function logout() {
-    await db.auth.signOut();
-    window.location.reload(); 
-  }
-
+  /* --- AUTH UI LOGIC --- */
   function showForm() {
     document.getElementById('login-section').style.display = 'none';
     document.getElementById('form-section').style.display = 'block';
     
-    const meta = currentUser.user_metadata;
-    const name = meta.full_name || meta.custom_claims?.global_name || meta.name || "User";
-    document.getElementById('user-display').innerText = name;
+    // Use the helper to get the display name safely
+    document.getElementById('user-display').innerText = window.authManager.getUserName();
   }
 
   function showLogin() {
@@ -187,7 +167,11 @@ title: Submit Map
     document.getElementById('form-section').style.display = 'none';
   }
 
-  /* --- MAP LOGIC --- */
+  // Hook up the buttons to the reusable manager
+  window.login = () => window.authManager.login();
+  window.logout = () => window.authManager.logout();
+
+  /* --- MAP RENDERING LOGIC (Preserved) --- */
   const img = document.getElementById('preview-img');
   const overlay = document.getElementById('grid-overlay');
   const cmdOutput = document.getElementById('cmdOutput');
@@ -234,7 +218,7 @@ title: Submit Map
     yAxis.style.display = isOn ? 'block' : 'none';
   }
 
-  /* Calculations */
+  /* --- CALCULATIONS & RENDERING --- */
   function calcGridFromPPI() {
     if(!img.naturalWidth) return;
     const ppi = parseInt(document.getElementById('ppi_num').value);
@@ -332,6 +316,7 @@ title: Submit Map
       return label;
   }
 
+  /* --- SUBMISSION LOGIC --- */
   async function submitMap() {
     const btn = document.getElementById('submit-btn');
     
@@ -344,8 +329,8 @@ title: Submit Map
     btn.disabled = true;
     btn.innerText = "Sending...";
 
-    const meta = currentUser.user_metadata;
-    const discordName = meta.full_name || meta.custom_claims?.global_name || meta.name || "Unknown";
+    // Use helper to get the username again to be safe
+    const discordName = window.authManager.getUserName();
 
     const isAvraeOn = document.getElementById('avraeToggle').checked;
     let finalCmd = "";
@@ -357,10 +342,7 @@ title: Submit Map
       name: document.getElementById('mapName').value,
       image_url: document.getElementById('imgUrl').value,
       creator: document.getElementById('creator').value,
-      
-      /* NEW FIELD ADDED HERE */
       source_url: document.getElementById('sourceUrl').value,
-      
       keywords: document.getElementById('keywords').value,
       grid_width: isAvraeOn ? document.getElementById('gridW_num').value : 0,
       grid_height: isAvraeOn ? document.getElementById('gridH_num').value : 0,
@@ -370,6 +352,7 @@ title: Submit Map
       is_free_use: true
     };
 
+    // Use the global 'db' (initialized in authManager.init)
     const { error } = await db.from('maps').insert(payload);
 
     if (error) {
