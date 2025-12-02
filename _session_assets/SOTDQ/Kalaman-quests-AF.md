@@ -31,7 +31,7 @@ Note: Some quests say "not yet available" - they require an additional pre-requi
 | **Military** | **Vogler Training 1**<br>Help Darrett Training Vogler Military Recruits | Vogler NPC Combatants get +1 Attack | ✅ |
 | **Military** | **Vogler Training 2**<br>Help Darrett Training Vogler Military Recruits | Vogler NPC Combatants get +1 AC | 4 |
 | **Political** | **Rally The Council Members**<br>Meet Council Members and rally support for Marshal Vedri and the defense efforts | +10% NPC Soldiers<br>*(Can be repeated up to 3 times)* | 3 each |
-| **Political** | **Rally the Merchants**<br>Meet the Guild Merchants of Kalaman to support the Vogler Refugees | *Redacted* | 4 (Not Yet Available) |
+| **Political** | **Rally the Merchants**<br>Meet the Guild Merchants of Kalaman to support the Vogler Refugees | *Negotiate prices on behalf of Vogler / Kalaman residents* | 4 (unlocked) |
 | **R&D** | **Research New Defenses**<br>Work with the R&D Team to research new defense systems for the city of Kalaman | New Defense capabilities in case of invasion | 5 (Not Yet Available) |
 | **R&D** | **Research New Equipment**<br>Research new gear for the party | Unlock 3 homebrew equipment for purchase in the AC | 6 (Not Yet Available) |
 | **R&D** | **Research the Legend of Huma** | Unlock +1 save against dragonfear and dragonbreath | 10 |
@@ -41,12 +41,12 @@ Note: Some quests say "not yet available" - they require an additional pre-requi
 | **Personal** | **Custom Personal Quest** | Custom | 5 to 10 |
 | **NPC** | **Recruit Rogue NPC** | NPC Party Member | 5 (Not Yet Available) |
 | **NPC** | **Recruit Cudgel (Fighter NPC)** | NPC Party Member | 5 |
-| **NPC** | **Recruit Wizard NPC** | NPC Party Member | 5 (Not Yet Available) |
+| **NPC** | **Recruit Waylan - Wizard NPC** | NPC Party Member | 5 |
 
 </div>
 
 ## Reputation Points Balance
 
-- **Points Earned:** 15
+- **Points Earned:** 27
 - **Points Spent:** 3
-- **Remaining:** 12
+- **Remaining:** 24
