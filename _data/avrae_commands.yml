@@ -175,8 +175,8 @@
   image: ""
 
 - title: "Skill Check with Advantage/Disadvantage"
-  syntax: "!c <skill> <adv/dis>"
-  example: "!c perception adv"
+  syntax: "!c <skill> -<adv/dis>"
+  example: "!c perception -adv"
   tags: "check skill advantage"
   category: "03 Skills & Checks"
   type: "Player"
