@@ -81,6 +81,16 @@
   type: "Player"
   image: ""
 
+- title: "Set Active Character (Channel)"
+  note: "Sets the active character for this channel only."
+  syntax: "!char channel <name>"
+  example: "!char channel Robin"
+  tags: "setup channel character"
+  category: "01 Setup"
+  type: "Player"
+  image: ""
+
+
 - title: "View Character Sheet"
   syntax: "!sheet"
   example: "!sheet"
