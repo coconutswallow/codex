@@ -16,7 +16,7 @@ title: Edit Map
   <div class="map-viewer" id="viewPort">
     <div class="canvas-wrapper" id="canvasWrapper">
         <img id="preview-img" src="" alt="" style="display:none;">
-        <div id="grid-overlay"></div>
+        <div id="grid-overlay" style="display:none;"></div>
     </div>
   </div>
 
@@ -38,43 +38,57 @@ title: Edit Map
         </div>
 
         <div class="section">
-            <h3>Revise Settings</h3>
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3>Revise Settings</h3>
+                <div id="admin-badge" style="display:none; padding: 5px 10px; background: var(--palette-danger); color: white; border-radius: 4px; font-weight: bold; font-size: 0.9em;">
+                    ADMIN MODE
+                </div>
+            </div>
             
             <label>Search Keywords</label>
             <input type="text" id="keywords" placeholder="forest, road, day">
             
             <hr style="margin: 15px 0; border-top: 1px dashed #ccc;">
 
-            <label>Pixels Per Cell</label>
-            <div class="slider-group">
-              <input type="range" id="ppi_slider" min="20" max="150" oninput="updateFromSlider('ppi')">
-              <input type="number" id="ppi_num" oninput="updateFromInput('ppi')">
-            </div>
-    
-            <label>Grid W / H</label>
-            <div class="slider-group">
-              <input type="number" id="gridW_num" oninput="updateFromInput('w')">
-              <span style="font-weight:bold;">x</span>
-              <input type="number" id="gridH_num" oninput="updateFromInput('h')">
+            <div style="margin-bottom: 15px;">
+                <label style="margin-top:10px; display:flex; align-items:center; gap:10px; cursor:pointer; text-transform:none; color:var(--color-text);">
+                    <input type="checkbox" id="avraeToggle" onchange="toggleAvraeMode()" style="width:auto; margin:0;"> 
+                    <strong>Include Avrae Maps settings</strong>
+                </label>
             </div>
             
-            <div style="text-align:right; margin-top:5px;">
-               <button class="tool-btn" onclick="calcPPIfromGrid()">Fit Image to Grid</button>
-               <button class="tool-btn" onclick="calcGridFromPPI()">Auto-Set W/H</button>
-            </div>
-            
-            <label>Offset (X / Y)</label>
-            <div style="display:flex; gap:10px;">
-                <input type="number" id="offX" value="0" oninput="renderGrid()">
-                <input type="number" id="offY" value="0" oninput="renderGrid()">
-            </div>
+            <div id="avrae-settings-container" style="display:none;">
+                <label>Pixels Per Cell</label>
+                <div class="slider-group">
+                  <input type="range" id="ppi_slider" min="20" max="150" oninput="updateFromSlider('ppi')">
+                  <input type="number" id="ppi_num" oninput="updateFromInput('ppi')">
+                </div>
+        
+                <label>Grid W / H</label>
+                <div class="slider-group">
+                  <input type="number" id="gridW_num" oninput="updateFromInput('w')">
+                  <span style="font-weight:bold;">x</span>
+                  <input type="number" id="gridH_num" oninput="updateFromInput('h')">
+                </div>
+                
+                <div style="text-align:right; margin-top:5px;">
+                   <button class="tool-btn" onclick="calcPPIfromGrid()">Fit Image to Grid</button>
+                   <button class="tool-btn" onclick="calcGridFromPPI()">Auto-Set W/H</button>
+                </div>
+                
+                <label>Offset (X / Y)</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="number" id="offX" value="0" oninput="renderGrid()">
+                    <input type="number" id="offY" value="0" oninput="renderGrid()">
+                </div>
 
-            <label style="margin-top: 20px;">Generated Command</label>
-            <div class="generated-cmd" id="cmdOutput">!map ...</div>
+                <label style="margin-top: 20px;">Generated Command</label>
+                <div class="generated-cmd" id="cmdOutput">!map ...</div>
+            </div>
         </div>
 
         <div class="section">
-            <button id="save-btn" onclick="saveVersion()">Save New Version</button>
+            <button id="save-btn" onclick="saveMap()">Save</button> 
             <p id="statusMsg"></p>
         </div>
     </div>
@@ -89,7 +103,8 @@ title: Edit Map
   let db;
   let currentUser = null;
   let originalMapId = null;
-  
+  let isAdmin = false; // NEW: Admin flag
+
   const VISUAL_CELL_SIZE = 28;
   const img = document.getElementById('preview-img');
   const overlay = document.getElementById('grid-overlay');
@@ -117,6 +132,15 @@ title: Edit Map
             return;
         }
 
+        // NEW: Check for admin status
+        isAdmin = window.authManager.isAdmin(); 
+        if (isAdmin) {
+             document.getElementById('admin-badge').style.display = 'inline-block';
+             document.getElementById('save-btn').innerText = 'Save Changes (Admin)';
+        } else {
+             document.getElementById('save-btn').innerText = 'Save New Version';
+        }
+
         // 4. Load Data if ID exists
         if(originalMapId) {
              loadMapData(originalMapId);
@@ -137,22 +161,37 @@ title: Edit Map
           console.error(error);
           return;
       }
+      
+      const hasAvrae = data.avrae_cmd && data.avrae_cmd.length > 5; // Check if Avrae data exists
 
-      // Populate Fields
+      // Populate Fields (Core Info)
       document.getElementById('mapName').value = data.name;
       document.getElementById('imgUrl').value = data.image_url;
       document.getElementById('creator').value = data.creator;
       document.getElementById('sourceUrl').value = data.source_url || '';
       document.getElementById('keywords').value = data.keywords || '';
 
-      // Populate Grid Settings (or defaults)
-      document.getElementById('ppi_num').value = data.cell_size_px || 70;
-      document.getElementById('ppi_slider').value = data.cell_size_px || 70;
-      document.getElementById('gridW_num').value = data.grid_width || 30;
-      document.getElementById('gridH_num').value = data.grid_height || 30;
+      // Populate Grid Settings - NEW: Check for existing Avrae data
+      if (hasAvrae) {
+        document.getElementById('avraeToggle').checked = true;
+        document.getElementById('ppi_num').value = data.cell_size_px || 40;
+        document.getElementById('ppi_slider').value = data.cell_size_px || 40;
+        document.getElementById('gridW_num').value = data.grid_width || 30;
+        document.getElementById('gridH_num').value = data.grid_height || 30;
+      } else {
+        // Set defaults if no Avrae data, but keep toggle off
+        document.getElementById('avraeToggle').checked = false;
+        document.getElementById('ppi_num').value = 40;
+        document.getElementById('ppi_slider').value = 40;
+        document.getElementById('gridW_num').value = 30;
+        document.getElementById('gridH_num').value = 30;
+      }
       
-      document.getElementById('offX').value = 0;
-      document.getElementById('offY').value = 0;
+      // Offset values are often 0, so load directly or default
+      document.getElementById('offX').value = data.offset_x || 0; // Assuming offset_x/y fields exist or default to 0
+      document.getElementById('offY').value = data.offset_y || 0; 
+      
+      toggleAvraeMode(); // Initial call to show/hide settings based on data
 
       // Load Image & UI
       document.getElementById('loading-msg').style.display = 'none';
@@ -167,6 +206,17 @@ title: Edit Map
           alert("Could not load original image.");
       };
   }
+  
+  /* NEW: Toggle Avrae Settings visibility and grid overlay */
+  function toggleAvraeMode() {
+    const isOn = document.getElementById('avraeToggle').checked;
+    const settingsDiv = document.getElementById('avrae-settings-container');
+    
+    settingsDiv.style.display = isOn ? 'block' : 'none';
+    overlay.style.display = isOn ? 'block' : 'none';
+    renderGrid(); // Re-render to update image transform/size
+  }
+
 
   /* --- RENDER & CALC LOGIC --- */
   function calcGridFromPPI() {
@@ -201,23 +251,107 @@ title: Edit Map
     const ppi = parseInt(document.getElementById('ppi_num').value);
     const ox = parseInt(document.getElementById('offX').value) || 0;
     const oy = parseInt(document.getElementById('offY').value) || 0;
+    const isAvraeOn = document.getElementById('avraeToggle').checked;
 
     if(img.naturalWidth > 0) {
-        const scale = VISUAL_CELL_SIZE / ppi;
-        img.style.width = (img.naturalWidth * scale) + 'px';
-        img.style.height = "auto";
-        img.style.transform = `translate(${ox * scale}px, ${oy * scale}px)`;
+        if (isAvraeOn) {
+            const scale = VISUAL_CELL_SIZE / ppi;
+            img.style.width = (img.naturalWidth * scale) + 'px';
+            img.style.height = "auto";
+            img.style.transform = `translate(${ox * scale}px, ${oy * scale}px)`;
+        } else {
+            img.style.width = "100%"; // Show image normally if grid is off
+            img.style.height = "auto";
+            img.style.transform = "none";
+        }
     }
 
-    overlay.style.width = (w * VISUAL_CELL_SIZE) + 'px';
-    overlay.style.height = (h * VISUAL_CELL_SIZE) + 'px';
+    // Only set overlay size if Avrae is on for clean display
+    if (isAvraeOn) {
+        overlay.style.width = (w * VISUAL_CELL_SIZE) + 'px';
+        overlay.style.height = (h * VISUAL_CELL_SIZE) + 'px';
+    } else {
+        overlay.style.width = '0px';
+        overlay.style.height = '0px';
+    }
     
-    const cmd = `!map -bg "${document.getElementById('imgUrl').value}" -mapsize ${w}x${h} -options dc${ppi} -o${ox}:${oy} -t DM`;
+    let cmd = "!map ...";
+    if (isAvraeOn) {
+        let options = `dc${ppi}`;
+        if (ox > 0 || oy > 0) {
+            options += ` -o${ox}:${oy}`;
+        }
+        cmd = `!map -bg "${document.getElementById('imgUrl').value}" -mapsize ${w}x${h} -options ${options} -t DM`;
+    }
     document.getElementById('cmdOutput').innerText = cmd;
   }
 
-  /* --- VERSIONING SAVE --- */
-  async function saveVersion() {
+  /* --- VERSIONING SAVE (Conditional Save) --- */
+  async function saveMap() {
+      if (isAdmin) {
+          await overwriteMap();
+      } else {
+          await saveNewVersion();
+      }
+  }
+
+  /* NEW: Admin-only direct overwrite */
+  async function overwriteMap() {
+      const btn = document.getElementById('save-btn');
+      const msg = document.getElementById('statusMsg');
+      
+      if(!db || !currentUser) return;
+
+      btn.disabled = true;
+      btn.innerText = "Saving changes...";
+      msg.innerText = "";
+
+      const isAvraeOn = document.getElementById('avraeToggle').checked;
+      const currentEditor = window.authManager.getUserName();
+      
+      let payload = {
+          name: document.getElementById('mapName').value,
+          keywords: document.getElementById('keywords').value,
+          last_edit: currentEditor,        
+          edit_date: new Date().toISOString()
+      };
+      
+      if (isAvraeOn) {
+          payload.grid_width = document.getElementById('gridW_num').value;
+          payload.grid_height = document.getElementById('gridH_num').value;
+          payload.cell_size_px = document.getElementById('ppi_num').value;
+          payload.avrae_cmd = document.getElementById('cmdOutput').innerText;
+          // Assuming offset fields exist in DB:
+          payload.offset_x = document.getElementById('offX').value;
+          payload.offset_y = document.getElementById('offY').value;
+      } else {
+          // Clear Avrae fields if toggled off
+          payload.grid_width = 0;
+          payload.grid_height = 0;
+          payload.cell_size_px = 0;
+          payload.avrae_cmd = "";
+          payload.offset_x = 0;
+          payload.offset_y = 0;
+      }
+
+      const { error: updateError } = await db.from('maps')
+          .update(payload)
+          .eq('id', originalMapId);
+
+      if(updateError) {
+           msg.innerText = "Error saving changes: " + updateError.message;
+           msg.style.color = "var(--palette-danger)";
+           btn.disabled = false;
+           btn.innerText = "Save Changes (Admin)";
+      } else {
+           msg.innerText = "Success! Map updated directly.";
+           msg.style.color = "var(--palette-success)";
+           setTimeout(() => { window.location.href = "/codex/maps"; }, 1500);
+      }
+  }
+
+  /* Existing logic for non-admin users */
+  async function saveNewVersion() {
       const btn = document.getElementById('save-btn');
       const msg = document.getElementById('statusMsg');
       
@@ -225,6 +359,9 @@ title: Edit Map
 
       btn.disabled = true;
       btn.innerText = "Archiving old version...";
+      msg.innerText = "";
+      
+      const isAvraeOn = document.getElementById('avraeToggle').checked;
 
       /* 1. ARCHIVE OLD MAP */
       // We fetch the old submitter first so we don't lose that info
@@ -234,16 +371,19 @@ title: Edit Map
           .eq('id', originalMapId)
           .single();
 
+      if (fetchError || !oldData) {
+          console.error("Could not fetch old map data for archiving.", fetchError);
+          // Proceed to save new version, but status message will reflect potential issue
+      }
+
       const { error: archiveError } = await db.rpc('archive_map', { 
           map_id: parseInt(originalMapId) 
       });
 
       if(archiveError) {
           console.error(archiveError);
-          msg.innerText = "Error archiving old version.";
+          msg.innerText = "Error archiving old version. Saving new version anyway...";
           msg.style.color = "var(--palette-danger)";
-          btn.disabled = false;
-          return;
       }
 
       btn.innerText = "Saving new version...";
@@ -251,23 +391,38 @@ title: Edit Map
       /* 2. INSERT NEW VERSION */
       // Use authManager helper for clean name
       const currentEditor = window.authManager.getUserName();
-      const originalSubmitter = oldData ? oldData.submitted_by : currentEditor;
+      // Keep original submitter if fetch was successful
+      const originalSubmitter = oldData ? oldData.submitted_by : currentEditor; 
 
-      const payload = {
+      let payload = {
           name: document.getElementById('mapName').value,
           image_url: document.getElementById('imgUrl').value,
           creator: document.getElementById('creator').value,
           source_url: document.getElementById('sourceUrl').value,
           keywords: document.getElementById('keywords').value,
-          grid_width: document.getElementById('gridW_num').value,
-          grid_height: document.getElementById('gridH_num').value,
-          cell_size_px: document.getElementById('ppi_num').value,
           avrae_cmd: document.getElementById('cmdOutput').innerText,
           is_free_use: true,
           submitted_by: originalSubmitter, 
           last_edit: currentEditor,        
           edit_date: new Date().toISOString() 
       };
+      
+      if (isAvraeOn) {
+          payload.grid_width = document.getElementById('gridW_num').value;
+          payload.grid_height = document.getElementById('gridH_num').value;
+          payload.cell_size_px = document.getElementById('ppi_num').value;
+          // Assuming offset fields exist in DB:
+          payload.offset_x = document.getElementById('offX').value;
+          payload.offset_y = document.getElementById('offY').value;
+      } else {
+          // Clear Avrae fields if toggled off
+          payload.grid_width = 0;
+          payload.grid_height = 0;
+          payload.cell_size_px = 0;
+          payload.avrae_cmd = "";
+          payload.offset_x = 0;
+          payload.offset_y = 0;
+      }
 
       const { error: insertError } = await db.from('maps').insert(payload);
 
