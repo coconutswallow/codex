@@ -1,10 +1,199 @@
+---
+layout: default
+title: Edit Map
+---
+
+<div class="hero-block">
+  <h1>Revise Map Data</h1>
+  <p>Create a new version of an existing map. Core image data is locked.</p>
+  <div style="margin-top: 20px;">
+    <a href="{{ '/maps' | relative_url }}" class="tool-btn" style="text-decoration: none;">&larr; Cancel Editing</a>
+  </div>
+</div>
+
+<div class="submit-container">
+  
+  <div class="map-viewer" id="viewPort">
+    <div class="canvas-wrapper" id="canvasWrapper">
+        <img id="preview-img" src="" alt="" style="display:none;">
+        <div id="grid-overlay" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div id="loading-msg" style="text-align:center; padding:20px;">Loading Map Data...</div>
+    
+    <div id="editor-ui" style="display:none;">
+        
+        <div class="section" style="background:#eee; opacity: 0.8;">
+            <h3>Core Info (Locked)</h3>
+            <label>Map Name</label>
+            <input type="text" id="mapName">
+            
+            <label>Image URL</label>
+            <input type="text" id="imgUrl" disabled>
+            <label>Creator</label>
+            <input type="text" id="creator" disabled>
+             <input type="hidden" id="sourceUrl">
+        </div>
+
+        <div class="section">
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3>Revise Settings</h3>
+                <div id="admin-badge" style="display:none; padding: 5px 10px; background: var(--palette-danger); color: white; border-radius: 4px; font-weight: bold; font-size: 0.9em;">
+                    ADMIN MODE
+                </div>
+            </div>
+            
+            <label>Search Keywords</label>
+            <input type="text" id="keywords" placeholder="forest, road, day">
+            
+            <hr style="margin: 15px 0; border-top: 1px dashed #ccc;">
+
+            <div style="margin-bottom: 15px;">
+                <label style="margin-top:10px; display:flex; align-items:center; gap:10px; cursor:pointer; text-transform:none; color:var(--color-text);">
+                    <input type="checkbox" id="avraeToggle" onchange="toggleAvraeMode()" style="width:auto; margin:0;"> 
+                    <strong>Include Avrae Maps settings</strong>
+                </label>
+            </div>
+            
+            <div id="avrae-settings-container" style="display:none;">
+                <label>Pixels Per Cell</label>
+                <div class="slider-group">
+                  <input type="range" id="ppi_slider" min="20" max="150" oninput="updateFromSlider('ppi')">
+                  <input type="number" id="ppi_num" oninput="updateFromInput('ppi')">
+                </div>
+        
+                <label>Grid W / H</label>
+                <div class="slider-group">
+                  <input type="number" id="gridW_num" oninput="updateFromInput('w')">
+                  <span style="font-weight:bold;">x</span>
+                  <input type="number" id="gridH_num" oninput="updateFromInput('h')">
+                </div>
+                
+                <div style="text-align:right; margin-top:5px;">
+                   <button class="tool-btn" onclick="calcPPIfromGrid()">Fit Image to Grid</button>
+                   <button class="tool-btn" onclick="calcGridFromPPI()">Auto-Set W/H</button>
+                </div>
+                
+                <label>Offset (X / Y)</label>
+                <div style="display:flex; gap:10px;">
+                    <input type="number" id="offX" value="0" oninput="renderGrid()">
+                    <input type="number" id="offY" value="0" oninput="renderGrid()">
+                </div>
+
+                <label style="margin-top: 20px;">Generated Command</label>
+                <div class="generated-cmd" id="cmdOutput">!map ...</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <button id="save-btn" onclick="saveMap()">Save</button> 
+            <p id="statusMsg"></p>
+        </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+/**
+ * auth-manager.js (EMBEDDED)
+ * A reusable component to handle Supabase Auth for any project.
+ */
+
+// --- CONFIGURATION (Update this one place only) ---
+const SUPABASE_CONFIG = {
+    url: 'https://kcbvryvmcbfpsibxthhn.supabase.co',
+    key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'
+};
+
+class AuthManager {
+    constructor() {
+        // Initialize Supabase (assumes supabase-js script is loaded in HTML)
+        if (typeof supabase === 'undefined') {
+            console.error('Supabase JS SDK not found. Make sure to include the CDN script.');
+            return;
+        }
+        this.db = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.key);
+        this.user = null;
+    }
+
+    /**
+     * Initializes the auth listener.
+     * @param {Function} onUserChange - Callback function (user) => { ... } runs whenever auth state changes.
+     */
+    init(onUserChange) {
+        // 1. Check current session immediately
+        this.db.auth.getSession().then(({ data }) => {
+            this.handleSession(data.session, onUserChange);
+        });
+
+        // 2. Listen for future changes (login/logout/token refresh)
+        this.db.auth.onAuthStateChange((event, session) => {
+            this.handleSession(session, onUserChange);
+        });
+    }
+
+    handleSession(session, callback) {
+        this.user = session ? session.user : null;
+        
+        // Clean URL fragment (removes #access_token=... junk from URL bar after login)
+        if (session && window.location.hash && window.location.hash.includes('access_token')) {
+            const newUrl = window.location.origin + window.location.pathname + window.location.search;
+            window.history.replaceState(null, null, newUrl);
+        }
+
+        if (callback) callback(this.user);
+    }
+
+    async login(provider = 'discord') {
+        const redirectUrl = window.location.origin + window.location.pathname;
+        await this.db.auth.signInWithOAuth({ 
+            provider: provider, 
+            options: { redirectTo: redirectUrl } 
+        });
+    }
+
+    async logout() {
+        await this.db.auth.signOut();
+        window.location.reload();
+    }
+
+    // Helper to check for Admin status (assuming a function or metadata flag is set)
+    // NOTE: This is a placeholder. Real admin checks must be done on the server/DB.
+    isAdmin() {
+         if (!this.user) return false;
+         // Placeholder for a real admin check: If user_metadata contains an 'is_admin: true' field
+         const meta = this.user.user_metadata;
+         return meta && meta.is_admin === true; 
+    }
+
+    // Helper to get formatted name
+    getUserName() {
+        if (!this.user) return "Guest";
+        const meta = this.user.user_metadata;
+        // Use custom_claims global_name if available (Discord standard)
+        return meta.full_name || meta.custom_claims?.global_name || meta.name || "User";
+    }
+
+    // Expose the raw client if specific pages need data fetching (like select/insert)
+    getClient() {
+        return this.db;
+    }
+}
+
+// Export a singleton instance globally
+window.authManager = new AuthManager();
+</script>
 <script>
   /* --- GLOBAL VARIABLES --- */
   let db;
   let currentUser = null;
   let originalMapId = null;
-  let isAdmin = false; 
-  
+  let isAdmin = false;
+
   const VISUAL_CELL_SIZE = 28;
   const img = document.getElementById('preview-img');
   const overlay = document.getElementById('grid-overlay');
@@ -15,14 +204,14 @@
     const params = new URLSearchParams(window.location.search);
     originalMapId = params.get('id');
 
-    // 2. Initialize Auth Manager and wait for session check
+    // 2. Initialize Auth Manager
+    // This check is now safe because window.authManager is embedded above.
     if (!window.authManager) {
         console.error("Auth Manager not found. Cannot proceed.");
-        alert("System error: Auth manager script missing.");
+        alert("System error: Auth manager script missing."); // This is the error message
         return;
     }
 
-    // Pass a callback function to init that runs AFTER the user/session check
     window.authManager.init((user) => {
         currentUser = user;
         db = window.authManager.getClient(); // Get the DB client
@@ -30,14 +219,11 @@
         // 3. Security Guard: Redirect if not logged in
         if (!user) {
             alert("You must be logged in to edit.");
-            // Delay redirect slightly to ensure message is seen
             setTimeout(() => { window.location.href = "/codex/maps/"; }, 100); 
             return;
         }
 
-        // --- Everything below this line runs ONLY if a user is confirmed ---
-        
-        // Check for admin status
+        // NEW: Check for admin status
         isAdmin = window.authManager.isAdmin(); 
         if (isAdmin) {
              document.getElementById('admin-badge').style.display = 'inline-block';
@@ -46,28 +232,26 @@
              document.getElementById('save-btn').innerText = 'Save New Version';
         }
 
-        // 4. Load Data now that ID and Auth are confirmed
+        // 4. Load Data if ID exists
         if(originalMapId) {
              loadMapData(originalMapId);
         } else {
              alert("No map ID provided.");
-             document.getElementById('loading-msg').innerText = "Error: No Map ID Provided.";
         }
     });
   });
 
   /* --- DATA LOADING --- */
   async function loadMapData(id) {
-      // Ensure DB client is available
       if(!db) {
-        document.getElementById('loading-msg').innerText = "Error: Database client not ready.";
-        return;
+          document.getElementById('loading-msg').innerText = "Error: Database client not ready.";
+          return;
       }
-      
+
       const { data, error } = await db.from('maps').select('*').eq('id', id).single();
       
       if(error || !data) {
-          alert("Error loading map data. " + (error ? error.message : "Data not found."));
+          alert("Error loading map data.");
           console.error(error);
           return;
       }
@@ -114,7 +298,7 @@
           alert("Could not load original image.");
       };
   }
-  
+
   /* NEW: Toggle Avrae Settings visibility and grid overlay */
   function toggleAvraeMode() {
     const isOn = document.getElementById('avraeToggle').checked;
@@ -122,7 +306,7 @@
     
     settingsDiv.style.display = isOn ? 'block' : 'none';
     overlay.style.display = isOn ? 'block' : 'none';
-    renderGrid(); 
+    renderGrid(); // Re-render to update image transform/size
   }
 
 
@@ -168,12 +352,13 @@
             img.style.height = "auto";
             img.style.transform = `translate(${ox * scale}px, ${oy * scale}px)`;
         } else {
-            img.style.width = "100%"; 
+            img.style.width = "100%"; // Show image normally if grid is off
             img.style.height = "auto";
             img.style.transform = "none";
         }
     }
 
+    // Only set overlay size if Avrae is on for clean display
     if (isAvraeOn) {
         overlay.style.width = (w * VISUAL_CELL_SIZE) + 'px';
         overlay.style.height = (h * VISUAL_CELL_SIZE) + 'px';
@@ -233,9 +418,11 @@
           payload.grid_height = document.getElementById('gridH_num').value;
           payload.cell_size_px = document.getElementById('ppi_num').value;
           payload.avrae_cmd = document.getElementById('cmdOutput').innerText;
+          // Assuming offset fields exist in DB:
           payload.offset_x = document.getElementById('offX').value;
           payload.offset_y = document.getElementById('offY').value;
       } else {
+          // Clear Avrae fields if toggled off
           payload.grid_width = 0;
           payload.grid_height = 0;
           payload.cell_size_px = 0;
@@ -279,13 +466,13 @@
       const isAvraeOn = document.getElementById('avraeToggle').checked;
 
       /* 1. ARCHIVE OLD MAP */
+      // We fetch the old submitter first so we don't lose that info
       const { data: oldData, error: fetchError } = await db
           .from('maps')
           .select('submitted_by')
           .eq('id', originalMapId)
           .single();
 
-      // Attempt to archive regardless of fetch success
       const { error: archiveError } = await db.rpc('archive_map', { 
           map_id: parseInt(originalMapId) 
       });
@@ -299,7 +486,9 @@
       btn.innerText = "Saving new version...";
 
       /* 2. INSERT NEW VERSION */
+      // Use authManager helper for clean name
       const currentEditor = window.authManager.getUserName();
+      // Keep original submitter if fetch was successful
       const originalSubmitter = oldData ? oldData.submitted_by : currentEditor; 
 
       let payload = {
@@ -322,6 +511,7 @@
           payload.offset_x = document.getElementById('offX').value;
           payload.offset_y = document.getElementById('offY').value;
       } else {
+          // Clear Avrae fields if toggled off
           payload.grid_width = 0;
           payload.grid_height = 0;
           payload.cell_size_px = 0;
