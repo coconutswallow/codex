@@ -1,40 +1,3 @@
----
-layout: default
-title: Map Index
----
-
-<div class="hero-block">
-  <h1>Curated D&D Battle Maps</h1>
-  <p>Curated battle maps with fast search and optional Avrae setup commands.</p>
-  <p>Login with Discord to edit map cards (ie. add avrae settings or search keywords) or add map(s) to the collection.</p>
-  
-  <div id="auth-ui" style="margin-top: 10px; font-size: 0.85em;">
-    <button id="login-btn" onclick="login()" class="tool-btn" style="display:none; background:var(--palette-brand-discord); border-color:var(--palette-brand-discord); color:var(--palette-white); padding: 4px 10px; font-size: 0.9em;">Login to Edit</button>
-    
-    <div id="user-info" style="display:none;">
-      <span style="margin-right:10px;">Logged in as: <strong id="username-display"></strong></span>
-      <button onclick="logout()" class="tool-btn" style="padding: 2px 8px; font-size: 0.8em;">Logout</button>
-    </div>
-  </div>
-</div>
-
-<div class="map-search-wrapper">
-  <input type="text" id="mapSearchInput" placeholder="Type keywords, name, or creator...">
-  
-  <a href="/codex/map-submit" class="tool-btn" style="display:inline-flex; align-items:center; justify-content:center; height:42px; box-sizing:border-box; text-decoration:none;">
-    + Submit Map
-  </a>
-</div>
-
-<div class="map-gallery" id="gallery-container">
-  </div>
-
-<button id="load-more-btn" class="tool-btn" onclick="fetchMaps()" style="display:none; margin: 20px auto; padding: 10px 20px;">Load More Maps</button>
-
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="{{ '/assets/js/auth-manager.js' | relative_url }}"></script>
-
 <script>
   /* --- GLOBAL VARIABLES --- */
   let db; 
@@ -59,10 +22,13 @@ title: Map Index
             
             updateAuthUI(user);
             
-            // If the gallery is empty (first load), fetch maps
+            // --- CRITICAL FIX: Only call resetGallery/fetchMaps once Auth/DB is ready ---
+            
+            // This ensures the gallery loads maps or reloads correctly after auth changes.
             const container = document.getElementById('gallery-container');
-            if (!container.innerHTML.trim()) {
-                resetGallery();
+            if (currentPage === 0 && container.children.length === 0) {
+                 // Initial load, only run if nothing is currently loaded and we're on page 0
+                resetGallery(); 
             }
         });
     } else {
@@ -105,6 +71,7 @@ title: Map Index
     const container = document.getElementById('gallery-container');
     if (container.children.length > 0) {
         // We clear and reload to ensure "Edit" buttons appear/disappear correctly
+        // This is safe because it's only called after user state is confirmed
         resetGallery();
     }
   }
@@ -127,10 +94,13 @@ title: Map Index
 
       // Ensure DB is ready before fetching
       if(db) fetchMaps();
+      // If DB is not ready (which shouldn't happen here, but as a safeguard) 
+      // the fetchMaps will run when the authManager.init callback completes.
   }
 
   async function fetchMaps() {
-    if(isLoading || reachedEnd || !db) return;
+    // CRITICAL: Ensure DB is set before proceeding
+    if(isLoading || reachedEnd || !db) return; 
     isLoading = true;
 
     const container = document.getElementById('gallery-container');
@@ -196,7 +166,8 @@ title: Map Index
           ? `<a href="${map.source_url}" target="_blank" rel="noopener noreferrer">${map.creator}</a>` 
           : map.creator;
 
-        // Check currentUser to decide if we show the edit button
+        // Check currentUser (global var set by authManager.init) to decide if we show the edit button
+        // This relies on the callback having completed.
         const editButtonHtml = currentUser 
           ? `<a href="/codex/edit?id=${map.id}" class="edit-btn">✏️ Edit / Revise</a>` 
           : '';
