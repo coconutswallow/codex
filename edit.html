@@ -280,6 +280,7 @@ window.authManager = new AuthManager();
         document.getElementById('gridH_num').value = 30;
       }
       
+      // FIX: Load offset_x and offset_y from the database record
       document.getElementById('offX').value = data.offset_x || 0; 
       document.getElementById('offY').value = data.offset_y || 0; 
       
@@ -418,7 +419,7 @@ window.authManager = new AuthManager();
           payload.grid_height = document.getElementById('gridH_num').value;
           payload.cell_size_px = document.getElementById('ppi_num').value;
           payload.avrae_cmd = document.getElementById('cmdOutput').innerText;
-          // Assuming offset fields exist in DB:
+          // Correctly include offset fields
           payload.offset_x = document.getElementById('offX').value;
           payload.offset_y = document.getElementById('offY').value;
       } else {
@@ -508,6 +509,7 @@ window.authManager = new AuthManager();
           payload.grid_width = document.getElementById('gridW_num').value;
           payload.grid_height = document.getElementById('gridH_num').value;
           payload.cell_size_px = document.getElementById('ppi_num').value;
+          // Correctly include offset fields
           payload.offset_x = document.getElementById('offX').value;
           payload.offset_y = document.getElementById('offY').value;
       } else {

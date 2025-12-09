@@ -6,7 +6,7 @@ title: Submit Map
 <div class="hero-block">
   <h1>Submit a Map</h1>
   <p>Upload free-to-use maps to the database. Please credit artists</p>
-  <p>As this is a public site, Discord login is required to prevent potenial misuse.  Ping me on discord to be whitelisted to have your maps auto-approved upon submission.</p>
+  <p>As this is a public site, Discord login is required to prevent potenial misuse. Ping me on discord to be whitelisted to have your maps auto-approved upon submission.</p>
   
   <div style="margin-top: 20px;">
     <a href="{{ '/maps' | relative_url }}" class="tool-btn" style="text-decoration: none;">&larr; Back to Index</a>
@@ -334,8 +334,22 @@ title: Submit Map
 
     const isAvraeOn = document.getElementById('avraeToggle').checked;
     let finalCmd = "";
+    
+    // Default values if Avrae is OFF
+    let w = 0;
+    let h = 0;
+    let ppi = 0;
+    let offX = 0;
+    let offY = 0;
+
     if (isAvraeOn) {
         finalCmd = document.getElementById('cmdOutput').innerText;
+        w = document.getElementById('gridW_num').value;
+        h = document.getElementById('gridH_num').value;
+        ppi = document.getElementById('ppi_num').value;
+        // Get offset values
+        offX = document.getElementById('offX').value;
+        offY = document.getElementById('offY').value;
     }
 
     const payload = {
@@ -344,9 +358,12 @@ title: Submit Map
       creator: document.getElementById('creator').value,
       source_url: document.getElementById('sourceUrl').value,
       keywords: document.getElementById('keywords').value,
-      grid_width: isAvraeOn ? document.getElementById('gridW_num').value : 0,
-      grid_height: isAvraeOn ? document.getElementById('gridH_num').value : 0,
-      cell_size_px: isAvraeOn ? document.getElementById('ppi_num').value : 0,
+      grid_width: w, // Use variable w
+      grid_height: h, // Use variable h
+      cell_size_px: ppi, // Use variable ppi
+      // NEW: Include offset columns
+      offset_x: offX,
+      offset_y: offY,
       avrae_cmd: finalCmd,
       submitted_by: discordName,
       is_free_use: true
