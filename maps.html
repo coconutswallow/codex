@@ -1,3 +1,126 @@
+---
+layout: default
+title: Map Index
+---
+
+<div class="hero-block">
+  <h1>Curated D&D Battle Maps</h1>
+  <p>Curated battle maps with fast search and optional Avrae setup commands.</p>
+  <p>Login with Discord to edit map cards (ie. add avrae settings or search keywords) or add map(s) to the collection.</p>
+  
+  <div id="auth-ui" style="margin-top: 10px; font-size: 0.85em;">
+    <button id="login-btn" onclick="login()" class="tool-btn" style="display:none; background:var(--palette-brand-discord); border-color:var(--palette-brand-discord); color:var(--palette-white); padding: 4px 10px; font-size: 0.9em;">Login to Edit</button>
+    
+    <div id="user-info" style="display:none;">
+      <span style="margin-right:10px;">Logged in as: <strong id="username-display"></strong></span>
+      <button onclick="logout()" class="tool-btn" style="padding: 2px 8px; font-size: 0.8em;">Logout</button>
+    </div>
+  </div>
+</div>
+
+<div class="map-search-wrapper">
+  <input type="text" id="mapSearchInput" placeholder="Type keywords, name, or creator...">
+  
+  <a href="/codex/map-submit" class="tool-btn" style="display:inline-flex; align-items:center; justify-content:center; height:42px; box-sizing:border-box; text-decoration:none;">
+    + Submit Map
+  </a>
+</div>
+
+<div class="map-gallery" id="gallery-container">
+  </div>
+
+<button id="load-more-btn" class="tool-btn" onclick="fetchMaps()" style="display:none; margin: 20px auto; padding: 10px 20px;">Load More Maps</button>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+/**
+ * auth-manager.js (EMBEDDED)
+ * A reusable component to handle Supabase Auth for any project.
+ */
+
+// --- CONFIGURATION (Update this one place only) ---
+const SUPABASE_CONFIG = {
+    url: 'https://kcbvryvmcbfpsibxthhn.supabase.co',
+    key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M'
+};
+
+class AuthManager {
+    constructor() {
+        // Initialize Supabase (assumes supabase-js script is loaded in HTML)
+        if (typeof supabase === 'undefined') {
+            console.error('Supabase JS SDK not found. Make sure to include the CDN script.');
+            return;
+        }
+        this.db = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.key);
+        this.user = null;
+    }
+
+    /**
+     * Initializes the auth listener.
+     * @param {Function} onUserChange - Callback function (user) => { ... } runs whenever auth state changes.
+     */
+    init(onUserChange) {
+        // 1. Check current session immediately
+        this.db.auth.getSession().then(({ data }) => {
+            this.handleSession(data.session, onUserChange);
+        });
+
+        // 2. Listen for future changes (login/logout/token refresh)
+        this.db.auth.onAuthStateChange((event, session) => {
+            this.handleSession(session, onUserChange);
+        });
+    }
+
+    handleSession(session, callback) {
+        this.user = session ? session.user : null;
+        
+        // Clean URL fragment (removes #access_token=... junk from URL bar after login)
+        if (session && window.location.hash && window.location.hash.includes('access_token')) {
+            const newUrl = window.location.origin + window.location.pathname + window.location.search;
+            window.history.replaceState(null, null, newUrl);
+        }
+
+        if (callback) callback(this.user);
+    }
+
+    async login(provider = 'discord') {
+        const redirectUrl = window.location.origin + window.location.pathname;
+        await this.db.auth.signInWithOAuth({ 
+            provider: provider, 
+            options: { redirectTo: redirectUrl } 
+        });
+    }
+
+    async logout() {
+        await this.db.auth.signOut();
+        window.location.reload();
+    }
+    
+    // Placeholder for admin check (required by edit.html, included for consistency)
+    isAdmin() {
+         if (!this.user) return false;
+         const meta = this.user.user_metadata;
+         return meta && meta.is_admin === true; 
+    }
+
+    // Helper to get formatted name
+    getUserName() {
+        if (!this.user) return "Guest";
+        const meta = this.user.user_metadata;
+        return meta.full_name || meta.custom_claims?.global_name || meta.name || "User";
+    }
+
+    // Expose the raw client if specific pages need data fetching (like select/insert)
+    getClient() {
+        return this.db;
+    }
+}
+
+// Export a singleton instance globally
+window.authManager = new AuthManager();
+</script>
 <script>
   /* --- GLOBAL VARIABLES --- */
   let db; 
@@ -22,17 +145,17 @@
             
             updateAuthUI(user);
             
-            // --- CRITICAL FIX: Only call resetGallery/fetchMaps once Auth/DB is ready ---
-            
-            // This ensures the gallery loads maps or reloads correctly after auth changes.
+            // CRITICAL FIX: Only call resetGallery/fetchMaps once Auth/DB is ready
+            // and ensure we don't double load.
             const container = document.getElementById('gallery-container');
+            // Check if it's the first page load AND the container is empty.
             if (currentPage === 0 && container.children.length === 0) {
-                 // Initial load, only run if nothing is currently loaded and we're on page 0
                 resetGallery(); 
             }
         });
     } else {
-        console.error("Auth Manager not loaded! Check script tags.");
+        // If window.authManager is still missing despite embedding, log the error.
+        console.error("Auth Manager not loaded! Initializing failed.");
     }
 
     // 2. Setup Search Listener
@@ -69,9 +192,8 @@
 
     // Re-render gallery to show/hide Edit buttons if user state changed
     const container = document.getElementById('gallery-container');
-    if (container.children.length > 0) {
-        // We clear and reload to ensure "Edit" buttons appear/disappear correctly
-        // This is safe because it's only called after user state is confirmed
+    // Only reload if maps are currently visible (i.e., we're not waiting for an initial load)
+    if (container.children.length > 0 || currentPage > 0) { 
         resetGallery();
     }
   }
@@ -94,8 +216,6 @@
 
       // Ensure DB is ready before fetching
       if(db) fetchMaps();
-      // If DB is not ready (which shouldn't happen here, but as a safeguard) 
-      // the fetchMaps will run when the authManager.init callback completes.
   }
 
   async function fetchMaps() {
@@ -166,8 +286,7 @@
           ? `<a href="${map.source_url}" target="_blank" rel="noopener noreferrer">${map.creator}</a>` 
           : map.creator;
 
-        // Check currentUser (global var set by authManager.init) to decide if we show the edit button
-        // This relies on the callback having completed.
+        // Check currentUser to decide if we show the edit button
         const editButtonHtml = currentUser 
           ? `<a href="/codex/edit?id=${map.id}" class="edit-btn">✏️ Edit / Revise</a>` 
           : '';
