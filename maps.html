@@ -6,7 +6,7 @@ title: Map Index
 <div class="hero-block">
   <h1>Curated D&D Battle Maps</h1>
   <p>Curated battle maps with fast search and optional Avrae setup commands.</p>
-  <p>Login with Discord to edit map cards (ie. add avrae settings or search keywords) or add map(s) to the collection.</p>
+  <p id="map-count-display">Loading map count...</p> <p>Login with Discord to edit map cards (ie. add avrae settings or search keywords) or add map(s) to the collection.</p>
   
   <div id="auth-ui" style="margin-top: 10px; font-size: 0.85em;">
     <button id="login-btn" onclick="login()" class="tool-btn" style="display:none; background:var(--palette-brand-discord); border-color:var(--palette-brand-discord); color:var(--palette-white); padding: 4px 10px; font-size: 0.9em;">Login to Edit</button>
@@ -225,13 +225,15 @@ window.authManager = new AuthManager();
 
     const container = document.getElementById('gallery-container');
     const loadMoreBtn = document.getElementById('load-more-btn');
+    const countDisplay = document.getElementById('map-count-display'); // Get the new element
     
     if(loadMoreBtn) loadMoreBtn.innerText = "Loading...";
 
     try {
+      // MODIFICATION: Request the total count using { count: 'exact' }
       let query = db
         .from('maps')
-        .select('*')
+        .select('*', { count: 'exact' }) // <-- Added count option
         .eq('is_approved', true)
         .order('created_at', { ascending: false });
 
@@ -244,16 +246,28 @@ window.authManager = new AuthManager();
       const to = from + PAGE_SIZE - 1;
       query = query.range(from, to);
 
-      const { data: maps, error } = await query;
+      // MODIFICATION: Destructure the count from the response
+      const { data: maps, error, count } = await query;
 
       if (error) throw error;
 
+      // MODIFICATION: Update the count display for the first page load/search
+      if (currentPage === 0) {
+        if (count && countDisplay) {
+            const mapWord = count === 1 ? 'map' : 'maps';
+            countDisplay.innerText = `Displaying ${maps.length} of ${count.toLocaleString()} curated D&D battle ${mapWord}.`;
+        } else if (countDisplay) {
+             countDisplay.innerText = `No curated D&D battle maps found.`;
+        }
+      }
+      
       if (currentPage === 0 && (!maps || maps.length === 0)) {
         container.innerHTML = `<p style="text-align:center; width:100%;">No maps found matching "${currentSearch}".</p>`;
         if(loadMoreBtn) loadMoreBtn.style.display = 'none';
         return;
       }
 
+      // ... (rest of pagination logic remains the same)
       if (maps.length < PAGE_SIZE) {
           reachedEnd = true;
           if(loadMoreBtn) loadMoreBtn.style.display = 'none'; 
@@ -270,6 +284,8 @@ window.authManager = new AuthManager();
     } catch (err) {
       console.error("Load Error:", err);
       container.innerHTML += `<p style="color:var(--palette-danger); text-align:center;">Error loading maps.</p>`;
+      // Optional: Set the count display to an error state as well
+      if(countDisplay) countDisplay.innerText = "Error loading map count.";
     } finally {
         isLoading = false;
     }
