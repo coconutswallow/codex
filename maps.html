@@ -6,7 +6,7 @@ title: Map Index
 <div class="hero-block">
   <h1>Curated D&D Battle Maps</h1>
   <p>Curated battle maps with fast search and optional Avrae setup commands.  All maps are offered free by creators, with links to source.</p>
-  <p id="map-count-display">Loading map count...</p> <p>Login with Discord to edit map cards (ie. add avrae settings or search keywords) or add map(s) to the collection.</p>
+  <p id="map-count-display">Loading map count...</p> <p>Help contribute to the collection!  Login with Discord to edit map cards (ie. add avrae settings or search keywords) or add map(s) to the collection.</p>
   
   <div id="auth-ui" style="margin-top: 10px; font-size: 0.85em;">
     <button id="login-btn" onclick="login()" class="tool-btn" style="display:none; background:var(--palette-brand-discord); border-color:var(--palette-brand-discord); color:var(--palette-white); padding: 4px 10px; font-size: 0.9em;">Login to Edit</button>
@@ -255,7 +255,7 @@ window.authManager = new AuthManager();
       if (currentPage === 0) {
         if (count && countDisplay) {
             const mapWord = count === 1 ? 'map' : 'maps';
-            countDisplay.innerText = `Map Collection: ${count.toLocaleString()} Maps ${mapWord}.`;
+            countDisplay.innerText = `Map Collection: ${count.toLocaleString()} ${mapWord}.`;
         } else if (countDisplay) {
              countDisplay.innerText = `No curated D&D battle maps found.`;
         }
