@@ -4,7 +4,7 @@ title: New to D&D
 permalink: /new-to-dnd/
 ---
 
-# New to D&D? Here's how to start?
+# New to D&D? Here are some resources to help you get started
 
 |Topic|	I like to read!|I prefer someone to tell it to me (Videos)|
 |:|	:|	:-------------------------------------------|
@@ -17,3 +17,9 @@ permalink: /new-to-dnd/
 |Creating your character in D&D Beyond|[How to Create Your First Dungeons & Dragons Character With D&D Beyond](https://www.dndbeyond.com/posts/1059-how-to-create-your-first-dungeons-dragons?srsltid=AfmBOoo0sk2SPru4VBwESkGumeo0YAjm_gA4OMMMGGz38DNyOy3v8EQV)|[D&D Beyond Character Creation: Perfect for New Players! by Uncle Rusty](https://youtu.be/BDThVdGYuGM?si=KCupp7JNpWqmwSSm)|
 |**Playing the Game**||
 |Character Creation Overview|[D&D Basic Rules: Combat](https://www.dndbeyond.com/sources/dnd/basic-rules-2014/combat?srsltid=AfmBOoqbmugUbJ8AQ3EWo15IYn_p1dp_CspuW3Fp8xqZLcCLegwlIfOV)|[5 minute d&d basic combat tutorial by D&D Afternoon Tea](https://youtu.be/qIscS1nJN1c?si=L7w5X1ebEDXs_-B7)
+
+# Other ways to learn
+
+1. There are a lot of D&D session on Youtube.  Watch one like Critical Role, Dork Tales, etc. and see one in action
+2. Spectate a game!  Ask a DM if you can spectate a game, most will allow it
+3. Ask questions!
