@@ -23,6 +23,8 @@ collections:
 navigation:
   - title: "Home"
     url: "/"
+  - title: "New to D&D?"
+    url: "/new-to-dnd"
   - title: "Avrae Quick Reference"
     url: "/avrae"
   - title: "Battle Maps"
