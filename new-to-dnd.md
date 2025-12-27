@@ -6,7 +6,7 @@ permalink: /new-to-dnd/
 
 # New to D&D? Here's how to start?
 
-|Topic|	I like to read!|I prefer someone to tell it to me|
+|Topic|	I like to read!|I prefer someone to tell it to me (Videos)|
 |:|	:|	:-------------------------------------------|
 |How to Play D&D|[D&D Free Reference Document - Page 5 to 18](https://media.dndbeyond.com/compendium-images/srd/5.2/SRD_CC_v5.2.1.pdf)|[How to play D&D — Absolute beginner's guide by Ginny Di](https://www.youtube.com/watch?v=hNNBjVmNbQI)|
 |**Character Creation**||
