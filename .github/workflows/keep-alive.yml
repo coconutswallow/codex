@@ -1,11 +1,9 @@
-name: Supabase Keep Alive
+name: Keep Supabase Awake
 
 on:
   schedule:
-    # Runs at 00:00 UTC every Monday and Thursday
-    # (Twice a week is safer than once a week)
-    - cron: "0 0 * * 1,4"
-  workflow_dispatch: # Allows you to run it manually from the Actions tab for testing
+    - cron: "0 0 * * 1,4" # Runs at 00:00 on Monday and Thursday
+  workflow_dispatch: # Allows manual testing
 
 jobs:
   ping:
@@ -13,10 +11,6 @@ jobs:
     steps:
       - name: Ping Coco Supabase
         run: |
-          # This command requests a single row from the REST API.
-          # We use 'curl' so no extra code/dependencies are needed.
-
-          # REPLACE 'users' WITH ANY VALID TABLE NAME IN YOUR DATABASE
           response=$(curl -s -o /dev/null -w "%{http_code}" \
             "${{ secrets.COCOSUPABASEURL }}/rest/v1/maps?select=*&limit=1" \
             -H "apikey: ${{ secrets.COCOSUPABASEKEY }}" \
@@ -28,12 +22,9 @@ jobs:
             echo "COCO Failed with HTTP $response"
             exit 1
           fi
-- name: Ping HAWT Supabase
-        run: |
-          # This command requests a single row from the REST API.
-          # We use 'curl' so no extra code/dependencies are needed.
 
-          # REPLACE 'users' WITH ANY VALID TABLE NAME IN YOUR DATABASE
+      - name: Ping HAWT Supabase
+        run: |
           response=$(curl -s -o /dev/null -w "%{http_code}" \
             "${{ secrets.HAWTSUPABASEURL }}/rest/v1/faq?select=*&limit=1" \
             -H "apikey: ${{ secrets.HAWTSUPABASEKEY }}" \
