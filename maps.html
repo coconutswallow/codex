@@ -292,56 +292,70 @@ window.authManager = new AuthManager();
   }
 
   function renderMapCards(maps) {
-    const container = document.getElementById('gallery-container');
+  const container = document.getElementById('gallery-container');
+  
+  maps.forEach((map, index) => {
+    const card = document.createElement('div');
+    card.className = 'map-card';
     
-    maps.forEach(map => {
-        const card = document.createElement('div');
-        card.className = 'map-card';
+    // 1. IMPROVED IMAGE OPTIMIZATION
+    // We provide a mobile-sized (200px) and a desktop-sized (400px) variant.
+    // We add 'fit=cover' and explicit 'h=300' to ensure uniform card sizes.
+    const thumbUrl400 = `https://wsrv.nl/?url=${encodeURIComponent(map.image_url)}&w=400&h=300&fit=cover&output=webp&q=80`;
+    const thumbUrl200 = `https://wsrv.nl/?url=${encodeURIComponent(map.image_url)}&w=200&h=150&fit=cover&output=webp&q=70`;
+
+    // 2. PERFORMANCE HINTING (LCP Optimization)
+    // The first 4 images (the top row) should load instantly. 
+    // All others use native lazy loading to save bandwidth and CPU.
+    const isAboveFold = index < 4;
+    const loadingAttr = isAboveFold ? 'eager' : 'lazy';
+    const priorityAttr = isAboveFold ? 'fetchpriority="high"' : '';
+
+    const creatorDisplay = map.source_url 
+      ? `<a href="${map.source_url}" target="_blank" rel="noopener noreferrer">${map.creator}</a>` 
+      : map.creator;
+
+    const editButtonHtml = currentUser 
+      ? `<a href="/codex/edit?id=${map.id}" class="edit-btn">✏️ Edit / Revise</a>` 
+      : '';
+
+    card.innerHTML = `
+      <a href="${map.image_url}" class="map-thumbnail-link" target="_blank" title="View Full Image">
+        <img 
+            src="${thumbUrl400}" 
+            srcset="${thumbUrl200} 200w, ${thumbUrl400} 400w"
+            sizes="(max-width: 600px) 200px, 400px"
+            alt="${map.name}" 
+            class="map-thumbnail" 
+            loading="${loadingAttr}"
+            ${priorityAttr}
+            width="400"
+            height="300"
+            onerror="this.onerror=null; this.src='${map.image_url}';"
+        >
+      </a>
+
+      <div class="map-card-info">
+        <h2>${map.name}</h2>
+        <p><strong>Creator:</strong> ${creatorDisplay}</p>
         
-        const creatorDisplay = map.source_url 
-          ? `<a href="${map.source_url}" target="_blank" rel="noopener noreferrer">${map.creator}</a>` 
-          : map.creator;
+        ${ map.grid_width ? `<p><strong>Dimensions:</strong> ${map.grid_width}x${map.grid_height}</p>` : '' }
 
-        // Check currentUser to decide if we show the edit button
-        const editButtonHtml = currentUser 
-          ? `<a href="/codex/edit?id=${map.id}" class="edit-btn">✏️ Edit / Revise</a>` 
-          : '';
+        <p><strong>Avrae Map Code:</strong></p>
+        <div class="copy-wrapper">
+           <code class="copy-target">${map.avrae_cmd || 'Not submitted'}</code>
+           <button class="copy-button">Copy</button>
+        </div>
+        
+        <p style="font-size:0.85em; color:var(--color-text-muted); margin-top:5px;">Tags: ${map.keywords || ''}</p>
+        ${editButtonHtml}
+      </div>
+    `;
+    container.appendChild(card);
+  });
 
-        const thumbUrl = `https://wsrv.nl/?url=${encodeURIComponent(map.image_url)}&w=400&output=webp`;
-
-        card.innerHTML = `
-          <a href="${map.image_url}" class="map-thumbnail-link" target="_blank" title="View Full Image">
-            <img 
-                src="${thumbUrl}" 
-                data-original="${map.image_url}"
-                alt="${map.name}" 
-                class="map-thumbnail" 
-                loading="lazy"
-                onerror="this.onerror=null; this.src=this.dataset.original;"
-            >
-          </a>
-
-          <div class="map-card-info">
-            <h2>${map.name}</h2>
-            <p><strong>Creator:</strong> ${creatorDisplay}</p>
-            
-            ${ map.grid_width ? `<p><strong>Dimensions:</strong> ${map.grid_width}x${map.grid_height}</p>` : '' }
-
-            <p><strong>Avrae Map Code:</strong></p>
-            <div class="copy-wrapper">
-               <code class="copy-target">${map.avrae_cmd || 'Not submitted'}</code>
-               <button class="copy-button">Copy</button>
-            </div>
-            
-            <p style="font-size:0.85em; color:var(--color-text-muted); margin-top:5px;">Tags: ${map.keywords || ''}</p>
-            ${editButtonHtml}
-          </div>
-        `;
-        container.appendChild(card);
-    });
-
-    setupInteractions(container);
-  }
+  setupInteractions(container);
+}
 
   function setupInteractions(container) {
     container.querySelectorAll('.copy-button').forEach(btn => {
