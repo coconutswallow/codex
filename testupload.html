@@ -8,7 +8,20 @@
         body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
         .container { border: 1px solid #ccc; padding: 2rem; border-radius: 8px; background: #f9f9f9; }
         
-        /* Style the hidden target div so we don't see the raw code it dumps */
+        /* Custom Button Style */
+        .custom-upload-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        .custom-upload-btn:hover { background-color: #0056b3; }
+
+        /* Hidden target for the result code */
         #hidden-target { display: none; }
         
         /* Results area */
@@ -21,71 +34,65 @@
 <body>
 
 <div class="container">
-    <h1>Plugin Upload Test</h1>
-    <p>Click the button below to open the secure upload window.</p>
+    <h1>Upload Test</h1>
+    <p>Click below to upload. The plugin will handle the popup.</p>
 
-    <script async 
-            src="//freeimage.host/sdk/pup.js" 
-            data-url="https://freeimage.host/upload" 
-            data-auto-insert="html-embed-medium" 
+    <script async src="//freeimage.host/sdk/pup.js" data-url="https://freeimage.host/upload"></script>
+
+    <button class="custom-upload-btn" 
+            data-chevereto-pup-trigger 
             data-target="#hidden-target">
-    </script>
+        Upload Image
+    </button>
     
-    <div id="hidden-target"></div>
+    <div id="hidden-target" contenteditable></div>
 
     <div id="results">
         <h2>Upload Result</h2>
         <div class="result-item">
-            <strong>Full Image:</strong>
+            <strong>Full Image URL:</strong>
             <div id="urlDisplay" class="url-box"></div>
+            
+            <strong>Thumbnail / Preview:</strong><br>
             <img id="imagePreview" src="" alt="Preview">
         </div>
     </div>
 </div>
 
 <script>
-    // We use a MutationObserver to "watch" the hidden-target div.
-    // When the plugin inserts the HTML code, this triggers.
+    // Watch for the plugin to insert content into #hidden-target
     const targetNode = document.getElementById('hidden-target');
     const resultsDiv = document.getElementById('results');
     const urlDisplay = document.getElementById('urlDisplay');
     const imagePreview = document.getElementById('imagePreview');
 
-    const config = { childList: true, subtree: true, characterData: true };
+    const observer = new MutationObserver((mutations) => {
+        if (targetNode.innerHTML.trim() !== "") {
+            // The plugin outputs BBCode or HTML. 
+            // We'll parse the HTML string to find the src/href.
+            const parser = new DOMParser();
+            // "text/html" parser works even if the content is just a partial string
+            const doc = parser.parseFromString(targetNode.innerHTML, 'text/html');
+            
+            const img = doc.querySelector('img');
+            const link = doc.querySelector('a');
 
-    const callback = function(mutationsList, observer) {
-        for(const mutation of mutationsList) {
-            // Check if content was added to the target div
-            if (targetNode.innerHTML.trim() !== "") {
-                
-                // The plugin dumps raw HTML like: <a href="..."><img src="..."></a>
-                // We parse that string to extract the real URLs.
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(targetNode.textContent || targetNode.innerHTML, 'text/html');
-                const imgTag = doc.querySelector('img');
-                const aTag = doc.querySelector('a');
+            if (img || link) {
+                // Get the best available URL
+                const src = img ? img.src : '';
+                const href = link ? link.href : src;
 
-                if (imgTag) {
-                    const src = imgTag.src; // Thumbnail or Medium URL
-                    const fullLink = aTag ? aTag.href : src; // Full URL
+                urlDisplay.textContent = href;
+                imagePreview.src = src || href;
+                resultsDiv.style.display = 'block';
 
-                    // Update our nice display
-                    imagePreview.src = src;
-                    urlDisplay.textContent = fullLink;
-                    resultsDiv.style.display = 'block';
-
-                    // Clear the hidden target so it's ready for the next one
-                    // (Disconnect briefly to avoid infinite loop if we cleared it inside)
-                    observer.disconnect();
-                    targetNode.innerHTML = ""; 
-                    observer.observe(targetNode, config); 
-                }
+                // Optional: Stop observing if you only want 1 upload
+                // observer.disconnect(); 
             }
         }
-    };
+    });
 
-    const observer = new MutationObserver(callback);
-    observer.observe(targetNode, config);
+    observer.observe(targetNode, { childList: true, subtree: true, characterData: true });
 </script>
 
 </body>
