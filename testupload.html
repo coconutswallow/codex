@@ -3,125 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Freeimage.host Upload Test</title>
+    <title>Freeimage.host Plugin Upload</title>
     <style>
         body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-        .container { border: 1px solid #ccc; padding: 2rem; border-radius: 8px; }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
-        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; }
-        button:hover { background-color: #0056b3; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        .container { border: 1px solid #ccc; padding: 2rem; border-radius: 8px; background: #f9f9f9; }
+        
+        /* Style the hidden target div so we don't see the raw code it dumps */
+        #hidden-target { display: none; }
+        
+        /* Results area */
         #results { margin-top: 2rem; display: none; }
-        .result-item { margin-bottom: 1.5rem; padding: 1rem; background: #f9f9f9; border-radius: 4px; }
+        .result-item { margin-bottom: 1.5rem; padding: 1rem; background: #fff; border: 1px solid #ddd; border-radius: 4px; }
         .url-box { background: #eee; padding: 0.5rem; word-break: break-all; font-family: monospace; margin-top: 0.5rem; }
         img { max-width: 100%; height: auto; margin-top: 10px; border: 1px solid #ddd; }
-        .error { color: red; margin-top: 1rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Upload Test Page (CORS Fix)</h1>
-    
-    <div class="form-group">
-        <label for="fileInput">Select an image:</label>
-        <input type="file" id="fileInput" accept="image/*">
-    </div>
+    <h1>Plugin Upload Test</h1>
+    <p>Click the button below to open the secure upload window.</p>
 
-    <button id="uploadBtn">Upload to Freeimage.host</button>
-    <div id="loading" style="display:none; margin-top:10px;">Uploading... please wait.</div>
-    <div id="errorMsg" class="error"></div>
+    <script async 
+            src="//freeimage.host/sdk/pup.js" 
+            data-url="https://freeimage.host/upload" 
+            data-auto-insert="html-embed-medium" 
+            data-target="#hidden-target">
+    </script>
+    
+    <div id="hidden-target"></div>
 
     <div id="results">
-        <h2>Upload Results</h2>
-        
+        <h2>Upload Result</h2>
         <div class="result-item">
-            <strong>Thumbnail URL:</strong>
-            <div id="thumbUrlDisplay" class="url-box"></div>
-            <img id="thumbPreview" src="" alt="Thumbnail Preview">
-        </div>
-
-        <div class="result-item">
-            <strong>Full Image URL:</strong>
-            <div id="fullUrlDisplay" class="url-box"></div>
-            <img id="fullPreview" src="" alt="Full Image Preview">
+            <strong>Full Image:</strong>
+            <div id="urlDisplay" class="url-box"></div>
+            <img id="imagePreview" src="" alt="Preview">
         </div>
     </div>
 </div>
 
 <script>
-    const uploadBtn = document.getElementById('uploadBtn');
-    const fileInput = document.getElementById('fileInput');
+    // We use a MutationObserver to "watch" the hidden-target div.
+    // When the plugin inserts the HTML code, this triggers.
+    const targetNode = document.getElementById('hidden-target');
     const resultsDiv = document.getElementById('results');
-    const loadingDiv = document.getElementById('loading');
-    const errorMsg = document.getElementById('errorMsg');
+    const urlDisplay = document.getElementById('urlDisplay');
+    const imagePreview = document.getElementById('imagePreview');
 
-    // API Configuration
-    const API_KEY = "6d207e02198a847aa98d0a2a901485a5"; 
-    // We prepend the proxy URL to the actual API endpoint
-    const PROXY_URL = "https://corsproxy.io/?";
-    const TARGET_URL = "https://freeimage.host/api/1/upload"; 
-    const API_URL = PROXY_URL + encodeURIComponent(TARGET_URL);
+    const config = { childList: true, subtree: true, characterData: true };
 
-    uploadBtn.addEventListener('click', async () => {
-        const file = fileInput.files[0];
-        
-        // Reset UI
-        errorMsg.textContent = '';
-        resultsDiv.style.display = 'none';
-
-        if (!file) {
-            errorMsg.textContent = "Please select a file first.";
-            return;
-        }
-
-        // Show loading state
-        uploadBtn.disabled = true;
-        loadingDiv.style.display = 'block';
-
-        // Prepare form data
-        const formData = new FormData();
-        formData.append('key', API_KEY);
-        formData.append('action', 'upload');
-        formData.append('source', file);
-        formData.append('format', 'json');
-
-        try {
-            // The fetch call now goes to the proxy, which forwards to Freeimage.host
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.status_code === 200) {
-                // Success: Extract URLs
-                const thumbUrl = data.image.thumb.url;
-                const fullUrl = data.image.url;
-
-                document.getElementById('thumbUrlDisplay').textContent = thumbUrl;
-                document.getElementById('thumbPreview').src = thumbUrl;
+    const callback = function(mutationsList, observer) {
+        for(const mutation of mutationsList) {
+            // Check if content was added to the target div
+            if (targetNode.innerHTML.trim() !== "") {
                 
-                document.getElementById('fullUrlDisplay').textContent = fullUrl;
-                document.getElementById('fullPreview').src = fullUrl;
+                // The plugin dumps raw HTML like: <a href="..."><img src="..."></a>
+                // We parse that string to extract the real URLs.
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(targetNode.textContent || targetNode.innerHTML, 'text/html');
+                const imgTag = doc.querySelector('img');
+                const aTag = doc.querySelector('a');
 
-                resultsDiv.style.display = 'block';
-            } else {
-                // Handle API error
-                const errorText = data.error ? data.error.message : (data.status_txt || 'Unknown error');
-                errorMsg.textContent = `Upload failed: ${errorText}`;
+                if (imgTag) {
+                    const src = imgTag.src; // Thumbnail or Medium URL
+                    const fullLink = aTag ? aTag.href : src; // Full URL
+
+                    // Update our nice display
+                    imagePreview.src = src;
+                    urlDisplay.textContent = fullLink;
+                    resultsDiv.style.display = 'block';
+
+                    // Clear the hidden target so it's ready for the next one
+                    // (Disconnect briefly to avoid infinite loop if we cleared it inside)
+                    observer.disconnect();
+                    targetNode.innerHTML = ""; 
+                    observer.observe(targetNode, config); 
+                }
             }
-
-        } catch (error) {
-            console.error(error);
-            errorMsg.textContent = "An error occurred. If this persists, the CORS proxy might be down.";
-        } finally {
-            uploadBtn.disabled = false;
-            loadingDiv.style.display = 'none';
         }
-    });
+    };
+
+    const observer = new MutationObserver(callback);
+    observer.observe(targetNode, config);
 </script>
 
 </body>
