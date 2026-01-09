@@ -90,7 +90,7 @@
       <div id="u-status" style="margin-top:15px; font-size:0.9em; height: 20px;"></div>
 
       <div class="disclaimer">
-        <strong>Warning:</strong> The file will be uploaded to a free image hosting service (<a href="https://freeimage.host" target="_blank">freeimage.host</a>) and available for public download. It cannot be removed easily. If you are not comfortable with this, please contact the site administrator.
+        <strong>Warning:</strong> The file will be uploaded to a free image hosting service (<a href="https://freeimage.host" target="_blank">freeimage.host</a>) and available for public download. It cannot be removed easily. If you are not comfortable with this, please contact the site administrator for alternative upload options.
       </div>
     </div>
   `;
