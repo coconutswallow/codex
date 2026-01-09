@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freeimage.host Direct Upload</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        .container { border: 1px solid #ccc; padding: 2rem; border-radius: 8px; background: #f9f9f9; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        input[type="text"] { width: 100%; padding: 8px; margin-bottom: 1rem; box-sizing: border-box; }
+        button { background-color: #28a745; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; font-size: 16px; }
+        button:hover { background-color: #218838; }
+        .note { font-size: 0.9em; color: #666; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Direct Upload (No Proxy)</h1>
+    <p>This method uses a standard form submission to bypass CORS limits.</p>
+
+    <form action="https://freeimage.host/api/1/upload" method="POST" enctype="multipart/form-data" target="_blank">
+        
+        <label for="key">API Key:</label>
+        <input type="text" name="key" value="6d207e02198a847aa98d0a2a901485a5" required>
+        
+        <input type="hidden" name="action" value="upload">
+        
+        <input type="hidden" name="format" value="json">
+
+        <label for="source">Select Image:</label>
+        <input type="file" name="source" accept="image/*" required style="margin-bottom: 1rem;">
+
+        <button type="submit">Upload Image</button>
+    </form>
+
+    <div class="note">
+        <strong>Note:</strong> After clicking upload, a new tab will open with the raw data (JSON) containing your image links. Look for "url" and "thumb" in that text.
+    </div>
+</div>
+
+</body>
+</html>
