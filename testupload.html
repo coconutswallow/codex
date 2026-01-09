@@ -5,6 +5,29 @@
     <button class="trigger-upload">Upload Photo</button>
     <script src="/codex/assets/js/upload.js"></script>
 
+    <script>
+  // This waits for the upload to finish
+  window.addEventListener('image-upload-complete', (event) => {
+      
+      // 1. Get the UUID from the event details
+      const newImageId = event.detail.id;
+      const thumbUrl = event.detail.thumb;
+
+      console.log("Upload ID received:", newImageId);
+
+      // --- EXAMPLE USAGE ---
+      
+      // Option A: Display it on screen
+      alert("Saved to Database! UUID: " + newImageId);
+      
+      // Option B: Put it in a hidden input form (for saving to another table later)
+      // document.getElementById('my-hidden-input').value = newImageId;
+      
+      // Option C: Show the thumbnail immediately
+      // document.getElementById('preview-img').src = thumbUrl;
+  });
+</script>
+
 </body>
 
 </body>
