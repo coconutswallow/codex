@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freeimage.host Upload Test</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        .container { border: 1px solid #ccc; padding: 2rem; border-radius: 8px; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 4px; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #results { margin-top: 2rem; display: none; }
+        .result-item { margin-bottom: 1.5rem; padding: 1rem; background: #f9f9f9; border-radius: 4px; }
+        .url-box { background: #eee; padding: 0.5rem; word-break: break-all; font-family: monospace; margin-top: 0.5rem; }
+        img { max-width: 100%; height: auto; margin-top: 10px; border: 1px solid #ddd; }
+        .error { color: red; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Upload Test Page</h1>
+    
+    <div class="form-group">
+        <label for="fileInput">Select an image:</label>
+        <input type="file" id="fileInput" accept="image/*">
+    </div>
+
+    <button id="uploadBtn">Upload to Freeimage.host</button>
+    <div id="loading" style="display:none; margin-top:10px;">Uploading... please wait.</div>
+    <div id="errorMsg" class="error"></div>
+
+    <div id="results">
+        <h2>Upload Results</h2>
+        
+        <div class="result-item">
+            <strong>Thumbnail URL:</strong>
+            <div id="thumbUrlDisplay" class="url-box"></div>
+            <img id="thumbPreview" src="" alt="Thumbnail Preview">
+        </div>
+
+        <div class="result-item">
+            <strong>Full Image URL:</strong>
+            <div id="fullUrlDisplay" class="url-box"></div>
+            <img id="fullPreview" src="" alt="Full Image Preview">
+        </div>
+    </div>
+</div>
+
+<script>
+    const uploadBtn = document.getElementById('uploadBtn');
+    const fileInput = document.getElementById('fileInput');
+    const resultsDiv = document.getElementById('results');
+    const loadingDiv = document.getElementById('loading');
+    const errorMsg = document.getElementById('errorMsg');
+
+    // API Configuration derived from your uploaded documentation
+    const API_KEY = "6d207e02198a847aa98d0a2a901485a5"; 
+    const API_URL = "https://freeimage.host/api/1/upload"; 
+
+    uploadBtn.addEventListener('click', async () => {
+        const file = fileInput.files[0];
+        
+        // Reset UI
+        errorMsg.textContent = '';
+        resultsDiv.style.display = 'none';
+
+        if (!file) {
+            errorMsg.textContent = "Please select a file first.";
+            return;
+        }
+
+        // Show loading state
+        uploadBtn.disabled = true;
+        loadingDiv.style.display = 'block';
+
+        // Prepare form data for POST request
+        const formData = new FormData();
+        formData.append('key', API_KEY);
+        formData.append('action', 'upload');
+        formData.append('source', file);
+        formData.append('format', 'json');
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.status_code === 200) {
+                // Success: Extract URLs from the response object
+                const thumbUrl = data.image.thumb.url;
+                const fullUrl = data.image.url;
+
+                // Update DOM elements
+                document.getElementById('thumbUrlDisplay').textContent = thumbUrl;
+                document.getElementById('thumbPreview').src = thumbUrl;
+                
+                document.getElementById('fullUrlDisplay').textContent = fullUrl;
+                document.getElementById('fullPreview').src = fullUrl;
+
+                // Show results
+                resultsDiv.style.display = 'block';
+            } else {
+                // Handle API error messages
+                const errorText = data.error ? data.error.message : (data.status_txt || 'Unknown error');
+                errorMsg.textContent = `Upload failed: ${errorText}`;
+            }
+
+        } catch (error) {
+            console.error(error);
+            errorMsg.textContent = "An error occurred during the upload. Check the console for details.";
+        } finally {
+            // Restore UI state
+            uploadBtn.disabled = false;
+            loadingDiv.style.display = 'none';
+        }
+    });
+</script>
+
+</body>
+</html>
