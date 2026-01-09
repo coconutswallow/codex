@@ -3,96 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Freeimage.host Plugin Upload</title>
+    <title>Freeimage.host Upload</title>
     <style>
         body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
         .container { border: 1px solid #ccc; padding: 2rem; border-radius: 8px; background: #f9f9f9; }
         
-        /* Custom Button Style */
-        .custom-upload-btn {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-bottom: 20px;
+        .upload-btn {
+            background-color: #007bff; color: white; padding: 12px 24px;
+            border: none; border-radius: 4px; cursor: pointer; font-size: 16px;
         }
-        .custom-upload-btn:hover { background-color: #0056b3; }
+        .upload-btn:hover { background-color: #0056b3; }
 
-        /* Hidden target for the result code */
-        #hidden-target { display: none; }
-        
-        /* Results area */
-        #results { margin-top: 2rem; display: none; }
-        .result-item { margin-bottom: 1.5rem; padding: 1rem; background: #fff; border: 1px solid #ddd; border-radius: 4px; }
-        .url-box { background: #eee; padding: 0.5rem; word-break: break-all; font-family: monospace; margin-top: 0.5rem; }
-        img { max-width: 100%; height: auto; margin-top: 10px; border: 1px solid #ddd; }
+        /* We hide the text area, but keep it in the DOM so the plugin can find it */
+        #catcher-area { opacity: 0; height: 1px; width: 1px; position: absolute; }
+
+        #results { margin-top: 20px; display: none; padding: 15px; border: 1px solid #ddd; background: white; }
+        .url-text { background: #eee; padding: 8px; font-family: monospace; word-break: break-all; }
+        img { max-width: 100%; margin-top: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Upload Test</h1>
-    <p>Click below to upload. The plugin will handle the popup.</p>
+    <h1>Upload Image</h1>
+    <p>Click the button to upload. The image will appear below automatically.</p>
 
-    <script async src="//freeimage.host/sdk/pup.js" data-url="https://freeimage.host/upload"></script>
+    <script async src="//freeimage.host/sdk/pup.js" 
+            data-url="https://freeimage.host/upload" 
+            data-auto-insert="direct-links"></script>
 
-    <button class="custom-upload-btn" 
-            data-chevereto-pup-trigger 
-            data-target="#hidden-target">
-        Upload Image
+    <button class="upload-btn" data-chevereto-pup-trigger data-target="#catcher-area">
+        Select & Upload Image
     </button>
-    
-    <div id="hidden-target" contenteditable></div>
+
+    <textarea id="catcher-area"></textarea>
 
     <div id="results">
-        <h2>Upload Result</h2>
-        <div class="result-item">
-            <strong>Full Image URL:</strong>
-            <div id="urlDisplay" class="url-box"></div>
-            
-            <strong>Thumbnail / Preview:</strong><br>
-            <img id="imagePreview" src="" alt="Preview">
-        </div>
+        <h3>Success!</h3>
+        <p><strong>Image URL:</strong></p>
+        <div id="url-display" class="url-text"></div>
+        
+        <p><strong>Preview:</strong></p>
+        <img id="img-preview" src="">
     </div>
 </div>
 
 <script>
-    // Watch for the plugin to insert content into #hidden-target
-    const targetNode = document.getElementById('hidden-target');
-    const resultsDiv = document.getElementById('results');
-    const urlDisplay = document.getElementById('urlDisplay');
-    const imagePreview = document.getElementById('imagePreview');
+    // The plugin doesn't tell us when it's done, so we check the text area every 500ms
+    setInterval(() => {
+        const catcher = document.getElementById('catcher-area');
+        const results = document.getElementById('results');
+        const urlDisplay = document.getElementById('url-display');
+        const imgPreview = document.getElementById('img-preview');
 
-    const observer = new MutationObserver((mutations) => {
-        if (targetNode.innerHTML.trim() !== "") {
-            // The plugin outputs BBCode or HTML. 
-            // We'll parse the HTML string to find the src/href.
-            const parser = new DOMParser();
-            // "text/html" parser works even if the content is just a partial string
-            const doc = parser.parseFromString(targetNode.innerHTML, 'text/html');
-            
-            const img = doc.querySelector('img');
-            const link = doc.querySelector('a');
+        // If the plugin has pasted text into our hidden area...
+        if (catcher.value.trim().length > 0) {
+            const uploadedUrl = catcher.value.trim();
 
-            if (img || link) {
-                // Get the best available URL
-                const src = img ? img.src : '';
-                const href = link ? link.href : src;
+            // 1. Show the result
+            urlDisplay.textContent = uploadedUrl;
+            imgPreview.src = uploadedUrl;
+            results.style.display = 'block';
 
-                urlDisplay.textContent = href;
-                imagePreview.src = src || href;
-                resultsDiv.style.display = 'block';
-
-                // Optional: Stop observing if you only want 1 upload
-                // observer.disconnect(); 
-            }
+            // 2. Clear the catcher so we don't trigger this again immediately
+            catcher.value = '';
         }
-    });
-
-    observer.observe(targetNode, { childList: true, subtree: true, characterData: true });
+    }, 500);
 </script>
 
 </body>
