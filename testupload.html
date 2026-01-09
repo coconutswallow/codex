@@ -22,7 +22,7 @@
 <body>
 
 <div class="container">
-    <h1>Upload Test Page</h1>
+    <h1>Upload Test Page (CORS Fix)</h1>
     
     <div class="form-group">
         <label for="fileInput">Select an image:</label>
@@ -57,9 +57,12 @@
     const loadingDiv = document.getElementById('loading');
     const errorMsg = document.getElementById('errorMsg');
 
-    // API Configuration derived from your uploaded documentation
+    // API Configuration
     const API_KEY = "6d207e02198a847aa98d0a2a901485a5"; 
-    const API_URL = "https://freeimage.host/api/1/upload"; 
+    // We prepend the proxy URL to the actual API endpoint
+    const PROXY_URL = "https://corsproxy.io/?";
+    const TARGET_URL = "https://freeimage.host/api/1/upload"; 
+    const API_URL = PROXY_URL + encodeURIComponent(TARGET_URL);
 
     uploadBtn.addEventListener('click', async () => {
         const file = fileInput.files[0];
@@ -77,7 +80,7 @@
         uploadBtn.disabled = true;
         loadingDiv.style.display = 'block';
 
-        // Prepare form data for POST request
+        // Prepare form data
         const formData = new FormData();
         formData.append('key', API_KEY);
         formData.append('action', 'upload');
@@ -85,6 +88,7 @@
         formData.append('format', 'json');
 
         try {
+            // The fetch call now goes to the proxy, which forwards to Freeimage.host
             const response = await fetch(API_URL, {
                 method: 'POST',
                 body: formData
@@ -93,30 +97,27 @@
             const data = await response.json();
 
             if (response.ok && data.status_code === 200) {
-                // Success: Extract URLs from the response object
+                // Success: Extract URLs
                 const thumbUrl = data.image.thumb.url;
                 const fullUrl = data.image.url;
 
-                // Update DOM elements
                 document.getElementById('thumbUrlDisplay').textContent = thumbUrl;
                 document.getElementById('thumbPreview').src = thumbUrl;
                 
                 document.getElementById('fullUrlDisplay').textContent = fullUrl;
                 document.getElementById('fullPreview').src = fullUrl;
 
-                // Show results
                 resultsDiv.style.display = 'block';
             } else {
-                // Handle API error messages
+                // Handle API error
                 const errorText = data.error ? data.error.message : (data.status_txt || 'Unknown error');
                 errorMsg.textContent = `Upload failed: ${errorText}`;
             }
 
         } catch (error) {
             console.error(error);
-            errorMsg.textContent = "An error occurred during the upload. Check the console for details.";
+            errorMsg.textContent = "An error occurred. If this persists, the CORS proxy might be down.";
         } finally {
-            // Restore UI state
             uploadBtn.disabled = false;
             loadingDiv.style.display = 'none';
         }
