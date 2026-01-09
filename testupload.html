@@ -14,6 +14,9 @@
         }
         .upload-btn:hover { background-color: #0056b3; }
 
+        /* Hidden dummy target to satisfy plugin requirements */
+        #dummy-target { display: none; }
+
         /* Results Display */
         #results { margin-top: 20px; display: none; padding: 15px; border: 1px solid #ddd; background: white; border-radius: 4px;}
         .result-row { margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
@@ -38,9 +41,11 @@
 
     <script async src="//freeimage.host/sdk/pup.js" data-url="https://freeimage.host/upload"></script>
 
-    <button class="upload-btn" data-chevereto-pup-trigger>
+    <button class="upload-btn" data-chevereto-pup-trigger data-target="#dummy-target">
         Upload Image
     </button>
+    
+    <div id="dummy-target"></div>
 
     <div id="results">
         <h3>Upload Successful!</h3>
@@ -68,8 +73,6 @@
                 </div>
             </div>
         </div>
-        
-        <p style="font-size: 0.8em; color: #777;">Check your browser console (F12) to see all other data returned (delete links, medium sizes, etc).</p>
     </div>
 </div>
 
@@ -78,15 +81,12 @@
     window.addEventListener('message', (event) => {
         
         // Security Check: ensure the message comes from freeimage.host
-        // (This prevents other sites from sending fake messages to your page)
         if (event.origin !== "https://freeimage.host") {
             return;
         }
 
-        // The data is usually sent as a JSON object inside event.data
         const data = event.data;
-
-        console.log("Full API Response:", data); // Log everything to console for you to see
+        console.log("Full API Response:", data);
 
         // Check if the upload was successful (status_code 200)
         if (data && data.status_code === 200) {
