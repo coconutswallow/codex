@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Map Viewer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #f0f0f0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 14px;
+            color: #ccc;
+            font-weight: 600;
+        }
+
+        select {
+            padding: 8px 12px;
+            border: 1px solid #444;
+            border-radius: 4px;
+            background: #2a2a2a;
+            color: #fff;
+            font-size: 14px;
+            min-width: 250px;
+            cursor: pointer;
+        }
+
+        select:hover {
+            border-color: #666;
+        }
+
+        .info-text {
+            color: #aaa;
+            font-size: 14px;
+            font-style: italic;
+        }
+
+        #map-container {
+            position: relative;
+            width: 100%;
+            height: 80vh;
+            border: 2px solid #444;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+            background: #1a1a1a;
+        }
+
+        /* Popup Styles */
+        .leaflet-popup-content-wrapper {
+            background: #ffffff !important; 
+            color: #333333 !important;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        
+        .leaflet-popup-content h3 {
+            color: #58180D;
+            margin: 0 0 10px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .leaflet-popup-content p {
+            margin: 8px 0;
+            color: #333;
+        }
+
+        .leaflet-popup-content a {
+            color: #58180D;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .leaflet-popup-content a:hover {
+            text-decoration: underline;
+        }
+
+        /* Pin Creation Form */
+        .pin-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 250px;
+        }
+
+        .pin-form strong {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .pin-form label {
+            font-weight: 600;
+            font-size: 13px;
+            color: #555;
+            margin-bottom: -5px;
+        }
+
+        .pin-form input,
+        .pin-form textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+            color: #000;
+            font-family: inherit;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        .pin-form input:focus,
+        .pin-form textarea:focus {
+            outline: none;
+            border-color: #58180D;
+        }
+
+        .pin-form button {
+            background: #58180D;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 5px;
+            transition: opacity 0.2s;
+        }
+
+        .pin-form button:hover {
+            opacity: 0.85;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #aaa;
+        }
+
+        .error {
+            background: #5a1a1a;
+            color: #ffaaaa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid #8a2a2a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Interactive Map Viewer</h1>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="map-select">Select Map:</label>
+                <select id="map-select">
+                    <option value="">Loading maps...</option>
+                </select>
+            </div>
+            <p class="info-text">Click anywhere on the map to add a new location pin</p>
+        </div>
+
+        <div id="error-container"></div>
+        
+        <div id="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <script type="module">
+        import { supabase } from './assets/js/supabaseClient.js';
+
+        // --- STATE ---
+        let map = null;
+        let currentMapId = null;
+        let currentMapData = null;
+
+        // --- UI ELEMENTS ---
+        const mapSelect = document.getElementById('map-select');
+        const errorContainer = document.getElementById('error-container');
+
+        // --- ERROR HANDLING ---
+        function showError(message) {
+            errorContainer.innerHTML = `<div class="error">${message}</div>`;
+        }
+
+        function clearError() {
+            errorContainer.innerHTML = '';
+        }
+
+        // --- 1. LOAD AVAILABLE MAPS ---
+        async function loadMaps() {
+            try {
+                const { data: maps, error } = await supabase
+                    .from('location_maps')
+                    .select('*')
+                    .order('name');
+
+                if (error) throw error;
+
+                if (!maps || maps.length === 0) {
+                    mapSelect.innerHTML = '<option value="">No maps available</option>';
+                    showError('No maps found in database. Please add maps to the location_maps table.');
+                    return;
+                }
+
+                // Populate dropdown
+                mapSelect.innerHTML = maps.map(m => 
+                    `<option value="${m.id}">${m.name}${m.description ? ' - ' + m.description : ''}</option>`
+                ).join('');
+
+                // Load first map by default
+                if (maps.length > 0) {
+                    currentMapId = maps[0].id;
+                    await loadMap(maps[0]);
+                }
+
+            } catch (err) {
+                console.error('Error loading maps:', err);
+                showError('Failed to load maps: ' + err.message);
+            }
+        }
+
+        // --- 2. MAP INITIALIZATION ---
+        async function loadMap(mapData) {
+            clearError();
+            currentMapData = mapData;
+            currentMapId = mapData.id;
+
+            const mapWidth = mapData.width || 4096;
+            const mapHeight = mapData.height || 2918;
+            const mapUrl = mapData.map_file_url;
+
+            // Remove existing map if present
+            if (map) {
+                map.remove();
+            }
+
+            // Create new map
+            map = L.map('map', {
+                crs: L.CRS.Simple,
+                minZoom: -2,
+                maxZoom: 3,
+                zoomSnap: 0.5,
+                scrollWheelZoom: true,
+                attributionControl: false
+            });
+
+            const bounds = [[0, 0], [mapHeight, mapWidth]];
+            
+            // Add image overlay
+            L.imageOverlay(mapUrl, bounds).addTo(map);
+            map.fitBounds(bounds);
+            map.setMaxBounds(bounds);
+
+            // Setup click handler for adding pins
+            map.on('click', handleMapClick);
+
+            // Load pins for this map
+            await loadPins();
+        }
+
+        // --- 3. LOAD PINS FOR CURRENT MAP ---
+        async function loadPins() {
+            if (!currentMapId) return;
+
+            try {
+                const { data: locations, error } = await supabase
+                    .from('locations')
+                    .select('*')
+                    .eq('map_id', currentMapId);
+
+                if (error) throw error;
+
+                if (locations) {
+                    locations.forEach(addMarkerToMap);
+                }
+
+            } catch (err) {
+                console.error('Error loading pins:', err);
+                showError('Failed to load location pins: ' + err.message);
+            }
+        }
+
+        // --- 4. ADD MARKER TO MAP ---
+        function addMarkerToMap(loc) {
+            const marker = L.marker([loc.y, loc.x]).addTo(map);
+            
+            const popupContent = `
+                <div style="min-width: 180px;">
+                    <h3>${loc.name || 'Unnamed Location'}</h3>
+                    ${loc.description ? `<p>${loc.description}</p>` : ''}
+                    ${loc.link_url ? `<a href="${loc.link_url}" target="_blank">Read More &raquo;</a>` : ''}
+                </div>
+            `;
+            
+            marker.bindPopup(popupContent);
+            
+            // Optional: Different icon for home location
+            if (loc.is_home) {
+                marker.setIcon(L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                }));
+            }
+        }
+
+        // --- 5. HANDLE MAP CLICK (ADD NEW PIN) ---
+        function handleMapClick(e) {
+            if (!currentMapId) {
+                alert('Please select a map first.');
+                return;
+            }
+
+            const x = e.latlng.lng.toFixed(2);
+            const y = e.latlng.lat.toFixed(2);
+
+            const formHtml = `
+                <div class="pin-form">
+                    <strong>Add New Location</strong>
+                    <label>Name *</label>
+                    <input type="text" id="new-name" placeholder="Location name" required />
+                    
+                    <label>Description</label>
+                    <textarea id="new-desc" placeholder="Optional description" rows="3"></textarea>
+                    
+                    <label>Link URL</label>
+                    <input type="text" id="new-link" placeholder="https://..." />
+                    
+                    <label>
+                        <input type="checkbox" id="new-home" style="width: auto; margin-right: 5px;" />
+                        Mark as home location
+                    </label>
+                    
+                    <button onclick="window.savePin(${x}, ${y})">Save Location</button>
+                </div>
+            `;
+
+            L.popup()
+                .setLatLng(e.latlng)
+                .setContent(formHtml)
+                .openOn(map);
+        }
+
+        // --- 6. SAVE NEW PIN ---
+        window.savePin = async function(x, y) {
+            const name = document.getElementById('new-name').value.trim();
+            const desc = document.getElementById('new-desc').value.trim();
+            const link = document.getElementById('new-link').value.trim();
+            const isHome = document.getElementById('new-home').checked;
+
+            if (!name) {
+                alert('Location name is required');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase
+                    .from('locations')
+                    .insert([{
+                        map_id: currentMapId,
+                        name: name,
+                        x: parseFloat(x),
+                        y: parseFloat(y),
+                        description: desc || null,
+                        link_url: link || null,
+                        is_home: isHome
+                    }])
+                    .select();
+
+                if (error) throw error;
+
+                if (data && data[0]) {
+                    addMarkerToMap(data[0]);
+                    map.closePopup();
+                }
+
+            } catch (err) {
+                console.error('Error saving pin:', err);
+                alert('Failed to save location: ' + err.message);
+            }
+        };
+
+        // --- 7. MAP SELECTION CHANGE ---
+        mapSelect.addEventListener('change', async (e) => {
+            const mapId = parseInt(e.target.value);
+            if (!mapId) return;
+
+            try {
+                const { data: mapData, error } = await supabase
+                    .from('location_maps')
+                    .select('*')
+                    .eq('id', mapId)
+                    .single();
+
+                if (error) throw error;
+                if (mapData) await loadMap(mapData);
+
+            } catch (err) {
+                console.error('Error loading selected map:', err);
+                showError('Failed to load map: ' + err.message);
+            }
+        });
+
+        // --- INITIALIZE ---
+        loadMaps();
+    </script>
+</body>
+</html>
