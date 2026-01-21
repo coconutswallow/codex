@@ -111,7 +111,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     
     <script type="module">
-        import { supabase } from '../assets/js/supabaseClient.js';
+        import { supabase } from './assets/js/supabaseClient.js';
 
         let map = null;
 
@@ -182,9 +182,14 @@
         }
 
         async function loadMap(mapData) {
-            const mapWidth = mapData.width || 4096;
-            const mapHeight = mapData.height || 2918;
+            const mapWidth = mapData.width;
+            const mapHeight = mapData.height;
             const mapUrl = mapData.map_file_url;
+
+            if (!mapWidth || !mapHeight) {
+                showError('Map dimensions (width/height) are missing in the database.');
+                return;
+            }
 
             // Update page title and info
             mapTitle.textContent = mapData.name || 'Map Viewer';

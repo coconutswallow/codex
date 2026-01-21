@@ -255,9 +255,14 @@ class MapComponent {
     }
 
     async renderMap(mapData) {
-        const mapWidth = mapData.width || 4096;
-        const mapHeight = mapData.height || 2918;
+        const mapWidth = mapData.width;
+        const mapHeight = mapData.height;
         const mapUrl = mapData.map_file_url;
+
+        if (!mapWidth || !mapHeight) {
+            this.showError('Map dimensions (width/height) are missing in the database.');
+            return;
+        }
 
         // Update title if shown
         if (this.config.showTitle) {
@@ -350,4 +355,243 @@ class MapComponent {
                 ${loc.is_home ? `<p><strong>Home Location</strong></p>` : ''}
                 <p style="font-size: 12px; color: #666;">X: ${loc.x}, Y: ${loc.y}</p>
                 <div style="display: flex; gap: 8px; margin-top: 10px;">
-                    <button onclick="window.mapComponents['${this.container.id}'].editPin(${loc.id})" style="flex: 1
+                    <button onclick="window.mapComponents['${this.container.id}'].editPin(${loc.id})" style="flex: 1; background: #58180D; color: white; border: none; padding: 6px; cursor: pointer; border-radius: 4px; font-size: 13px;">Edit</button>
+                    <button onclick="window.mapComponents['${this.container.id}'].deletePin(${loc.id})" style="flex: 1; background: #c0392b; color: white; border: none; padding: 6px; cursor: pointer; border-radius: 4px; font-size: 13px;">Delete</button>
+                </div>
+            </div>
+        `;
+    }
+
+    handleMapClick(e) {
+        const x = e.latlng.lng.toFixed(2);
+        const y = e.latlng.lat.toFixed(2);
+
+        const formHtml = `
+            <div class="map-pin-form">
+                <strong>Add New Location</strong>
+                <label>Name *</label>
+                <input type="text" id="new-name-${this.container.id}" placeholder="Location name" required />
+                
+                <label>Description</label>
+                <textarea id="new-desc-${this.container.id}" placeholder="Optional description" rows="3"></textarea>
+                
+                <label>Link URL</label>
+                <input type="text" id="new-link-${this.container.id}" placeholder="https://..." />
+                
+                <label>
+                    <input type="checkbox" id="new-home-${this.container.id}" style="width: auto; margin-right: 5px;" />
+                    Mark as home location
+                </label>
+                
+                <button onclick="window.mapComponents['${this.container.id}'].savePin(${x}, ${y})">Save Location</button>
+            </div>
+        `;
+
+        L.popup()
+            .setLatLng(e.latlng)
+            .setContent(formHtml)
+            .openOn(this.map);
+    }
+
+    async savePin(x, y) {
+        const name = document.getElementById(`new-name-${this.container.id}`).value.trim();
+        const desc = document.getElementById(`new-desc-${this.container.id}`).value.trim();
+        const link = document.getElementById(`new-link-${this.container.id}`).value.trim();
+        const isHome = document.getElementById(`new-home-${this.container.id}`).checked;
+
+        if (!name) {
+            alert('Location name is required');
+            return;
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('locations')
+                .insert([{
+                    map_id: this.currentMapData.id,
+                    name: name,
+                    x: parseFloat(x),
+                    y: parseFloat(y),
+                    description: desc || null,
+                    link_url: link || null,
+                    is_home: isHome
+                }])
+                .select();
+
+            if (error) throw error;
+
+            if (data && data[0]) {
+                this.addMarker(data[0]);
+                this.map.closePopup();
+            }
+
+        } catch (err) {
+            console.error('Error saving pin:', err);
+            alert('Failed to save location: ' + err.message);
+        }
+    }
+
+    async editPin(locationId) {
+        try {
+            const { data, error } = await supabase
+                .from('locations')
+                .select('*')
+                .eq('id', locationId)
+                .single();
+
+            if (error) throw error;
+
+            const editForm = `
+                <div class="map-pin-form">
+                    <strong>Edit Location</strong>
+                    <label>Name *</label>
+                    <input type="text" id="edit-name-${this.container.id}" value="${data.name || ''}" required />
+                    
+                    <label>Description</label>
+                    <textarea id="edit-desc-${this.container.id}" rows="3">${data.description || ''}</textarea>
+                    
+                    <label>Link URL</label>
+                    <input type="text" id="edit-link-${this.container.id}" value="${data.link_url || ''}" />
+                    
+                    <label>
+                        <input type="checkbox" id="edit-home-${this.container.id}" ${data.is_home ? 'checked' : ''} style="width: auto; margin-right: 5px;" />
+                        Mark as home location
+                    </label>
+                    
+                    <div class="button-group">
+                        <button onclick="window.mapComponents['${this.container.id}'].saveEdit(${locationId})">Save</button>
+                        <button onclick="window.mapComponents['${this.container.id}'].cancelEdit(${locationId})">Cancel</button>
+                    </div>
+                </div>
+            `;
+
+            const marker = this.markers.get(locationId);
+            if (marker) {
+                marker.setPopupContent(editForm);
+                marker.openPopup();
+            }
+
+        } catch (err) {
+            console.error('Error loading location:', err);
+            alert('Failed to load location: ' + err.message);
+        }
+    }
+
+    async saveEdit(locationId) {
+        const name = document.getElementById(`edit-name-${this.container.id}`).value.trim();
+        const desc = document.getElementById(`edit-desc-${this.container.id}`).value.trim();
+        const link = document.getElementById(`edit-link-${this.container.id}`).value.trim();
+        const isHome = document.getElementById(`edit-home-${this.container.id}`).checked;
+
+        if (!name) {
+            alert('Location name is required');
+            return;
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('locations')
+                .update({
+                    name: name,
+                    description: desc || null,
+                    link_url: link || null,
+                    is_home: isHome
+                })
+                .eq('id', locationId)
+                .select();
+
+            if (error) throw error;
+
+            if (data && data[0]) {
+                const marker = this.markers.get(locationId);
+                if (marker) {
+                    marker.setPopupContent(this.createEditablePopup(data[0]));
+                    
+                    if (data[0].is_home) {
+                        marker.setIcon(L.icon({
+                            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                            iconSize: [25, 41],
+                            iconAnchor: [12, 41],
+                            popupAnchor: [1, -34],
+                            shadowSize: [41, 41]
+                        }));
+                    } else {
+                        marker.setIcon(new L.Icon.Default());
+                    }
+                }
+            }
+
+        } catch (err) {
+            console.error('Error updating location:', err);
+            alert('Failed to update location: ' + err.message);
+        }
+    }
+
+    async cancelEdit(locationId) {
+        try {
+            const { data, error } = await supabase
+                .from('locations')
+                .select('*')
+                .eq('id', locationId)
+                .single();
+
+            if (error) throw error;
+
+            const marker = this.markers.get(locationId);
+            if (marker) {
+                marker.setPopupContent(this.createEditablePopup(data));
+            }
+
+        } catch (err) {
+            console.error('Error:', err);
+        }
+    }
+
+    async deletePin(locationId) {
+        if (!confirm('Are you sure you want to delete this location?')) {
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from('locations')
+                .delete()
+                .eq('id', locationId);
+
+            if (error) throw error;
+
+            const marker = this.markers.get(locationId);
+            if (marker) {
+                this.map.removeLayer(marker);
+                this.markers.delete(locationId);
+            }
+
+        } catch (err) {
+            console.error('Error deleting location:', err);
+            alert('Failed to delete location: ' + err.message);
+        }
+    }
+}
+
+// Initialize all map components on page load
+window.mapComponents = window.mapComponents || {};
+
+function initMapComponents() {
+    const containers = document.querySelectorAll('[data-map-component]');
+    containers.forEach(container => {
+        if (!container.id) {
+            container.id = 'map-' + Math.random().toString(36).substr(2, 9);
+        }
+        window.mapComponents[container.id] = new MapComponent(container);
+    });
+}
+
+// Auto-initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMapComponents);
+} else {
+    initMapComponents();
+}
+
+export { MapComponent, initMapComponents };
