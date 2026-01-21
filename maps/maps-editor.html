@@ -76,6 +76,19 @@
         });
 
         init();
+
+        const saveViewBtn = document.getElementById('save-view-btn');
+
+        saveViewBtn.addEventListener('click', async () => {
+            const widget = window.mapComponents['editor-widget'];
+            if (widget) {
+                try {
+                    await widget.saveCurrentViewAsDefault();
+                } catch (err) {
+                    alert('Error saving view: ' + err.message);
+                }
+            }
+        });
     </script>
 </body>
 </html>

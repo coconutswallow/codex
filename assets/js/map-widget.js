@@ -141,35 +141,62 @@ export class MapComponent {
     }
 
     async renderMap(mapData) {
-        const mapWrapper = this.container.querySelector('.map-component-wrapper');
-        
-        if (this.map) {
-            this.map.remove();
-            this.markers.clear();
-        }
-
-        const bounds = [[0, 0], [mapData.height, mapData.width]];
-        
-        this.map = L.map(mapWrapper, {
-            crs: L.CRS.Simple,
-            minZoom: -2,
-            maxZoom: 3,
-            zoomSnap: 0.5,
-            scrollWheelZoom: true,
-            attributionControl: false
-        });
-
-        L.imageOverlay(mapData.map_file_url, bounds).addTo(this.map);
-        this.map.fitBounds(bounds);
-        this.map.setMaxBounds(bounds);
-
-        // Click to add pin (only if editable)
-        if (this.config.editable) {
-            this.map.on('click', (e) => this.handleMapClick(e));
-        }
-
-        await this.loadPins(mapData.id);
+    const mapWrapper = this.container.querySelector('.map-component-wrapper');
+    
+    // Set widget height dynamically from DB if height isn't hardcoded in data-attributes
+    if (mapData.display_height && !this.container.dataset.height) {
+        mapWrapper.style.height = mapData.display_height;
     }
+
+    if (this.map) {
+        this.map.remove();
+        this.markers.clear();
+    }
+
+    const bounds = [[0, 0], [mapData.height, mapData.width]];
+    
+    this.map = L.map(mapWrapper, {
+        crs: L.CRS.Simple,
+        minZoom: -3,
+        maxZoom: 3,
+        attributionControl: false
+    });
+
+    L.imageOverlay(mapData.map_file_url, bounds).addTo(this.map);
+
+    // LOGIC: Use DB defaults if they exist, otherwise fit bounds
+    if (mapData.initial_x !== null && mapData.initial_y !== null) {
+        this.map.setView([mapData.initial_y, mapData.initial_x], mapData.initial_zoom || 0);
+    } else {
+        this.map.fitBounds(bounds);
+    }
+
+    if (this.config.editable) {
+        this.map.on('click', (e) => this.handleMapClick(e));
+    }
+
+    await this.loadPins(mapData.id);
+}
+
+// NEW METHOD: Capture current view for the Editor
+async saveCurrentViewAsDefault() {
+    const center = this.map.getCenter();
+    const zoom = this.map.getZoom();
+    const height = this.container.querySelector('.map-component-wrapper').style.height;
+
+    const { error } = await supabase
+        .from('location_maps')
+        .update({
+            initial_x: center.lng,
+            initial_y: center.lat,
+            initial_zoom: zoom,
+            display_height: height // Optional: saves current UI height
+        })
+        .eq('id', this.currentMapData.id);
+
+    if (error) throw error;
+    alert('Default view saved!');
+}
 
     async loadPins(mapId) {
         try {
