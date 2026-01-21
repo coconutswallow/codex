@@ -27,7 +27,7 @@
  * - data-show-title: "true" or "false" - show map title above (default: false)
  */
 
-import { supabase } from './supabaseClient.js';
+import { supabase } from '../assets/js/supabaseClient.js';
 
 class MapComponent {
     constructor(container) {
