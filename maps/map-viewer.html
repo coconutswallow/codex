@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Viewer</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #f0f0f0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .map-info {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        #map-container {
+            position: relative;
+            width: 100%;
+            height: 85vh;
+            border: 2px solid #444;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+            background: #1a1a1a;
+        }
+
+        .leaflet-popup-content-wrapper {
+            background: #ffffff !important; 
+            color: #333333 !important;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        
+        .leaflet-popup-content h3 {
+            color: #58180D;
+            margin: 0 0 10px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .leaflet-popup-content p {
+            margin: 8px 0;
+            color: #333;
+        }
+
+        .leaflet-popup-content a {
+            color: #58180D;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .leaflet-popup-content a:hover {
+            text-decoration: underline;
+        }
+
+        .error {
+            background: #5a1a1a;
+            color: #ffaaaa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid #8a2a2a;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #aaa;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="map-title">Map Viewer</h1>
+        <div class="map-info" id="map-description"></div>
+
+        <div id="error-container"></div>
+        <div id="loading-container" class="loading">Loading map...</div>
+        
+        <div id="map-container" style="display: none;">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <script type="module">
+        import { supabase } from './assets/js/supabaseClient.js';
+
+        let map = null;
+
+        const mapTitle = document.getElementById('map-title');
+        const mapDescription = document.getElementById('map-description');
+        const errorContainer = document.getElementById('error-container');
+        const loadingContainer = document.getElementById('loading-container');
+        const mapContainer = document.getElementById('map-container');
+
+        function showError(message) {
+            errorContainer.innerHTML = `<div class="error">${message}</div>`;
+            loadingContainer.style.display = 'none';
+        }
+
+        function hideLoading() {
+            loadingContainer.style.display = 'none';
+            mapContainer.style.display = 'block';
+        }
+
+        function getMapIdentifier() {
+            // Get map identifier from URL hash (e.g., #ansalon)
+            const hash = window.location.hash.substring(1);
+            if (hash) return hash;
+
+            // Fallback to query parameter (e.g., ?map=ansalon)
+            const params = new URLSearchParams(window.location.search);
+            return params.get('map');
+        }
+
+        async function loadMapByIdentifier(identifier) {
+            if (!identifier) {
+                showError('No map specified. Please use #mapname in the URL (e.g., view-map.html#ansalon)');
+                return;
+            }
+
+            try {
+                // Try to find map by name (case-insensitive) or by ID
+                let query = supabase
+                    .from('location_maps')
+                    .select('*');
+
+                // Check if identifier is a number (ID) or string (name)
+                if (!isNaN(identifier)) {
+                    query = query.eq('id', parseInt(identifier));
+                } else {
+                    query = query.ilike('name', identifier);
+                }
+
+                const { data: mapData, error } = await query.single();
+
+                if (error) {
+                    if (error.code === 'PGRST116') {
+                        showError(`Map "${identifier}" not found. Please check the URL.`);
+                    } else {
+                        throw error;
+                    }
+                    return;
+                }
+
+                if (mapData) {
+                    await loadMap(mapData);
+                }
+
+            } catch (err) {
+                console.error('Error loading map:', err);
+                showError('Failed to load map: ' + err.message);
+            }
+        }
+
+        async function loadMap(mapData) {
+            const mapWidth = mapData.width || 4096;
+            const mapHeight = mapData.height || 2918;
+            const mapUrl = mapData.map_file_url;
+
+            // Update page title and info
+            mapTitle.textContent = mapData.name || 'Map Viewer';
+            mapDescription.textContent = mapData.description || '';
+            document.title = mapData.name || 'Map Viewer';
+
+            // Create map
+            map = L.map('map', {
+                crs: L.CRS.Simple,
+                minZoom: -2,
+                maxZoom: 3,
+                zoomSnap: 0.5,
+                scrollWheelZoom: true,
+                attributionControl: false,
+                dragging: true,
+                touchZoom: true,
+                doubleClickZoom: true,
+                boxZoom: true,
+                keyboard: true
+            });
+
+            const bounds = [[0, 0], [mapHeight, mapWidth]];
+            
+            L.imageOverlay(mapUrl, bounds).addTo(map);
+            map.fitBounds(bounds);
+            map.setMaxBounds(bounds);
+
+            await loadPins(mapData.id);
+            hideLoading();
+        }
+
+        async function loadPins(mapId) {
+            try {
+                const { data: locations, error } = await supabase
+                    .from('locations')
+                    .select('*')
+                    .eq('map_id', mapId);
+
+                if (error) throw error;
+
+                if (locations) {
+                    locations.forEach(addMarkerToMap);
+                }
+
+            } catch (err) {
+                console.error('Error loading pins:', err);
+                showError('Failed to load location pins: ' + err.message);
+            }
+        }
+
+        function addMarkerToMap(loc) {
+            const marker = L.marker([loc.y, loc.x]).addTo(map);
+            
+            const popupContent = `
+                <div style="min-width: 180px;">
+                    <h3>${loc.name || 'Unnamed Location'}</h3>
+                    ${loc.description ? `<p>${loc.description}</p>` : ''}
+                    ${loc.link_url ? `<p><a href="${loc.link_url}" target="_blank">Read More &raquo;</a></p>` : ''}
+                </div>
+            `;
+            
+            marker.bindPopup(popupContent);
+            
+            if (loc.is_home) {
+                marker.setIcon(L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                }));
+            }
+        }
+
+        // Handle hash changes (for navigation)
+        window.addEventListener('hashchange', () => {
+            const identifier = getMapIdentifier();
+            if (identifier) {
+                loadingContainer.style.display = 'block';
+                mapContainer.style.display = 'none';
+                errorContainer.innerHTML = '';
+                if (map) {
+                    map.remove();
+                    map = null;
+                }
+                loadMapByIdentifier(identifier);
+            }
+        });
+
+        // Initialize
+        const mapIdentifier = getMapIdentifier();
+        loadMapByIdentifier(mapIdentifier);
+    </script>
+</body>
+</html>
