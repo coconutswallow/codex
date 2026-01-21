@@ -209,3 +209,27 @@ select:hover {
     border-radius: 4px;
     font-size: 13px;
 }
+
+/* Add to map.css */
+.pin-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 200px;
+    color: #333; /* Ensure text is visible on light popup background */
+}
+
+.pin-form input, .pin-form textarea {
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+.pin-form button {
+    background: #58180D;
+    color: white;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+}
