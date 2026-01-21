@@ -33,7 +33,7 @@
         #map-container {
             position: relative;
             width: 100%;
-            height: 85vh;
+            height: 80vh;
             border: 2px solid #444;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             border-radius: 8px;
@@ -199,9 +199,8 @@
             // Create map
             map = L.map('map', {
                 crs: L.CRS.Simple,
-                minZoom: -2,
-                maxZoom: 3,
-                zoomSnap: 0.5,
+                minZoom: -3,
+                maxZoom: 2,
                 scrollWheelZoom: true,
                 attributionControl: false,
                 dragging: true,
@@ -215,7 +214,6 @@
             
             L.imageOverlay(mapUrl, bounds).addTo(map);
             map.fitBounds(bounds);
-            map.setMaxBounds(bounds);
 
             await loadPins(mapData.id);
             hideLoading();
