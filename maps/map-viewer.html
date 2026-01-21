@@ -111,7 +111,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     
     <script type="module">
-        import { supabase } from '../assets/js/supabaseClient.js';
+        import { supabase } from './assets/js/supabaseClient.js';
 
         let map = null;
 
@@ -199,8 +199,9 @@
             // Create map
             map = L.map('map', {
                 crs: L.CRS.Simple,
-                minZoom: -3,
-                maxZoom: 2,
+                minZoom: -2,
+                maxZoom: 3,
+                zoomSnap: 0.5,
                 scrollWheelZoom: true,
                 attributionControl: false,
                 dragging: true,
@@ -214,6 +215,7 @@
             
             L.imageOverlay(mapUrl, bounds).addTo(map);
             map.fitBounds(bounds);
+            map.setMaxBounds(bounds);
 
             await loadPins(mapData.id);
             hideLoading();
