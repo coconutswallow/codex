@@ -233,3 +233,14 @@ select:hover {
     cursor: pointer;
     border-radius: 4px;
 }
+
+.map-component-wrapper .leaflet-container {
+    background: var(--color-bg-dark); /* Match your site theme */
+    outline: 0;
+}
+
+/* This prevents the map from 'shifting' inside the div */
+.leaflet-image-layer {
+    image-rendering: -webkit-optimize-contrast; /* Keeps map text sharp */
+    image-rendering: crisp-edges;
+}
