@@ -5,38 +5,51 @@ title: Submit / Edit Battle Map
 
 {% include auth-header.html %}
 
-<section class="hero-block">
-  <h1 id="page-title">Submit Battle Map</h1>
-  <p>Upload a new battle map or update an existing one.</p>
-</section>
+<h2>Submit Battle Map</h2>
+<p style="margin-bottom: 2rem;">Upload a new battle map or update an existing one.</p>
 
 <div class="form-wrapper">
+  
   <div class="image-upload">
     <label>Map Image</label>
-    <input type="file" id="ik-file" accept="image/*" />
-    <input type="url" id="ik-url" placeholder="…or paste image URL" />
-    <img id="preview" style="display:none; max-width:100%; margin-top:10px;" />
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <input type="file" id="ik-file" accept="image/*" />
+      <input type="url" id="ik-url" placeholder="…or paste image URL" style="flex-grow:1;" />
+    </div>
+    
+    <img id="preview" style="display:none; max-width:100%; margin-top:15px; border-radius:4px; border:1px solid #ccc;" />
+    <p id="detect-msg" style="font-size:0.85em; color:#666; margin-top:5px;"></p>
   </div>
 
   <form id="map-form">
-    <input id="name" placeholder="Map name" required />
+    <label>Map Details</label>
+    <input id="name" placeholder="Map Name" required />
 
-    <div class="row">
-      <input id="gridW" type="number" placeholder="Grid width" required />
-      <input id="gridH" type="number" placeholder="Grid height" required />
-      <input id="cell" type="number" placeholder="Cell size (px)" />
+    <div class="row" style="display: flex; gap: 10px;">
+      <div style="flex:1;">
+        <label style="font-size:0.8em;">Grid Width</label>
+        <input id="gridW" type="number" placeholder="e.g. 30" required />
+      </div>
+      <div style="flex:1;">
+        <label style="font-size:0.8em;">Grid Height</label>
+        <input id="gridH" type="number" placeholder="e.g. 20" required />
+      </div>
+      <div style="flex:1;">
+        <label style="font-size:0.8em;">Cell Size (px)</label>
+        <input id="cell" type="number" placeholder="e.g. 70" />
+      </div>
     </div>
 
-    <input id="creator" placeholder="Creator name" required />
-    <input id="source" placeholder="Source URL" />
+    <input id="creator" placeholder="Creator Name" required />
+    <input id="source" placeholder="Source URL (Patreon/Ko-fi link)" />
     <input id="keywords" placeholder="Keywords (comma separated)" />
 
-    <label class="checkbox">
+    <label class="checkbox" style="margin-top:10px; display:block;">
       <input type="checkbox" id="freeUse" />
       Creator allows free use
     </label>
 
-    <button type="submit" class="tool-btn">Save Map</button>
+    <button type="submit" class="tool-btn" style="margin-top:20px;">Save Map</button>
   </form>
 </div>
 
@@ -47,11 +60,23 @@ title: Submit / Edit Battle Map
   const params = new URLSearchParams(window.location.search);
   const mapId = params.get("id");
 
+  // DOM Elements
+  const fileInput = document.getElementById("ik-file");
+  const urlInput = document.getElementById("ik-url");
+  const preview = document.getElementById("preview");
+  const detectMsg = document.getElementById("detect-msg");
+  
+  // Inputs
+  const nameIn = document.getElementById("name");
+  const gridW = document.getElementById("gridW");
+  const gridH = document.getElementById("gridH");
+  const cell = document.getElementById("cell");
+
   let currentUser = null;
   let existingImageUrl = null;
 
   /* -------------------------
-     AUTH CHECK
+     1. AUTH CHECK
   ------------------------- */
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -61,10 +86,51 @@ title: Submit / Edit Battle Map
   currentUser = user;
 
   /* -------------------------
-     LOAD EXISTING MAP (EDIT)
+     2. AUTO-DETECT LOGIC
+  ------------------------- */
+  fileInput.addEventListener("change", handleFileSelect);
+
+  function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // A. Parse Filename (e.g. "Forest_Enc_30x20.jpg")
+    // Regex looks for: Number 'x' Number
+    const match = file.name.match(/(\d+)\s?[xX]\s?(\d+)/);
+    
+    if (match) {
+      gridW.value = match[1];
+      gridH.value = match[2];
+      detectMsg.textContent = `Auto-detected grid: ${match[1]}x${match[2]}`;
+    }
+
+    // B. Preview & Calculate Cell Size
+    const objectUrl = URL.createObjectURL(file);
+    preview.src = objectUrl;
+    preview.style.display = "block";
+
+    const img = new Image();
+    img.onload = () => {
+      // If we successfully found Grid W/H from filename, we can calculate PPI
+      if (gridW.value && gridH.value) {
+        const pxWidth = img.naturalWidth;
+        const calculatedCell = Math.round(pxWidth / gridW.value);
+        
+        // Auto-fill cell size
+        cell.value = calculatedCell;
+        detectMsg.textContent += ` | Calculated Cell Size: ${calculatedCell}px`;
+      } else {
+        detectMsg.textContent = `Image dimensions: ${img.naturalWidth}x${img.naturalHeight}px. (Please enter Grid Width manually)`;
+      }
+    };
+    img.src = objectUrl;
+  }
+
+  /* -------------------------
+     3. LOAD EXISTING MAP (EDIT)
   ------------------------- */
   if (mapId) {
-    document.getElementById("page-title").innerText = "Edit Battle Map";
+    document.querySelector("h2").innerText = "Edit Battle Map";
 
     const { data, error } = await supabase
       .from("battlemaps")
@@ -78,71 +144,60 @@ title: Submit / Edit Battle Map
     }
 
     // Populate form
-    name.value = data.name;
+    nameIn.value = data.name;
     gridW.value = data.grid_width;
     gridH.value = data.grid_height;
     cell.value = data.cell_size_px || "";
-    creator.value = data.creator;
-    source.value = data.source_url || "";
-    keywords.value = data.keywords || "";
-    freeUse.checked = data.is_free_use;
+    document.getElementById("creator").value = data.creator;
+    document.getElementById("source").value = data.source_url || "";
+    document.getElementById("keywords").value = data.keywords || "";
+    document.getElementById("freeUse").checked = data.is_free_use;
 
     existingImageUrl = data.image_url;
-
-    const preview = document.getElementById("preview");
     preview.src = `${existingImageUrl}?tr=w-600`;
     preview.style.display = "block";
   }
 
   /* -------------------------
-     SUBMIT HANDLER
+     4. SUBMIT HANDLER
   ------------------------- */
   document.getElementById("map-form").addEventListener("submit", async (e) => {
     e.preventDefault();
 
     let imageUrl = existingImageUrl;
 
-    // Upload new image if provided
-    if (
-      document.getElementById("ik-file").files.length ||
-      document.getElementById("ik-url").value
-    ) {
+    // Check if new file selected
+    if (fileInput.files.length || urlInput.value) {
       const upload = await uploadImage();
       if (!upload) return;
       imageUrl = upload.url;
     }
 
     const payload = {
-      name: name.value,
+      name: nameIn.value,
       grid_width: +gridW.value,
       grid_height: +gridH.value,
       cell_size_px: cell.value ? +cell.value : null,
-      creator: creator.value,
-      source_url: source.value,
-      keywords: keywords.value,
-      is_free_use: freeUse.checked,
+      creator: document.getElementById("creator").value,
+      source_url: document.getElementById("source").value,
+      keywords: document.getElementById("keywords").value,
+      is_free_use: document.getElementById("freeUse").checked,
       image_url: imageUrl,
       submitted_by: user.id
     };
 
     let result;
     if (mapId) {
-      result = await supabase
-        .from("battlemaps")
-        .update(payload)
-        .eq("id", mapId);
+      result = await supabase.from("battlemaps").update(payload).eq("id", mapId);
     } else {
-      result = await supabase
-        .from("battlemaps")
-        .insert(payload);
+      result = await supabase.from("battlemaps").insert(payload);
     }
 
     if (result.error) {
       console.error(result.error);
       alert("Failed to save map.");
-      return;
+    } else {
+      window.location.href = "/battlemaps-view.html";
     }
-
-    window.location.href = "/battlemaps-view.html";
   });
 </script>
