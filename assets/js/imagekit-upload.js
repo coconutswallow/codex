@@ -1,7 +1,7 @@
 import { supabase } from "./supabaseClient.js";
 
 const imagekit = new ImageKit({
-  publicKey: "YOUR_IMAGEKIT_PUBLIC_KEY",
+  publicKey: "public_bPs07/2jWzBhLfDfD3Rl0KLaRgo=",
   urlEndpoint: "https://ik.imagekit.io/YOUR_ID",
   authenticationEndpoint: "/api/imagekit-auth" // later
 });
