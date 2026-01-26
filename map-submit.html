@@ -1,388 +1,71 @@
 ---
 layout: default
-title: Submit Map
 ---
 
-<div class="hero-block">
-  <h1>Submit a Map</h1>
-  <p>Upload free-to-use maps to the database. Please credit artists</p>
-  <p>As this is a public site, Discord login is required to prevent potenial misuse. Ping me on discord to be whitelisted to have your maps auto-approved upon submission.</p>
-  
-  <div style="margin-top: 20px;">
-    <a href="{{ '/maps' | relative_url }}" class="tool-btn" style="text-decoration: none;">&larr; Back to Index</a>
-  </div>
+{% include auth-header.html %}
+
+<h2>Submit Battlemap</h2>
+
+<div>
+  <input id="ik-file" type="file" accept="image/*" />
+  <input id="ik-url" type="url" placeholder="Or paste image URL" />
 </div>
 
-<div class="submit-container">
-  
-  <div class="map-viewer" id="viewPort">
-    <div class="canvas-wrapper" id="canvasWrapper">
-        <p id="placeholder-text" style="color:#888; width: 300px; padding: 50px;">Map Preview will appear here</p>
-        <div id="axis-x-container" style="display:none;"></div>
-        <div id="axis-y-container" style="display:none;"></div>
-        <img id="preview-img" src="" alt="" style="display:none;">
-        <div id="grid-overlay" style="display:none;"></div>
-    </div>
-  </div>
+<form id="map-form">
+  <input id="name" placeholder="Map name" required />
+  <input id="gridW" type="number" placeholder="Grid width" required />
+  <input id="gridH" type="number" placeholder="Grid height" required />
+  <input id="cell" type="number" placeholder="Cell size (px)" />
 
-  <div class="controls">
-    
-    <div id="login-section" style="text-align: center; padding: 40px 0;">
-      <p style="margin-bottom: 20px;">Log in to submit maps.</p>
-      <button onclick="login()" class="discord-btn">Login with Discord</button>
-    </div>
+  <input id="creator" placeholder="Creator" required />
+  <input id="source" placeholder="Source URL" />
+  <input id="keywords" placeholder="Keywords" />
 
-    <div id="form-section" style="display:none;">
-      
-      <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-        <div style="font-size: 0.8em; color: var(--color-text-muted);">
-          Submitted by: <strong id="user-display">User</strong>
-        </div>
-        <button onclick="logout()" class="tool-btn" style="font-size:0.7em;">Log Out</button>
-      </div>
+  <label>
+    <input type="checkbox" id="freeUse" />
+    Free to use
+  </label>
 
-      <div class="section">
-        <h3>1. Map Info</h3>
-        <label>Map Name</label>
-        <input type="text" id="mapName" placeholder="e.g. Forest Ambush">
+  <button type="submit">Submit</button>
+</form>
 
-        <label>Image URL</label>
-        <div class="input-group">
-          <input type="url" id="imgUrl" placeholder="https://..." onkeydown="if(event.key === 'Enter') loadImage()">
-          <button onclick="loadImage()">Load</button>
-        </div>
+<script type="module">
+  import { supabase } from "/assets/js/supabaseClient.js";
+  import { uploadImage } from "/assets/js/imagekit-upload.js";
 
-        <label>Creator Name</label>
-        <input type="text" id="creator" placeholder="e.g. Neutral Party">
+  document.getElementById("map-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-        <label>Creator/Source URL</label>
-        <input type="url" id="sourceUrl" placeholder="https://patreon.com/..." >
-        
-        <label>Search Keywords</label>
-        <input type="text" id="keywords" placeholder="forest, road, day">
-      </div>
-      
-      <div class="section">
-        <div style="margin-bottom: 15px;">
-            <h3>2. Battle Map Setup</h3>
-            <label style="margin-top:10px; display:flex; align-items:center; gap:10px; cursor:pointer; text-transform:none; color:var(--color-text);">
-                <input type="checkbox" id="avraeToggle" onchange="toggleAvraeMode()" style="width:auto; margin:0;"> 
-                <strong>Include Avrae Maps settings</strong>
-            </label>
-        </div>
-
-        <div id="avrae-settings-container" style="display:none;">
-            <label>Pixels Per Cell</label>
-            <div class="slider-group">
-              <input type="range" id="ppi_slider" min="20" max="150" value="40" step="1" oninput="updateFromSlider('ppi')">
-              <input type="number" id="ppi_num" value="40" oninput="updateFromInput('ppi')">
-            </div>
-    
-            <label>Grid W / H (Cells)</label>
-            <div class="slider-group">
-              <span style="font-size:0.8em; font-weight:bold; width:15px;">W</span>
-              <input type="number" id="gridW_num" value="30" oninput="updateFromInput('w')">
-              <span style="font-size:0.8em; font-weight:bold; width:15px;">H</span>
-              <input type="number" id="gridH_num" value="30" oninput="updateFromInput('h')">
-            </div>
-            
-            <div style="text-align:right; margin-top:5px;">
-               <button class="tool-btn" onclick="calcPPIfromGrid()">Fit Image to Grid</button>
-               <button class="tool-btn" onclick="calcGridFromPPI()">Auto-Set W/H</button>
-            </div>
-    
-            <hr style="border:0; border-top:1px dashed var(--color-border); margin:15px 0;">
-    
-            <label>Offset Background (Pixels)</label>
-            <div style="display:flex; gap:10px;">
-                <div style="flex:1;">
-                    <span style="font-size:0.8em;">Right (X)</span>
-                    <input type="number" id="offX" value="0" oninput="renderGrid()">
-                </div>
-                <div style="flex:1;">
-                    <span style="font-size:0.8em;">Down (Y)</span>
-                    <input type="number" id="offY" value="0" oninput="renderGrid()">
-                </div>
-            </div>
-
-            <label style="margin-top: 20px;">Generated Command</label>
-            <div class="generated-cmd" id="cmdOutput">!map ...</div>
-        </div>
-      </div>
-
-      <div class="section" style="background:var(--palette-bg-page-light);">
-        <label style="margin-top:0; font-weight:normal; display: flex; gap: 10px; align-items: center; text-transform:none;">
-          <input type="checkbox" id="tosCheck" style="width: auto; margin: 0;"> 
-          I confirm this map is free to use.
-        </label>
-
-        <button id="submit-btn" onclick="submitMap()">Submit</button>
-        <p id="statusMsg"></p>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="{{ '/assets/js/auth-manager.js' | relative_url }}"></script>
-
-<<script>
-  /* --- GLOBAL VARIABLES --- */
-  let db; 
-  let currentUser = null;
-
-  /* --- INITIALIZATION --- */
-  document.addEventListener('DOMContentLoaded', () => {
-    // Check if auth manager script is loaded
-    if (!window.authManager) {
-        console.error("Auth Manager not found. Check your script tags.");
-        return;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      alert("You must be logged in.");
+      return;
     }
 
-    // Initialize Auth Manager
-    window.authManager.init((user) => {
-        currentUser = user;
-        db = window.authManager.getClient(); // Get the DB client for submissions
-        
-        if (user) {
-            showForm();
-        } else {
-            showLogin();
-        }
-    });
-  });
-
-  /* --- AUTH UI LOGIC --- */
-  function showForm() {
-    document.getElementById('login-section').style.display = 'none';
-    document.getElementById('form-section').style.display = 'block';
-    
-    // Use the helper to get the display name safely
-    document.getElementById('user-display').innerText = window.authManager.getUserName();
-  }
-
-  function showLogin() {
-    currentUser = null;
-    document.getElementById('login-section').style.display = 'block';
-    document.getElementById('form-section').style.display = 'none';
-  }
-
-  // Hook up the buttons to the reusable manager
-  window.login = () => window.authManager.login();
-  window.logout = () => window.authManager.logout();
-
-  /* --- MAP RENDERING LOGIC (Preserved) --- */
-  const img = document.getElementById('preview-img');
-  const overlay = document.getElementById('grid-overlay');
-  const cmdOutput = document.getElementById('cmdOutput');
-  const statusMsg = document.getElementById('statusMsg');
-  const xAxis = document.getElementById('axis-x-container');
-  const yAxis = document.getElementById('axis-y-container');
-  
-  const VISUAL_CELL_SIZE = 28; 
-
-  function loadImage() {
-    const url = document.getElementById('imgUrl').value;
-    if(!url) return;
-    
-    statusMsg.innerText = "Loading...";
-    statusMsg.style.color = "var(--color-text)"; 
-    
-    const btn = document.getElementById('submit-btn');
-    btn.innerText = "Submit";
-    btn.disabled = false;
-
-    document.getElementById('placeholder-text').style.display = 'none';
-    img.removeAttribute('src'); 
-    img.style.display = 'block'; 
-    img.src = url; 
-  }
-
-  img.onload = function() {
-    statusMsg.innerText = "";
-    renderGrid();
-  };
-
-  img.onerror = function() {
-    statusMsg.innerText = "❌ Error loading image.";
-    statusMsg.style.color = "var(--palette-danger)";
-  };
-
-  function toggleAvraeMode() {
-    const isOn = document.getElementById('avraeToggle').checked;
-    const settingsDiv = document.getElementById('avrae-settings-container');
-    
-    settingsDiv.style.display = isOn ? 'block' : 'none';
-    overlay.style.display = isOn ? 'block' : 'none';
-    xAxis.style.display = isOn ? 'block' : 'none';
-    yAxis.style.display = isOn ? 'block' : 'none';
-  }
-
-  /* --- CALCULATIONS & RENDERING --- */
-  function calcGridFromPPI() {
-    if(!img.naturalWidth) return;
-    const ppi = parseInt(document.getElementById('ppi_num').value);
-    document.getElementById('gridW_num').value = Math.ceil(img.naturalWidth / ppi);
-    document.getElementById('gridH_num').value = Math.ceil(img.naturalHeight / ppi);
-    renderGrid();
-  }
-
-  function calcPPIfromGrid() {
-    if(!img.naturalWidth) return;
-    const cols = parseInt(document.getElementById('gridW_num').value);
-    const exactPPI = Math.round(img.naturalWidth / cols);
-    document.getElementById('ppi_slider').value = exactPPI;
-    document.getElementById('ppi_num').value = exactPPI;
-    renderGrid();
-  }
-
-  function updateFromSlider(type) {
-    if(type === 'ppi') document.getElementById('ppi_num').value = document.getElementById('ppi_slider').value;
-    renderGrid();
-  }
-
-  function updateFromInput(type) {
-    if(type === 'ppi') document.getElementById('ppi_slider').value = document.getElementById('ppi_num').value;
-    renderGrid();
-  }
-
-  function renderGrid() {
-    const w_cols = parseInt(document.getElementById('gridW_num').value);
-    const h_rows = parseInt(document.getElementById('gridH_num').value);
-    const ppi_val = parseInt(document.getElementById('ppi_num').value);
-    const offX = parseInt(document.getElementById('offX').value) || 0;
-    const offY = parseInt(document.getElementById('offY').value) || 0;
-
-    if(img.naturalWidth > 0) {
-        const isAvraeOn = document.getElementById('avraeToggle').checked;
-        
-        if (isAvraeOn) {
-            const scaleRatio = VISUAL_CELL_SIZE / ppi_val;
-            img.style.width = (img.naturalWidth * scaleRatio) + 'px';
-            const visualOffX = offX * scaleRatio;
-            const visualOffY = offY * scaleRatio;
-            img.style.transform = `translate(${visualOffX}px, ${visualOffY}px)`;
-        } else {
-            img.style.width = "100%"; 
-            img.style.transform = "none";
-        }
-        img.style.height = "auto";
-    }
-
-    overlay.style.width = (w_cols * VISUAL_CELL_SIZE) + 'px';
-    overlay.style.height = (h_rows * VISUAL_CELL_SIZE) + 'px';
-
-    renderCoordinates(w_cols, h_rows);
-
-    const url = document.getElementById('imgUrl').value || "URL";
-    let options = `dc${ppi_val}`;
-    if (offX > 0 || offY > 0) {
-        options += ` -o${offX}:${offY}`;
-    }
-    
-    const cmd = `!map -bg "${url}" -mapsize ${w_cols}x${h_rows} -options ${options} -t DM`;
-    cmdOutput.innerText = cmd;
-  }
-
-  function renderCoordinates(cols, rows) {
-    xAxis.innerHTML = '';
-    yAxis.innerHTML = '';
-    
-    for(let i=0; i<cols; i++) {
-        const el = document.createElement('div');
-        el.className = 'axis-label axis-x';
-        el.innerText = getColumnLabel(i);
-        el.style.left = (30 + (i * VISUAL_CELL_SIZE)) + 'px'; 
-        el.style.width = VISUAL_CELL_SIZE + 'px';
-        xAxis.appendChild(el);
-    }
-    for(let i=0; i<rows; i++) {
-        const el = document.createElement('div');
-        el.className = 'axis-label axis-y';
-        el.innerText = (i + 1);
-        el.style.top = (25 + (i * VISUAL_CELL_SIZE)) + 'px'; 
-        el.style.height = VISUAL_CELL_SIZE + 'px';
-        yAxis.appendChild(el);
-    }
-  }
-
-  function getColumnLabel(index) {
-      let label = "";
-      let n = index;
-      while (n >= 0) {
-          label = String.fromCharCode((n % 26) + 65) + label;
-          n = Math.floor(n / 26) - 1;
-      }
-      return label;
-  }
-
-  /* --- SUBMISSION LOGIC --- */
-  async function submitMap() {
-    const btn = document.getElementById('submit-btn');
-    
-    if (!document.getElementById('tosCheck').checked) return alert("Please confirm free to use.");
-    if (!document.getElementById('imgUrl').value) return alert("URL required.");
-    if (!document.getElementById('mapName').value) return alert("Please enter a Map Name.");
-    if (img.naturalWidth === 0) return alert("Load a valid image first.");
-    if (!currentUser) return alert("You must be logged in!");
-
-    btn.disabled = true;
-    btn.innerText = "Sending...";
-
-    // Use helper to get the username again to be safe
-    const discordName = window.authManager.getUserName();
-
-    const isAvraeOn = document.getElementById('avraeToggle').checked;
-    let finalCmd = "";
-    
-    // Default values if Avrae is OFF
-    let w = 0;
-    let h = 0;
-    let ppi = 0;
-    let offX = 0;
-    let offY = 0;
-
-    if (isAvraeOn) {
-        finalCmd = document.getElementById('cmdOutput').innerText;
-        w = document.getElementById('gridW_num').value;
-        h = document.getElementById('gridH_num').value;
-        ppi = document.getElementById('ppi_num').value;
-        // Get offset values
-        offX = document.getElementById('offX').value;
-        offY = document.getElementById('offY').value;
-    }
+    const image = await uploadImage();
+    if (!image) return;
 
     const payload = {
-      name: document.getElementById('mapName').value,
-      image_url: document.getElementById('imgUrl').value,
-      creator: document.getElementById('creator').value,
-      source_url: document.getElementById('sourceUrl').value,
-      keywords: document.getElementById('keywords').value,
-      grid_width: w, // Use variable w
-      grid_height: h, // Use variable h
-      cell_size_px: ppi, // Use variable ppi
-      // NEW: Include offset columns
-      offset_x: offX,
-      offset_y: offY,
-      avrae_cmd: finalCmd,
-      submitted_by: discordName,
-      is_free_use: true
+      name: name.value,
+      grid_width: +gridW.value,
+      grid_height: +gridH.value,
+      cell_size_px: +cell.value || null,
+      keywords: keywords.value,
+      creator: creator.value,
+      source_url: source.value,
+      is_free_use: freeUse.checked,
+      submitted_by: user.id
     };
 
-    // Use the global 'db' (initialized in authManager.init)
-    const { error } = await db.from('maps').insert(payload);
+    const { error } = await supabase
+      .from("battlemaps")
+      .insert(payload);
 
     if (error) {
       console.error(error);
-      statusMsg.innerText = "Error: " + error.message;
-      statusMsg.style.color = "var(--palette-danger)";
-      btn.disabled = false;
-      btn.innerText = "Submit";
+      alert("Failed to save map");
     } else {
-      statusMsg.innerText = "Success! Map submitted.";
-      statusMsg.style.color = "var(--palette-success)";
-      btn.innerText = "Submitted";
-      document.getElementById('mapName').value = "";
+      location.href = "/maps.html";
     }
-  }
+  });
 </script>

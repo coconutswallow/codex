@@ -1,0 +1,162 @@
+<!--
+    map-widget.html
+    
+    OVERVIEW:
+    Jekyll include template for embedding interactive map widgets on any page.
+    Creates a container with proper data attributes and initializes the MapComponent.
+    
+    PURPOSE:
+    - Provides reusable map embedding via Jekyll's {% include %} syntax
+    - Handles Leaflet library loading
+    - Manages initialization timing (waits for Leaflet to load)
+    - Supports both named maps and ID-based maps
+    
+    USAGE EXAMPLES:
+    
+    1. Basic embed by name:
+       {% include map-widget.html name="Hawthorne-Location" %}
+    
+    2. Custom ID and height:
+       {% include map-widget.html 
+          id="my-custom-map" 
+          name="Downtown-Office" 
+          height="800px" %}
+    
+    3. Load by database ID instead of name:
+       {% include map-widget.html map_id="123" %}
+    
+    4. Editable mode (requires authentication):
+       {% include map-widget.html 
+          name="Headquarters" 
+          editable="true" %}
+    
+    PARAMETERS:
+    - id (optional): HTML element ID, defaults to 'map-widget'
+    - name (optional): Map name from database (location_maps.name)
+    - map_id (optional): Map ID from database (location_maps.id)
+    - editable (optional): "true" to enable editing, defaults to "false"
+    - height (optional): CSS height value, defaults to "500px"
+    
+    REQUIREMENTS:
+    - Leaflet.js 1.9.4 CSS and JS (loaded via CDN)
+    - map-widget.js module in /assets/js/
+    - Supabase client configured
+    
+    LOADING SEQUENCE:
+    1. Leaflet CSS loaded (styling)
+    2. Leaflet JS loaded (library)
+    3. Container div created with data attributes
+    4. Module script waits for Leaflet global (window.L)
+    5. initMapComponents() called to create MapComponent instance
+-->
+
+<!-- 
+    External Dependencies: Leaflet CSS
+    Provides styling for map controls, markers, popups, etc.
+-->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<!-- 
+    External Dependencies: Leaflet JavaScript
+    Main mapping library - must load before our widget initializes
+-->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- 
+    Map Container Element
+    
+    DATA ATTRIBUTES EXPLAINED:
+    - data-map-component: Selector for automatic initialization
+    - data-map-name: Database lookup by name (optional)
+    - data-map-id: Database lookup by ID (optional, takes precedence over name)
+    - data-editable: Enable/disable editing features
+    - data-height: Display height (can also be set via CSS)
+    
+    LIQUID TEMPLATE SYNTAX:
+    {{ include.param | default: 'fallback' }} - Gets param or uses default
+    {% if include.param %} - Conditionally renders if param exists
+-->
+<div id="{{ include.id | default: 'map-widget' }}" 
+     data-map-component
+     {% if include.name %}data-map-name="{{ include.name }}"{% endif %}
+     {% if include.map_id %}data-map-id="{{ include.map_id }}"{% endif %}
+     data-editable="{{ include.editable | default: 'false' }}"
+     data-height="{{ include.height | default: '500px' }}">
+</div>
+
+<!--
+    Initialization Script
+    
+    TYPE="MODULE": Enables ES6 import syntax
+    
+    TIMING ISSUE SOLUTION:
+    Leaflet loads asynchronously, so we can't immediately call initMapComponents().
+    The startWidget() function polls for window.L (Leaflet global) before proceeding.
+    This prevents "L is not defined" errors.
+    
+    ALTERNATIVE APPROACH (not used here):
+    Could use window.onload or DOMContentLoaded, but polling is more reliable
+    since we specifically need Leaflet, not just DOM readiness.
+-->
+<script type="module">
+    // Import our map component initialization function
+    import { initMapComponents } from "{{ '/assets/js/map-widget.js' | relative_url }}";
+    
+    /**
+     * Wait for Leaflet to be available before initializing
+     * 
+     * WHY THIS IS NEEDED:
+     * - Leaflet script tag loads asynchronously
+     * - Our module script may execute before Leaflet finishes loading
+     * - MapComponent constructor requires window.L to exist
+     * 
+     * PROCESS:
+     * 1. Check if window.L exists (Leaflet loaded)
+     * 2. If yes: Initialize all map components
+     * 3. If no: Wait 50ms and check again
+     * 
+     * TIMEOUT: 50ms is fast enough to feel instant while being
+     * conservative enough to catch Leaflet on slower connections
+     */
+    function startWidget() {
+        if (typeof L !== 'undefined') {
+            // Leaflet is ready - initialize maps
+            initMapComponents();
+        } else {
+            // Leaflet not ready yet - check again soon
+            console.log("Waiting for Leaflet...");
+            setTimeout(startWidget, 50);
+        }
+    }
+    
+    // Begin the initialization process
+    startWidget();
+</script>
+
+<!--
+    NOTES FOR JEKYLL INTEGRATION:
+    
+    1. File Location:
+       Place in _includes/map-widget.html
+    
+    2. CSS Styling:
+       Additional styles can be added to your site's CSS:
+       - .location-display (popup content)
+       - .map-component-title (location name)
+       - .edit-actions (edit mode buttons)
+       - .pin-form (add pin form)
+    
+    3. Authentication:
+       Editable mode should be used with authentication checks.
+       Consider wrapping in permission checks in your page template.
+    
+    4. Responsive Design:
+       For responsive maps, add CSS class instead of fixed height:
+       <div class="responsive-map-frame" ...>
+       Then style with aspect-ratio or padding-bottom technique.
+    
+    5. Multiple Maps:
+       Can include multiple times on same page with different IDs:
+       {% include map-widget.html id="map1" name="Location1" %}
+       {% include map-widget.html id="map2" name="Location2" %}
+-->

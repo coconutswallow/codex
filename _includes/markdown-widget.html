@@ -1,0 +1,213 @@
+{% comment %}
+/*
+* Markdown Widget Component
+* --------------------------
+* A reusable markdown editor with live preview, tabs, and formatting tools.
+*
+* Usage:
+* {% include markdown-widget.html id="my_editor" name="content" width="100%" height="400px" %}
+*
+* Parameters:
+* - id (required for multiple widgets): Unique ID for JS logic. Default: "markdown-editor"
+* - name (required for forms): Input name for the POST data. Default: "markdown_content"
+* - width: CSS width. Default: "100%"
+* - height: CSS min-height. Default: "350px"
+* - position: "bottom" (optional)
+*
+* Notes: this include will show as having errors in VS Code, it's because it's an include, you can ignore
+*/
+{% endcomment %}
+
+{% assign editor_id = include.id | default: "markdown-editor" %}
+{% assign input_name = include.name | default: "markdown_content" %}
+{% assign widget_width = include.width | default: "100%" %}
+{% assign widget_height = include.height | default: "350px" %}
+
+<div id="widget-{{ editor_id }}" class="md-widget-container" style="width: {{ widget_width }};">
+
+    <script>
+        if (typeof marked === 'undefined' && !window.markedLoading) {
+            window.markedLoading = true;
+            var script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+            document.head.appendChild(script);
+        }
+    </script>
+
+    <div class="md-header">
+        <div class="md-tabs">
+            <button type="button" class="md-tab active" data-tab="write">Write</button>
+            <button type="button" class="md-tab" data-tab="preview">Preview</button>
+        </div>
+        
+        <div class="md-tools">
+            <button type="button" data-cmd="header" data-val="# ">H1</button>
+            <button type="button" data-cmd="header" data-val="## ">H2</button>
+            <button type="button" data-cmd="header" data-val="### ">H3</button>
+            <span class="md-sep">|</span>
+            <button type="button" data-cmd="wrap" data-val="**"><strong>B</strong></button>
+            <button type="button" data-cmd="wrap" data-val="*"><em>I</em></button>
+            <button type="button" data-cmd="wrap" data-val="<u>" data-val-end="</u>"><u>U</u></button>
+            <span class="md-sep">|</span>
+            <button type="button" data-cmd="header" data-val="- ">• List</button>
+            <button type="button" data-cmd="link">🔗 Link</button>
+        </div>
+    </div>
+
+    <div class="md-body">
+        <textarea 
+            id="{{ editor_id }}" 
+            name="{{ input_name }}" 
+            class="md-textarea" 
+            style="min-height: {{ widget_height }};"
+            placeholder="Type your markdown here..."></textarea>
+        
+        <div id="{{ editor_id }}-preview" class="md-preview-box" style="display: none; min-height: {{ widget_height }};"></div>
+    </div>
+
+    <style>
+        .md-widget-container { 
+            border: 2px solid var(--color-border); 
+            border-radius: var(--border-radius); 
+            background: var(--color-bg-light); 
+            margin-bottom: var(--spacing-md);
+            overflow: hidden;
+        }
+        .md-header {
+            background: var(--color-bg-medium);
+            border-bottom: 2px solid var(--color-border);
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+        }
+        .md-tabs { display: flex; }
+        .md-tab {
+            background: transparent; border: none; padding: 12px 20px;
+            cursor: pointer; font-weight: bold; color: var(--color-text-secondary);
+            border-bottom: 3px solid transparent; font-family: var(--font-header);
+        }
+        .md-tab:hover { color: var(--color-primary); background: rgba(0,0,0,0.05); }
+        .md-tab.active { 
+            border-bottom-color: var(--color-primary); color: var(--color-primary); 
+            background: var(--color-bg-light);
+        }
+        .md-tools { display: flex; gap: 5px; padding: 5px; align-items: center; }
+        .md-tools button {
+            background: var(--color-bg-page); border: 1px solid var(--color-border);
+            border-radius: 4px; padding: 4px 8px; cursor: pointer;
+            color: var(--color-text); min-width: 28px;
+        }
+        .md-tools button:hover { background: var(--color-secondary); color: white; border-color: var(--color-secondary); }
+        .md-sep { color: var(--color-border); margin: 0 4px; }
+        
+        .md-textarea { 
+            width: 100%; border: none; padding: 15px; 
+            resize: vertical; outline: none; font-family: 'Courier New', monospace; 
+            font-size: 14px; line-height: 1.6; background: var(--color-bg-page); 
+            color: var(--color-text); display: block;
+        }
+        .md-preview-box { 
+            padding: 20px; background: var(--color-bg-light); 
+            color: var(--color-text); overflow-y: auto;
+        }
+        .md-preview-box img { max-width: 100%; }
+        
+        @media (max-width: 600px) {
+            .md-header { flex-direction: column; align-items: stretch; }
+            .md-tools { border-top: 1px solid var(--color-border); padding: 10px 5px; justify-content: center; }
+        }
+    </style>
+
+    <script data-widget-id="{{ editor_id }}">
+    (function() {
+        var scriptTag = document.currentScript;
+        var id = scriptTag.getAttribute('data-widget-id');
+        
+        var container = document.getElementById('widget-' + id);
+        var textarea = document.getElementById(id);
+        var preview = document.getElementById(id + '-preview');
+        var toolsPanel = container.querySelector('.md-tools');
+        
+        container.addEventListener('click', function(e) {
+            var btn = e.target.closest('button');
+            if (!btn) return;
+
+            if (btn.hasAttribute('data-tab')) {
+                switchTab(btn.dataset.tab);
+            }
+
+            if (btn.hasAttribute('data-cmd')) {
+                var cmd = btn.dataset.cmd;
+                var val = btn.dataset.val;
+                var valEnd = btn.dataset.valEnd || val; 
+
+                if (cmd === 'header') insertAtCursor(val);
+                if (cmd === 'wrap') wrapSelection(val, valEnd);
+                if (cmd === 'link') insertLink();
+            }
+        });
+
+        function switchTab(mode) {
+            var tabs = container.querySelectorAll('.md-tab');
+            if (mode === 'write') {
+                textarea.style.display = 'block';
+                preview.style.display = 'none';
+                toolsPanel.style.display = 'flex';
+                tabs[0].classList.add('active');
+                tabs[1].classList.remove('active');
+            } else {
+                if (typeof marked !== 'undefined') {
+                    var raw = textarea.value.trim();
+                    preview.innerHTML = raw ? marked.parse(raw) : '<em>Nothing to preview.</em>';
+                }
+                textarea.style.display = 'none';
+                preview.style.display = 'block';
+                toolsPanel.style.display = 'none';
+                tabs[0].classList.remove('active');
+                tabs[1].classList.add('active');
+            }
+        }
+
+        function insertAtCursor(text) {
+            var start = textarea.selectionStart;
+            var end = textarea.selectionEnd;
+            var before = textarea.value.substring(0, start);
+            var after = textarea.value.substring(end);
+            
+            if (start > 0 && before.slice(-1) !== '\n') {
+                text = "\n" + text;
+            }
+
+            textarea.value = before + text + after;
+            textarea.focus();
+            textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        }
+
+        function wrapSelection(startTag, endTag) {
+            var start = textarea.selectionStart;
+            var end = textarea.selectionEnd;
+            var text = textarea.value.substring(start, end);
+            
+            textarea.value = textarea.value.substring(0, start) + startTag + text + endTag + textarea.value.substring(end);
+            textarea.focus();
+
+            if (text.length > 0) {
+                textarea.selectionStart = textarea.selectionEnd = start + startTag.length + text.length + endTag.length;
+            } else {
+                textarea.selectionStart = textarea.selectionEnd = start + startTag.length;
+            }
+        }
+
+        function insertLink() {
+            var start = textarea.selectionStart;
+            var end = textarea.selectionEnd;
+            var text = textarea.value.substring(start, end) || "link text";
+            
+            var snippet = "[" + text + "](url)";
+            textarea.value = textarea.value.substring(0, start) + snippet + textarea.value.substring(end);
+            
+            textarea.focus();
+            var urlStart = start + 1 + text.length + 2; 
+            textarea.setSelectionRange(urlStart, urlStart + 3);
+        }
+    })();
+    </script>
+</div>

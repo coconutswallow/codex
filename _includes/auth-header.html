@@ -1,0 +1,226 @@
+<style>
+/* auth Header Component
+ * ---------------------
+ * This component provides a user authentication interface using Supabase and Discord OAuth.
+ * It displays a login button when the user is not authenticated and shows the user's profile
+ * information along with a logout button when authenticated.
+ *
+ * Usage:
+ * - Include this file in your HTML where you want the auth header to appear.
+ * - Ensure that the `authManager` script is loaded on the page to handle authentication logic.
+ *
+ * Documentation: https://github.com/hawthorneguild/HawthorneTeams/issues/17
+ */
+</style>
+
+<div id="auth-component" class="auth-wrapper">
+
+    <span id="auth-loading" class="auth-loading-text" role="status">Loading...</span>
+
+    <button id="login-btn" class="auth-btn auth-btn-discord" style="display:none;">
+        <svg class="discord-logo" width="20" height="20" viewBox="0 0 127.14 96.36" aria-hidden="true">
+            <path fill="currentColor" d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0A105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.11,77.11,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.89,105.89,0,0,0,126.6,80.22c2.36-24.44-2.54-47.89-18.9-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5.18-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z"/>
+        </svg>
+        Login with Discord
+    </button>
+
+    <div id="user-profile" class="auth-profile" style="display:none;">
+        <img id="user-avatar" src="" alt="User Avatar" class="auth-avatar" 
+             onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNTgxODBEIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTTIwIDIxdi0yYTQgNCAwIDAgMC00LTRINGE0IDQgMCAwIDAtNCA0djIiPjwvcGF0aD48Y2lyY2xlIGN4PSIxMiIgY3k9IjciIHI9IjQiPjwvY2lyY2xlPjwvc3ZnPg==';">
+        
+        <div class="auth-user-info">
+            <span id="user-name" class="auth-name">Adventurer</span>
+        </div>
+        
+        <button id="logout-btn" class="auth-btn auth-btn-logout" title="Sign Out" aria-label="Sign Out">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<style>
+/* THEMING:
+   This component inherits variables from the global scope.
+   Expected variables:
+   --font-header: Main font family
+   --color-text-secondary: Muted text color
+   --color-bg-light: Light background for profile pill
+   --color-border: Border color for profile pill
+   --color-primary: Primary accent color (used for borders/text)
+*/
+
+.auth-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-family: var(--font-header, sans-serif);
+    font-size: 0.9em;
+}
+
+.auth-loading-text {
+    color: var(--color-text-secondary, #888);
+    font-style: italic;
+}
+
+.auth-btn {
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    text-transform: uppercase;
+    font-weight: 600;
+    border-radius: 4px;
+    padding: 0.6em 1.2em;
+    text-decoration: none;
+    box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.1)); /* Added fallback */
+}
+
+.auth-btn-discord {
+    background-color: #5865F2;
+    color: white;
+}
+
+.auth-btn-discord:hover {
+    background-color: #4752C4;
+    transform: translateY(-2px);
+}
+
+.discord-logo {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+    flex-shrink: 0;
+}
+
+.auth-btn-logout {
+    background: transparent;
+    color: var(--color-text-secondary, #5a5a5a);
+    padding: 4px;
+    margin-left: 8px;
+    box-shadow: none;
+}
+
+.auth-btn-logout:hover {
+    color: var(--palette-alert-danger-action, #c00);
+    background-color: rgba(0,0,0,0.05);
+}
+
+.auth-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background-color: var(--color-bg-light, #FDF1DC);
+    border: 2px solid var(--color-border, #D4C4B0);
+    color: var(--color-text, #2c2c2c);
+    padding: 6px 12px;
+    border-radius: 4px;
+    box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.1));
+}
+
+.auth-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--color-primary, #58180D);
+    background-color: white; /* Ensures transparent SVGs look okay */
+}
+
+.auth-user-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.auth-name {
+    font-weight: 700;
+    font-size: 0.9em;
+    color: var(--color-primary, #58180D);
+}
+</style>
+
+<script>
+(function () {
+    const getEl = (id) => document.getElementById(id);
+
+    const ui = {
+        loading: getEl('auth-loading'),
+        loginBtn: getEl('login-btn'),
+        profile: getEl('user-profile'),
+        avatar: getEl('user-avatar'),
+        name: getEl('user-name'),
+        logoutBtn: getEl('logout-btn')
+    };
+
+    /**
+     * Updates the DOM based on the user state.
+     * @param {Object|null} user - The Supabase user object or null.
+     */
+    const updateAuthUI = (user) => {
+        if(!ui.loading) return; // Safety check if DOM is missing
+        
+        ui.loading.style.display = 'none';
+
+        if (!user) {
+            // Logged out state
+            ui.loginBtn.style.display = 'inline-flex';
+            ui.profile.style.display = 'none';
+        } else {
+            // Logged in state
+            ui.loginBtn.style.display = 'none';
+            ui.profile.style.display = 'flex';
+
+            // Use Supabase/Discord metadata
+            ui.name.textContent = user.user_metadata?.full_name || 'Adventurer';
+
+            if (user.user_metadata?.avatar_url) {
+                ui.avatar.src = user.user_metadata.avatar_url;
+                ui.avatar.style.display = 'block';
+            }
+        }
+
+        // Hook for page-specific logic (e.g. AuthGuard)
+        if (typeof window.handlePageAuth === 'function') {
+            window.handlePageAuth(user);
+        }
+    };
+
+    // Polling configuration
+    let pollCount = 0;
+    const MAX_POLLS = 50; // 50 * 100ms = 5 seconds max wait time
+
+    const initAuth = () => {
+        // Wait for authManager to load from the other script
+        if (!window.authManager) {
+            pollCount++;
+            if (pollCount > MAX_POLLS) {
+                console.warn("Auth: Failed to load authManager within 5 seconds.");
+                if(ui.loading) ui.loading.textContent = "Auth Error";
+                return;
+            }
+            setTimeout(initAuth, 100);
+            return;
+        }
+
+        ui.loginBtn.onclick = () => window.authManager.login();
+        ui.logoutBtn.onclick = () => window.authManager.logout();
+        
+        // Initialize the manager, passing our UI updater callback
+        window.authManager.init(updateAuthUI);
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAuth);
+    } else {
+        initAuth();
+    }
+})();
+</script>

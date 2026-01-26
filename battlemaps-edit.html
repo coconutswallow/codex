@@ -1,0 +1,148 @@
+---
+layout: default
+title: Submit / Edit Battle Map
+---
+
+{% include auth-header.html %}
+
+<section class="hero-block">
+  <h1 id="page-title">Submit Battle Map</h1>
+  <p>Upload a new battle map or update an existing one.</p>
+</section>
+
+<div class="form-wrapper">
+  <div class="image-upload">
+    <label>Map Image</label>
+    <input type="file" id="ik-file" accept="image/*" />
+    <input type="url" id="ik-url" placeholder="…or paste image URL" />
+    <img id="preview" style="display:none; max-width:100%; margin-top:10px;" />
+  </div>
+
+  <form id="map-form">
+    <input id="name" placeholder="Map name" required />
+
+    <div class="row">
+      <input id="gridW" type="number" placeholder="Grid width" required />
+      <input id="gridH" type="number" placeholder="Grid height" required />
+      <input id="cell" type="number" placeholder="Cell size (px)" />
+    </div>
+
+    <input id="creator" placeholder="Creator name" required />
+    <input id="source" placeholder="Source URL" />
+    <input id="keywords" placeholder="Keywords (comma separated)" />
+
+    <label class="checkbox">
+      <input type="checkbox" id="freeUse" />
+      Creator allows free use
+    </label>
+
+    <button type="submit" class="tool-btn">Save Map</button>
+  </form>
+</div>
+
+<script type="module">
+  import { supabase } from "/assets/js/supabaseClient.js";
+  import { uploadImage } from "/assets/js/imagekit-upload.js";
+
+  const params = new URLSearchParams(window.location.search);
+  const mapId = params.get("id");
+
+  let currentUser = null;
+  let existingImageUrl = null;
+
+  /* -------------------------
+     AUTH CHECK
+  ------------------------- */
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    alert("You must be logged in to submit or edit maps.");
+    window.location.href = "/battlemaps-view.html";
+  }
+  currentUser = user;
+
+  /* -------------------------
+     LOAD EXISTING MAP (EDIT)
+  ------------------------- */
+  if (mapId) {
+    document.getElementById("page-title").innerText = "Edit Battle Map";
+
+    const { data, error } = await supabase
+      .from("battlemaps")
+      .select("*")
+      .eq("id", mapId)
+      .single();
+
+    if (error || !data) {
+      alert("Failed to load map.");
+      location.href = "/battlemaps-view.html";
+    }
+
+    // Populate form
+    name.value = data.name;
+    gridW.value = data.grid_width;
+    gridH.value = data.grid_height;
+    cell.value = data.cell_size_px || "";
+    creator.value = data.creator;
+    source.value = data.source_url || "";
+    keywords.value = data.keywords || "";
+    freeUse.checked = data.is_free_use;
+
+    existingImageUrl = data.image_url;
+
+    const preview = document.getElementById("preview");
+    preview.src = `${existingImageUrl}?tr=w-600`;
+    preview.style.display = "block";
+  }
+
+  /* -------------------------
+     SUBMIT HANDLER
+  ------------------------- */
+  document.getElementById("map-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    let imageUrl = existingImageUrl;
+
+    // Upload new image if provided
+    if (
+      document.getElementById("ik-file").files.length ||
+      document.getElementById("ik-url").value
+    ) {
+      const upload = await uploadImage();
+      if (!upload) return;
+      imageUrl = upload.url;
+    }
+
+    const payload = {
+      name: name.value,
+      grid_width: +gridW.value,
+      grid_height: +gridH.value,
+      cell_size_px: cell.value ? +cell.value : null,
+      creator: creator.value,
+      source_url: source.value,
+      keywords: keywords.value,
+      is_free_use: freeUse.checked,
+      image_url: imageUrl,
+      submitted_by: user.id
+    };
+
+    let result;
+    if (mapId) {
+      result = await supabase
+        .from("battlemaps")
+        .update(payload)
+        .eq("id", mapId);
+    } else {
+      result = await supabase
+        .from("battlemaps")
+        .insert(payload);
+    }
+
+    if (result.error) {
+      console.error(result.error);
+      alert("Failed to save map.");
+      return;
+    }
+
+    window.location.href = "/battlemaps-view.html";
+  });
+</script>

@@ -1,0 +1,53 @@
+<div class="output-component-wrapper">
+    <textarea 
+        id="{{ include.id }}" 
+        class="output-area" 
+        spellcheck="false"
+        placeholder="Output will appear here..."
+        style="height: {{ include.height | default: '500px' }};"
+    ></textarea>
+
+    <div class="output-actions" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+        <button 
+            type="button" 
+            class="button action-btn btn-save" 
+            style="width: 30%; justify-content: center;"
+            onclick="window.copyToClipboard('{{ include.id }}')">
+            Copy to Clipboard
+        </button>
+
+        {% if include.channel_url %}
+        <p style="text-align: center; font-size: 0.9em; color: var(--text-muted, #888); margin: 0;">
+            Please copy this statblock to 
+            <a href="{{ include.channel_url }}" target="_blank" style="color: var(--color-primary, #d35400); font-weight: bold; text-decoration: underline;">
+                {{ include.channel_name }}
+            </a>
+        </p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Self-contained copy function for this component
+    // We check if it exists first so we don't define it twice if you use the include multiple times on one page
+    if (!window.copyToClipboard) {
+        window.copyToClipboard = function(elementId) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+
+            // Select the text
+            el.select();
+            el.setSelectionRange(0, 99999); // For mobile devices
+
+            try {
+                navigator.clipboard.writeText(el.value).then(() => {
+                    alert("Copied to Clipboard!");
+                });
+            } catch (err) {
+                // Fallback for older browsers
+                document.execCommand('copy');
+                alert("Copied to Clipboard!");
+            }
+        };
+    }
+</script>
