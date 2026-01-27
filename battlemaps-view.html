@@ -146,6 +146,14 @@ title: Battle Maps
   Load More
 </button>
 
+It looks like the mistake happened when merging the new URL parameter logic into your battlemaps-view.html file. You have a "double" DOMContentLoaded listener and a stray await getCurrentUser() call that broke the script's structure.
+
+Here is the corrected code for both the HTML/JavaScript and the Discord Bot.
+
+1. Fixed Website Code (battlemaps-view.html)
+The main issue was that you had two document.addEventListener("DOMContentLoaded"...) blocks and some redundant code at the top of your script. This version cleans that up and correctly handles the ?search= parameter.
+
+JavaScript
 <script type="module">
   import { supabase } from "../assets/js/supabaseClient.js";
 
@@ -170,41 +178,28 @@ title: Battle Maps
   }
 
   /* -----------------------------
-   INITIAL LOAD
------------------------------ */
-document.addEventListener("DOMContentLoaded", async () => {
-  await getCurrentUser();
+     INITIAL LOAD
+  ----------------------------- */
+  document.addEventListener("DOMContentLoaded", async () => {
+    // 1. Authenticate user
+    await getCurrentUser();
 
-  const searchInput = document.getElementById("mapSearchInput");
-  
-  const urlParams = new URLSearchParams(window.location.search);
-  const searchParam = urlParams.get('search');
-  
-  if (searchParam) {
-    currentSearch = searchParam.trim();
-    searchInput.value = currentSearch; // Populates the search bar UI
-  }
-  // ----------------------------------------
+    // 2. Setup Search Input and check URL parameters
+    const searchInput = document.getElementById("mapSearchInput");
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchParam = urlParams.get('search');
+    
+    if (searchParam) {
+      currentSearch = searchParam.trim();
+      searchInput.value = currentSearch; 
+    }
 
-  resetGallery();
-
-  let timeout = null;
-  searchInput.addEventListener("input", e => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      currentSearch = e.target.value.trim();
-      resetGallery();
-    }, 400);
-  });
-
-  loadMoreBtn.onclick = fetchMaps;
-});  await getCurrentUser();
+    // 3. Initial gallery load
     resetGallery();
 
-    const search = document.getElementById("mapSearchInput");
+    // 4. Setup search input listener
     let timeout = null;
-
-    search.addEventListener("input", e => {
+    searchInput.addEventListener("input", e => {
       clearTimeout(timeout);
       timeout = setTimeout(() => {
         currentSearch = e.target.value.trim();
