@@ -1,0 +1,584 @@
+---
+layout: default
+title: Bulk Submit Battle Maps
+---
+
+{% include auth-header.html %}
+
+<section class="hero-block">
+  <h1>Bulk Submit Battle Maps</h1>
+  <p>Upload multiple maps at once with shared creator information.</p>
+</section>
+
+<script src="/codex/assets/js/upload-bulk.js"></script>
+
+<style>
+  .bulk-container {
+    max-width: 1200px;
+    width: 100%;
+    padding: 40px;
+    margin: 0 auto;
+  }
+  
+  .shared-section {
+    background: var(--palette-bg-page-light);
+    padding: 30px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+  }
+  
+  .shared-section h2 {
+    margin-top: 0;
+    font-size: 1.3em;
+    margin-bottom: 20px;
+  }
+  
+  .drop-zone {
+    border: 3px dashed var(--color-border);
+    border-radius: 8px;
+    padding: 60px 40px;
+    text-align: center;
+    background: var(--palette-bg-page);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 30px;
+  }
+  
+  .drop-zone.dragover {
+    border-color: var(--palette-brand-accent);
+    background: var(--palette-bg-page-light);
+  }
+  
+  .drop-zone h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.2em;
+  }
+  
+  .drop-zone p {
+    margin: 5px 0;
+    color: var(--color-text-muted);
+  }
+  
+  .upload-progress {
+    display: none;
+    background: var(--palette-bg-page-light);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+  
+  .progress-bar {
+    width: 100%;
+    height: 30px;
+    background: var(--palette-bg-page);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+  
+  .progress-fill {
+    height: 100%;
+    background: var(--palette-brand-accent);
+    width: 0%;
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 0.9em;
+  }
+  
+  .images-grid {
+    display: none;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+  }
+  
+  .image-card {
+    background: var(--palette-bg-page-light);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+  }
+  
+  .image-card.error {
+    border-color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
+  }
+  
+  .image-preview {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    border: 1px solid var(--color-border);
+  }
+  
+  .image-card label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    font-size: 0.9em;
+  }
+  
+  .image-card input[type="text"] {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--palette-bg-page);
+    color: var(--color-text);
+  }
+  
+  .image-card .dimensions {
+    font-size: 0.85em;
+    color: var(--color-text-muted);
+    margin-bottom: 10px;
+  }
+  
+  .image-card .status {
+    font-size: 0.85em;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  
+  .image-card .status.success {
+    color: var(--palette-success);
+  }
+  
+  .image-card .status.error {
+    color: #ff6b6b;
+  }
+  
+  .remove-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(255, 107, 107, 0.9);
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2em;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .remove-btn:hover {
+    background: #ff5252;
+  }
+  
+  .bulk-actions {
+    display: none;
+    position: sticky;
+    bottom: 20px;
+    background: var(--palette-bg-page);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    border: 1px solid var(--color-border);
+    text-align: center;
+  }
+  
+  .bulk-actions .summary {
+    margin-bottom: 15px;
+    font-size: 1.1em;
+  }
+  
+  .bulk-actions button {
+    padding: 12px 40px;
+    font-size: 1.1em;
+  }
+  
+  @media (max-width: 768px) {
+    .images-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="bulk-container">
+  
+  <!-- Shared Information Section -->
+  <div class="shared-section">
+    <h2>Shared Information (applies to all maps)</h2>
+    
+    <div style="margin-bottom: 20px;">
+      <label for="creator">Creator Name</label>
+      <input id="creator" type="text" placeholder="Who made these maps?" required style="width: 100%; padding: 10px;" />
+    </div>
+
+    <div style="margin-bottom: 20px;">
+      <label for="source">Creator's URL</label>
+      <input id="source" type="url" placeholder="Link to Patreon, Ko-fi, or original post" style="width: 100%; padding: 10px;" />
+    </div>
+
+    <label class="checkbox" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; text-transform: none; color: var(--color-text);">
+      <input type="checkbox" id="freeUse" style="width: 20px; height: 20px; margin-top: 2px;" required />
+      <span><strong>Required:</strong> I confirm that these maps were made available for free to the public by the creator.</span>
+    </label>
+  </div>
+
+  <!-- Drop Zone -->
+  <div class="drop-zone" id="drop-zone">
+    <h3>📁 Drop Images Here</h3>
+    <p>or click to browse</p>
+    <p style="font-size: 0.85em; margin-top: 10px;">Accepts: JPG, PNG, WebP</p>
+    <input type="file" id="file-input" accept="image/*" multiple style="display: none;" />
+  </div>
+
+  <!-- Upload Progress -->
+  <div class="upload-progress" id="upload-progress">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+      <strong>Uploading images...</strong>
+      <span id="progress-text">0 / 0</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill">0%</div>
+    </div>
+  </div>
+
+  <!-- Images Grid -->
+  <div class="images-grid" id="images-grid">
+    <!-- Image cards will be inserted here -->
+  </div>
+
+  <!-- Bulk Actions -->
+  <div class="bulk-actions" id="bulk-actions">
+    <div class="summary">
+      Ready to save <strong id="map-count">0</strong> maps
+    </div>
+    <button id="save-all-btn" class="button primary">Save All Maps</button>
+  </div>
+
+</div>
+
+<script type="module">
+  import { supabase } from "../assets/js/supabaseClient.js";
+
+  // Elements
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  const uploadProgress = document.getElementById('upload-progress');
+  const progressFill = document.getElementById('progress-fill');
+  const progressText = document.getElementById('progress-text');
+  const imagesGrid = document.getElementById('images-grid');
+  const bulkActions = document.getElementById('bulk-actions');
+  const mapCount = document.getElementById('map-count');
+  const saveAllBtn = document.getElementById('save-all-btn');
+  const creatorInput = document.getElementById('creator');
+  const sourceInput = document.getElementById('source');
+  const freeUseCheckbox = document.getElementById('freeUse');
+
+  let currentUser = null;
+  let isApprovedSubmitter = false;
+  let uploadedImages = [];
+
+  /* -------------------------
+     AUTH CHECK
+  ------------------------- */
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    alert("You must be logged in to submit maps.");
+    window.location.href = "/codex/battlemaps-view";
+  }
+  currentUser = user;
+
+  // Fetch approval status
+  const { data: profile } = await supabase
+    .from("discord_users")
+    .select("approved_map_submitter")
+    .eq("user_id", currentUser.id)
+    .single();
+
+  if (profile && profile.approved_map_submitter === true) {
+    isApprovedSubmitter = true;
+  }
+
+  /* -------------------------
+     DROP ZONE HANDLERS
+  ------------------------- */
+  dropZone.addEventListener('click', () => fileInput.click());
+  
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+  
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragover');
+  });
+  
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    handleFiles(e.dataTransfer.files);
+  });
+  
+  fileInput.addEventListener('change', (e) => {
+    handleFiles(e.target.files);
+  });
+
+  /* -------------------------
+     FILE HANDLING
+  ------------------------- */
+  async function handleFiles(files) {
+    if (files.length === 0) return;
+
+    // Validate shared fields
+    if (!creatorInput.value.trim()) {
+      alert("Please enter the creator name first.");
+      return;
+    }
+    if (!freeUseCheckbox.checked) {
+      alert("Please confirm that these maps are free to use.");
+      return;
+    }
+
+    // Show progress
+    uploadProgress.style.display = 'block';
+    imagesGrid.style.display = 'grid';
+    bulkActions.style.display = 'block';
+
+    const filesArray = Array.from(files);
+    let completed = 0;
+
+    for (const file of filesArray) {
+      // Create card immediately with loading state
+      const cardId = `card-${Date.now()}-${Math.random()}`;
+      const card = createImageCard(file, cardId);
+      imagesGrid.appendChild(card);
+
+      // Upload the file
+      try {
+        const result = await uploadFile(file);
+        completed++;
+        updateProgress(completed, filesArray.length);
+
+        if (result.success) {
+          // Get image dimensions
+          const dimensions = await getImageDimensions(result.url);
+          
+          // Store the uploaded image data
+          const imageData = {
+            id: cardId,
+            dbId: result.id,
+            thumbUrl: result.thumb,
+            fullUrl: result.url,
+            filename: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
+            width: dimensions.width,
+            height: dimensions.height
+          };
+          uploadedImages.push(imageData);
+
+          // Update the card
+          updateImageCard(cardId, imageData, null);
+        } else {
+          updateImageCard(cardId, null, result.error || "Upload failed");
+        }
+      } catch (error) {
+        completed++;
+        updateProgress(completed, filesArray.length);
+        updateImageCard(cardId, null, error.message);
+      }
+    }
+
+    // Hide progress when done
+    setTimeout(() => {
+      uploadProgress.style.display = 'none';
+    }, 1000);
+
+    updateMapCount();
+  }
+
+  function createImageCard(file, cardId) {
+    const card = document.createElement('div');
+    card.className = 'image-card';
+    card.id = cardId;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const preview = card.querySelector('.image-preview');
+      if (preview) preview.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+
+    card.innerHTML = `
+      <button class="remove-btn" onclick="removeCard('${cardId}')">×</button>
+      <img class="image-preview" src="" alt="Preview" />
+      <div class="status">Uploading...</div>
+      <label>Map Name</label>
+      <input type="text" class="map-name" placeholder="Loading..." disabled />
+      <label>Keywords</label>
+      <input type="text" class="map-keywords" placeholder="forest, cave, snow..." disabled />
+      <div class="dimensions"></div>
+    `;
+    
+    return card;
+  }
+
+  function updateImageCard(cardId, data, error) {
+    const card = document.getElementById(cardId);
+    if (!card) return;
+
+    if (error) {
+      card.classList.add('error');
+      card.querySelector('.status').textContent = `Error: ${error}`;
+      card.querySelector('.status').className = 'status error';
+      return;
+    }
+
+    // Success - update card
+    const preview = card.querySelector('.image-preview');
+    preview.src = data.thumbUrl;
+
+    const nameInput = card.querySelector('.map-name');
+    nameInput.value = data.filename;
+    nameInput.disabled = false;
+
+    const keywordsInput = card.querySelector('.map-keywords');
+    keywordsInput.disabled = false;
+
+    const dimensions = card.querySelector('.dimensions');
+    dimensions.textContent = `${data.width} × ${data.height} px`;
+
+    const status = card.querySelector('.status');
+    status.textContent = '✓ Ready';
+    status.className = 'status success';
+  }
+
+  function updateProgress(current, total) {
+    const percent = Math.round((current / total) * 100);
+    progressFill.style.width = `${percent}%`;
+    progressFill.textContent = `${percent}%`;
+    progressText.textContent = `${current} / ${total}`;
+  }
+
+  function updateMapCount() {
+    const validMaps = uploadedImages.filter(img => {
+      const card = document.getElementById(img.id);
+      return card && !card.classList.contains('error');
+    });
+    mapCount.textContent = validMaps.length;
+  }
+
+  window.removeCard = function(cardId) {
+    const card = document.getElementById(cardId);
+    if (card) {
+      card.remove();
+      uploadedImages = uploadedImages.filter(img => img.id !== cardId);
+      updateMapCount();
+      
+      if (uploadedImages.length === 0) {
+        imagesGrid.style.display = 'none';
+        bulkActions.style.display = 'none';
+      }
+    }
+  };
+
+  /* -------------------------
+     UPLOAD FUNCTION
+  ------------------------- */
+  async function uploadFile(file) {
+    const FUNCTION_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co/functions/v1/upload-proxy';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M';
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+      body: formData
+    });
+
+    return await response.json();
+  }
+
+  function getImageDimensions(url) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+      img.onload = () => {
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.onerror = () => {
+        resolve({ width: null, height: null });
+      };
+      img.src = url;
+    });
+  }
+
+  /* -------------------------
+     SAVE ALL MAPS
+  ------------------------- */
+  saveAllBtn.addEventListener('click', async () => {
+    saveAllBtn.textContent = 'Saving...';
+    saveAllBtn.disabled = true;
+
+    const creator = creatorInput.value.trim();
+    const sourceUrl = sourceInput.value.trim();
+    const isFreeUse = freeUseCheckbox.checked;
+
+    const mapsToInsert = [];
+
+    for (const img of uploadedImages) {
+      const card = document.getElementById(img.id);
+      if (!card || card.classList.contains('error')) continue;
+
+      const name = card.querySelector('.map-name').value.trim();
+      const keywords = card.querySelector('.map-keywords').value.trim();
+
+      if (!name) {
+        alert(`Please provide a name for all maps.`);
+        saveAllBtn.textContent = 'Save All Maps';
+        saveAllBtn.disabled = false;
+        return;
+      }
+
+      mapsToInsert.push({
+        name,
+        creator,
+        source_url: sourceUrl || null,
+        keywords: keywords || null,
+        is_free_use: isFreeUse,
+        image_url: img.fullUrl,
+        thumbnail_url: img.thumbUrl,
+        grid_width: img.width,
+        grid_height: img.height,
+        submitted_by: currentUser.id,
+        is_approved: isApprovedSubmitter
+      });
+    }
+
+    if (mapsToInsert.length === 0) {
+      alert('No valid maps to save.');
+      saveAllBtn.textContent = 'Save All Maps';
+      saveAllBtn.disabled = false;
+      return;
+    }
+
+    const { error } = await supabase
+      .from('battlemaps')
+      .insert(mapsToInsert);
+
+    if (error) {
+      console.error('Supabase Error:', error);
+      alert('Error saving maps: ' + error.message);
+      saveAllBtn.textContent = 'Save All Maps';
+      saveAllBtn.disabled = false;
+    } else {
+      alert(`Successfully saved ${mapsToInsert.length} maps!`);
+      window.location.href = '/codex/battlemaps-view';
+    }
+  });
+</script>
