@@ -283,6 +283,16 @@ title: Submit / Edit Battle Map
   document.getElementById("map-form").addEventListener("submit", async (e) => {
     e.preventDefault(); 
     
+    console.log("Current mapId is:", mapId); 
+    
+    if (mapId) {
+      console.log("Attempting UPDATE for ID:", mapId);
+      result = await supabase.from("battlemaps").update(payload).eq("id", mapId);
+    } else {
+      console.log("Attempting INSERT (New Row)");
+      result = await supabase.from("battlemaps").insert(payload);
+    }
+    
     // Check if free use is confirmed
     if (!document.getElementById("freeUse").checked) {
       alert("Please confirm that this map was made available for free to the public.");
