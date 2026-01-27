@@ -136,7 +136,7 @@ title: Submit / Edit Battle Map
   const genAI = new GoogleGenerativeAI("AIzaSyDthqoHCBkJs2oIQi2bgCrhfLo2WizSomo");
   
   // FIX 1: Use specific model version 'gemini-1.5-flash-001' to avoid 404 errors
-  const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
+  const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   // --- 2. HELPER FUNCTION: Blob to Base64 ---
   async function blobToBase64(blob) {
