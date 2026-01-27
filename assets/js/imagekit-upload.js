@@ -44,26 +44,7 @@ export async function uploadImage() {
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
-
-    // Upload with transformation parameters and auth
-    const result = await imagekit.upload({
-      file: fileData,
-      fileName: file.name,
-      folder: "/battlemaps",
-      transformation: {
-        // Simplified transformations - just resize to max dimensions
-        pre: 'w-4096,h-4096,c-at_max'
-        // w-4096: Max width 4096px
-        // h-4096: Max height 4096px  
-        // c-at_max: Fit within dimensions, maintain aspect ratio
-      },
-      useUniqueFileName: true,
-      // Pass auth parameters from Supabase function
-      signature: authData.signature,
-      expire: authData.expire,
-      token: authData.token
-    });
-
+ 
     console.log("Upload successful:", result);
     return result; // Returns { url, fileId, name, etc. }
 
