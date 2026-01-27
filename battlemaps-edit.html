@@ -126,6 +126,8 @@ title: Submit / Edit Battle Map
     const dbId = event.detail.id;  // This is the freehost_images table ID
     const thumbUrl = event.detail.thumb;  // This is already the full thumbnail URL
     
+    console.log("Querying freehost_images with ID:", dbId);
+    
     // Query the freehost_images table to get the full image URL
     const { data, error } = await supabase
       .from('freehost_images')
@@ -133,10 +135,17 @@ title: Submit / Edit Battle Map
       .eq('id', dbId)
       .single();
     
+    console.log("Query result - Data:", data, "Error:", error);
+    
     if (error || !data) {
       console.error("Error fetching image URL:", error);
       uploadStatus.style.color = "var(--color-error)";
-      uploadStatus.textContent = "⚠ Upload succeeded but couldn't retrieve full URL";
+      uploadStatus.textContent = "⚠ Error: " + (error?.message || "No data returned");
+      
+      // Still try to continue with just the thumb URL
+      document.getElementById('thumb-url').value = thumbUrl;
+      document.getElementById('image-url').value = thumbUrl; // Fallback to thumb
+      showPreview(thumbUrl, thumbUrl);
       return;
     }
     
