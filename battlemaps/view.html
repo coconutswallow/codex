@@ -21,7 +21,7 @@ title: Battle Maps
     placeholder="Search by name, creator, or keyword…"
   />
 
-  <a href="edit" class="tool-btn">
+  <a href="../edit" class="tool-btn">
     + Submit Map
   </a>
 </div>
@@ -307,7 +307,7 @@ title: Battle Maps
 
           <div class="map-actions">
             ${isOwner 
-              ? `<a href="edit?id=${map.id}" class="tool-btn" style="background: var(--palette-accent);">
+              ? `<a href="../edit?id=${map.id}" class="tool-btn" style="background: var(--palette-accent);">
                   ✏️ Edit
                 </a>`
               : ''
