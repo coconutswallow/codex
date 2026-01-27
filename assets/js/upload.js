@@ -143,7 +143,11 @@
         statusDiv.innerText = "Success!";
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent('image-upload-complete', { 
-            detail: { id: result.id, thumb: result.thumb } 
+            detail: { 
+              id: result.id, 
+              thumb: result.thumb,
+              url: result.url  // ADDED: Pass through the full URL
+            } 
           }));
           closeAndReset(); 
         }, 1000);
