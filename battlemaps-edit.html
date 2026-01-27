@@ -129,51 +129,59 @@ title: Submit / Edit Battle Map
 
 <script type="module">
   import { supabase } from "../assets/js/supabaseClient.js";
-
-  // AI Tagging
   import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+
+  // --- 1. AI CONFIGURATION ---
   const genAI = new GoogleGenerativeAI("AIzaSyDthqoHCBkJs2oIQi2bgCrhfLo2WizSomo");
   const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-  try {
-    // 1. Act as a TTRPG expert prompt
-    const prompt = "Act as a TTRPG expert. Look at this battlemap and provide 8-10 descriptive search keywords (e.g., forest, dungeon, night, ruins, river). Return ONLY the keywords separated by commas.";
-    
-    // 2. Fetch image 
-    const resp = await fetch(imageUrl, { mode: 'cors' }); // Added cors mode
-    if (!resp.ok) throw new Error("Could not fetch image for AI");
-    
-    const blob = await resp.blob();
-    const base64Data = await new Promise((resolve) => {
+  // --- 2. HELPER FUNCTION: Blob to Base64 (Required) ---
+  async function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
-
-    const result = await aiModel.generateContent([
-      prompt,
-      { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
-    ]);
-
-    const keywords = result.response.text();
-    
-    // 3. Update the UI explicitly
-    const keywordsInput = document.getElementById("keywords");
-    keywordsInput.value = keywords.toLowerCase().trim().replace(/\*/g, ""); // Remove AI formatting
-    
-    uploadStatus.textContent = "✓ Image uploaded + AI Keywords Generated";
-    uploadStatus.style.color = "var(--palette-success)";
-    
-  } catch (err) {
-    console.error("AI Tagging failed:", err);
-    uploadStatus.textContent = "✓ Image uploaded (AI Tagging failed)";
   }
-}
 
+  // --- 3. MAIN AI TAGGING FUNCTION ---
+  async function autoTagMap(imageUrl) {
+    try {
+      const prompt = "Act as a TTRPG expert. Look at this battlemap and provide 8-10 descriptive search keywords (e.g., forest, dungeon, night, ruins, river). Return ONLY the keywords separated by commas.";
+      
+      const resp = await fetch(imageUrl, { mode: 'cors' });
+      if (!resp.ok) throw new Error("Could not fetch image for AI");
+      
+      const blob = await resp.blob();
+      const base64Data = await blobToBase64(blob); // Uses helper above
+
+      const result = await aiModel.generateContent([
+        prompt,
+        { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
+      ]);
+
+      const keywords = result.response.text();
+      
+      // Update UI
+      const keywordsInput = document.getElementById("keywords");
+      keywordsInput.value = keywords.toLowerCase().trim().replace(/\*/g, ""); 
+      
+      const statusEl = document.getElementById("upload-status");
+      statusEl.textContent = "✓ Image uploaded + AI Keywords Generated";
+      statusEl.style.color = "var(--palette-success)";
+      
+    } catch (err) {
+      console.error("AI Tagging failed:", err);
+      const statusEl = document.getElementById("upload-status");
+      statusEl.textContent = "✓ Image uploaded (AI Tagging failed)";
+    }
+  }
+
+  // --- 4. PAGE VARIABLES & LOGIC ---
   const params = new URLSearchParams(window.location.search);
   const mapId = params.get("id");
 
-  // Elements
   const gridW = document.getElementById("gridW");
   const gridH = document.getElementById("gridH");
   const previewContainer = document.getElementById("preview-container");
@@ -188,9 +196,7 @@ title: Submit / Edit Battle Map
   let existingImageUrl = null;
   let existingThumbUrl = null;
 
- /* -------------------------
-   1. AUTH CHECK & PERMISSIONS
-------------------------- */
+  // --- AUTH CHECK ---
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     alert("You must be logged in to submit maps.");
@@ -198,7 +204,6 @@ title: Submit / Edit Battle Map
   }
   currentUser = user;
 
-  // NEW: Fetch approval status from discord_users
   let isApprovedSubmitter = false;
   const { data: profile } = await supabase
     .from("discord_users")
@@ -210,13 +215,11 @@ title: Submit / Edit Battle Map
     isApprovedSubmitter = true;
   }
 
-  /* -------------------------
-     2. LISTEN FOR UPLOAD COMPLETE
-  ------------------------- */
+  // --- EVENT: UPLOAD COMPLETE ---
   window.addEventListener('image-upload-complete', async (event) => {
     console.log("Upload complete event:", event.detail);
     
-    const dbId = event.detail.id;  // Database ID from freehost_images
+    const dbId = event.detail.id;
     const thumbUrl = event.detail.thumb;
     const fullUrl = event.detail.url;
 
@@ -225,18 +228,16 @@ title: Submit / Edit Battle Map
       await autoTagMap(fullUrl);
     }
     
-    // AUTO-FILL NAME LOGIC
-    // If the name input is blank, try to fetch the original filename
+    // Auto-fill name if blank
     if (!nameInput.value.trim() && dbId) {
       try {
-        const { data: imgData, error: imgError } = await supabase
+        const { data: imgData } = await supabase
           .from('freehost_images')
           .select('original_filename')
           .eq('id', dbId)
           .single();
 
         if (imgData && imgData.original_filename) {
-          // Remove extension (e.g., "Battlemap01.png" -> "Battlemap01")
           const cleanName = imgData.original_filename.replace(/\.[^/.]+$/, "");
           nameInput.value = cleanName;
         }
@@ -250,45 +251,33 @@ title: Submit / Edit Battle Map
       document.getElementById('image-id').value = dbId;
       document.getElementById('thumb-url').value = thumbUrl;
       document.getElementById('image-url').value = thumbUrl;
-      
       showPreview(thumbUrl, thumbUrl);
       analyzeImageFromUrl(thumbUrl);
-      
       uploadStatus.style.color = "orange";
       uploadStatus.textContent = "✓ Uploaded (using thumbnail as image)";
       return;
     }
     
-    // Store in hidden fields
     document.getElementById('image-id').value = dbId;
     document.getElementById('thumb-url').value = thumbUrl;
     document.getElementById('image-url').value = fullUrl;
     
-    // Show preview
     showPreview(thumbUrl, fullUrl);
-    
-    // Analyze image dimensions
     analyzeImageFromUrl(fullUrl);
     
     uploadStatus.style.color = "var(--palette-success)";
     uploadStatus.textContent = "✓ Image uploaded successfully";
   });
 
-  /* -------------------------
-     3. AUTO-DETECT LOGIC
-  ------------------------- */
+  // --- HELPER: ANALYZE DIMENSIONS ---
   async function analyzeImageFromUrl(url) {
-    // Load the image to get dimensions
     const img = new Image();
     img.crossOrigin = "Anonymous";
     img.onload = () => {
       const pxW = img.naturalWidth;
       const pxH = img.naturalHeight;
-      
-      // Auto-fill the dimension fields
       gridW.value = pxW;
       gridH.value = pxH;
-      
       let msg = `Image Resolution: ${pxW} x ${pxH} px`;
       detectMsg.style.color = "var(--palette-success)";
       detectMsg.textContent = msg;
@@ -306,17 +295,10 @@ title: Submit / Edit Battle Map
     previewContainer.style.display = "block";
   }
 
-  /* -------------------------
-     4. LOAD EXISTING (EDIT MODE)
-  ------------------------- */
+  // --- EDIT MODE LOADING ---
   if (mapId) {
     document.getElementById("page-title").innerText = "Edit Battle Map";
-    
-    const { data, error } = await supabase
-      .from("battlemaps")
-      .select("*")
-      .eq("id", mapId)
-      .single();
+    const { data, error } = await supabase.from("battlemaps").select("*").eq("id", mapId).single();
 
     if (!error && data) {
       nameInput.value = data.name;
@@ -339,10 +321,8 @@ title: Submit / Edit Battle Map
     }
   }
 
-  /* -------------------------
-     5. SUBMIT HANDLER
-  ------------------------- */
-document.getElementById("map-form").addEventListener("submit", async (e) => {
+  // --- SUBMIT HANDLER ---
+  document.getElementById("map-form").addEventListener("submit", async (e) => {
     e.preventDefault(); 
     
     if (!document.getElementById("freeUse").checked) {
@@ -384,7 +364,7 @@ document.getElementById("map-form").addEventListener("submit", async (e) => {
     } else {
       window.location.href = "/codex/battlemaps-view";
     }
-});
+  });
 
   function resetButton() {
     btn.textContent = "Save Map";
