@@ -170,10 +170,35 @@ title: Battle Maps
   }
 
   /* -----------------------------
-     INITIAL LOAD
-  ----------------------------- */
-  document.addEventListener("DOMContentLoaded", async () => {
-    await getCurrentUser();
+   INITIAL LOAD
+----------------------------- */
+document.addEventListener("DOMContentLoaded", async () => {
+  await getCurrentUser();
+
+  const searchInput = document.getElementById("mapSearchInput");
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const searchParam = urlParams.get('search');
+  
+  if (searchParam) {
+    currentSearch = searchParam.trim();
+    searchInput.value = currentSearch; // Populates the search bar UI
+  }
+  // ----------------------------------------
+
+  resetGallery();
+
+  let timeout = null;
+  searchInput.addEventListener("input", e => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => {
+      currentSearch = e.target.value.trim();
+      resetGallery();
+    }, 400);
+  });
+
+  loadMoreBtn.onclick = fetchMaps;
+});  await getCurrentUser();
     resetGallery();
 
     const search = document.getElementById("mapSearchInput");
