@@ -265,6 +265,11 @@ title: Bulk Submit Battle Maps
 <script type="module">
   import { supabase } from "../assets/js/supabaseClient.js";
 
+   // AI Tagging
+  import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+  const genAI = new GoogleGenerativeAI("AIzaSyAnfiXcRrAUwX5_ogCYYygycRD0uZVKbw8");
+  const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
   // Elements
   const dropZone = document.getElementById('drop-zone');
   const fileInput = document.getElementById('file-input');
@@ -385,10 +390,23 @@ title: Bulk Submit Battle Maps
         } else {
           updateImageCard(cardId, null, result.error || "Upload failed");
         }
+        
       } catch (error) {
         completed++;
         updateProgress(completed, filesArray.length);
         updateImageCard(cardId, null, error.message);
+      }
+      try {
+        const aiPrompt = "Provide 8 RPG battlemap keywords for this image, comma-separated.";
+        const aiResult = await aiModel.generateContent([
+          aiPrompt,
+          { inlineData: { data: await blobToBase64(file), mimeType: file.type } }
+        ]);
+        
+        const keywordsInput = document.getElementById(cardId).querySelector('.map-keywords');
+        keywordsInput.value = aiResult.response.text().toLowerCase().trim();
+      } catch (aiErr) {
+        console.warn("AI tagging skipped for this map", aiErr);
       }
     }
 

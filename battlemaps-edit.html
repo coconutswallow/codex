@@ -130,6 +130,37 @@ title: Submit / Edit Battle Map
 <script type="module">
   import { supabase } from "../assets/js/supabaseClient.js";
 
+  // AI Tagging
+  import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
+  const genAI = new GoogleGenerativeAI("AIzaSyAnfiXcRrAUwX5_ogCYYygycRD0uZVKbw8");
+  const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+  async function autoTagMap(imageUrl) {
+    try {
+      const prompt = "Act as a TTRPG expert. Look at this battlemap and provide 8-10 descriptive search keywords (e.g., forest, dungeon, night, ruins, river). Return ONLY the keywords separated by commas.";
+      
+      // Fetch image as base64 for Gemini
+      const resp = await fetch(imageUrl);
+      const blob = await resp.blob();
+      const base64Data = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result.split(',')[1]);
+        reader.readAsDataURL(blob);
+      });
+
+      const result = await aiModel.generateContent([
+        prompt,
+        { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
+      ]);
+
+      const keywords = result.response.text();
+      document.getElementById("keywords").value = keywords.toLowerCase().trim();
+      uploadStatus.textContent += " + AI Keywords Generated";
+    } catch (err) {
+      console.error("AI Tagging failed:", err);
+    }
+  }
+
   const params = new URLSearchParams(window.location.search);
   const mapId = params.get("id");
 
@@ -179,6 +210,11 @@ title: Submit / Edit Battle Map
     const dbId = event.detail.id;  // Database ID from freehost_images
     const thumbUrl = event.detail.thumb;
     const fullUrl = event.detail.url;
+
+    if (fullUrl) {
+      uploadStatus.textContent = "✓ Image uploaded. AI is analyzing...";
+      await autoTagMap(fullUrl);
+    }
     
     // AUTO-FILL NAME LOGIC
     // If the name input is blank, try to fetch the original filename
