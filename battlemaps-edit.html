@@ -13,47 +13,48 @@ title: Submit / Edit Battle Map
 <!-- Load the freehost upload.js -->
 <script src="/codex/assets/js/upload.js"></script>
 
-<div class="submit-container" style="display: block; max-width: 800px; margin: 40px auto;">
+<style>
+  /* Full width layout */
+  .submit-container {
+    max-width: 100% !important;
+    width: 100%;
+    padding: 40px;
+    margin: 0 auto;
+  }
+  
+  /* Two column layout for upload section */
+  .upload-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    align-items: start;
+  }
+  
+  .upload-left {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .upload-right {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  @media (max-width: 768px) {
+    .upload-section {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="submit-container">
   
   <form id="map-form" class="controls">
     
     <div class="section">
       <label for="name">Map Name</label>
       <input id="name" type="text" placeholder="e.g. Forest Ambush" required />
-    </div>
-
-    <div class="section">
-      <label>Map File</label>
-      <p style="font-size: 0.85em; color: var(--color-text-muted); margin-top:0;">
-        Click to upload an image file.
-      </p>
-      
-      <button type="button" class="trigger-upload" style="padding: 10px 20px; cursor: pointer;">
-        📤 Upload Image
-      </button>
-      
-      <div id="upload-status" style="margin-top: 10px; font-size: 0.9em; color: var(--color-text-muted);"></div>
-      
-      <!-- Hidden fields to store the upload IDs -->
-      <input type="hidden" id="image-id" />
-      <input type="hidden" id="image-url" />
-      <input type="hidden" id="thumb-url" />
-    </div>
-
-    <div class="section">
-      <label>Grid Dimensions (Optional)</label>
-      <div style="display: flex; gap: 20px;">
-        <div style="flex: 1;">
-          <input id="gridW" type="number" placeholder="Width" />
-          <span style="font-size: 0.8em; color: var(--color-text-muted);">Squares Wide</span>
-        </div>
-        <div style="display: flex; align-items: center; padding-top: 5px; color: var(--color-text-muted);">X</div>
-        <div style="flex: 1;">
-          <input id="gridH" type="number" placeholder="Height" />
-          <span style="font-size: 0.8em; color: var(--color-text-muted);">Squares Tall</span>
-        </div>
-      </div>
-      <p id="detect-msg" style="font-size: 0.85em; color: var(--palette-brand-accent); font-weight: bold; margin-top: 5px; min-height: 1.2em;"></p>
     </div>
 
     <div class="section">
@@ -66,18 +67,59 @@ title: Submit / Edit Battle Map
 
     <div class="section" style="background: var(--palette-bg-page-light);">
       <label class="checkbox" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; text-transform: none; color: var(--color-text);">
-        <input type="checkbox" id="freeUse" style="width: 20px; height: 20px; margin-top: 2px;" />
-        <span>I confirm that this map was made available for free to the public by the creator.</span>
+        <input type="checkbox" id="freeUse" style="width: 20px; height: 20px; margin-top: 2px;" required />
+        <span><strong>Required:</strong> I confirm that this map was made available for free to the public by the creator.</span>
       </label>
     </div>
 
     <div class="section">
-      <div id="preview-container" style="display: none; margin-bottom: 20px; text-align: center;">
-        <label>Image Preview</label>
-        <img id="preview" style="max-width: 100%; max-height: 400px; border-radius: 8px; border: 1px solid var(--color-border); display: block; margin: 10px auto;" />
-        <a id="full-size-link" href="#" target="_blank" style="font-size: 0.9em;">View Full Size Image</a>
+      <label>Map File</label>
+      
+      <div class="upload-section">
+        <div class="upload-left">
+          <p style="font-size: 0.85em; color: var(--color-text-muted); margin-top:0;">
+            Click to upload an image file.
+          </p>
+          
+          <button type="button" class="trigger-upload" style="padding: 10px 20px; cursor: pointer; width: fit-content;">
+            📤 Upload Image
+          </button>
+          
+          <div id="upload-status" style="margin-top: 10px; font-size: 0.9em; color: var(--color-text-muted);"></div>
+          
+          <!-- Hidden fields to store the upload IDs -->
+          <input type="hidden" id="image-id" />
+          <input type="hidden" id="image-url" />
+          <input type="hidden" id="thumb-url" />
+        </div>
+        
+        <div class="upload-right">
+          <div id="preview-container" style="display: none; text-align: center; width: 100%;">
+            <label>Image Preview</label>
+            <img id="preview" style="max-width: 100%; max-height: 400px; border-radius: 8px; border: 1px solid var(--color-border); display: block; margin: 10px auto;" />
+            <a id="full-size-link" href="#" target="_blank" style="font-size: 0.9em;">View Full Size Image</a>
+          </div>
+        </div>
       </div>
+    </div>
 
+    <div class="section">
+      <label>Image Dimensions</label>
+      <p id="detect-msg" style="font-size: 0.85em; color: var(--palette-brand-accent); font-weight: bold; margin-top: 5px; min-height: 1.2em;"></p>
+      <div style="display: flex; gap: 20px;">
+        <div style="flex: 1;">
+          <input id="gridW" type="number" placeholder="Width" readonly style="background: var(--palette-bg-page-light);" />
+          <span style="font-size: 0.8em; color: var(--color-text-muted);">Width (px)</span>
+        </div>
+        <div style="display: flex; align-items: center; padding-top: 5px; color: var(--color-text-muted);">X</div>
+        <div style="flex: 1;">
+          <input id="gridH" type="number" placeholder="Height" readonly style="background: var(--palette-bg-page-light);" />
+          <span style="font-size: 0.8em; color: var(--color-text-muted);">Height (px)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
       <label for="keywords">Search Keywords</label>
       <input id="keywords" type="text" placeholder="forest, cave, snow, ambush..." />
     </div>
@@ -113,7 +155,7 @@ title: Submit / Edit Battle Map
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     alert("You must be logged in to submit maps.");
-    window.location.href = "/battlemaps-view.html";
+    window.location.href = "/codex/battlemaps-view";
   }
   currentUser = user;
 
@@ -122,18 +164,13 @@ title: Submit / Edit Battle Map
   ------------------------- */
   window.addEventListener('image-upload-complete', async (event) => {
     console.log("Upload complete event:", event.detail);
-    console.log("Event detail keys:", Object.keys(event.detail));
-    console.log("id:", event.detail.id);
-    console.log("thumb:", event.detail.thumb);
-    console.log("url:", event.detail.url);
     
     const dbId = event.detail.id;  // Database ID from freehost_images
     const thumbUrl = event.detail.thumb;  // Thumbnail URL
-    const fullUrl = event.detail.url;  // Full image URL (now included in event)
+    const fullUrl = event.detail.url;  // Full image URL
     
     if (!fullUrl) {
       console.error("No full URL in event data - using thumb as fallback");
-      // Use thumb URL as fallback for now
       document.getElementById('image-id').value = dbId;
       document.getElementById('thumb-url').value = thumbUrl;
       document.getElementById('image-url').value = thumbUrl;
@@ -156,7 +193,7 @@ title: Submit / Edit Battle Map
     // Show preview
     showPreview(thumbUrl, fullUrl);
     
-    // Try to analyze image dimensions
+    // Analyze image dimensions
     analyzeImageFromUrl(fullUrl);
     
     uploadStatus.style.color = "var(--palette-success)";
@@ -173,16 +210,18 @@ title: Submit / Edit Battle Map
     img.onload = () => {
       const pxW = img.naturalWidth;
       const pxH = img.naturalHeight;
-      let msg = `Image Resolution: ${pxW} x ${pxH} px`;
       
-      // Try to detect grid from filename if possible
-      // (For freehost URLs, this won't work, but we show dimensions)
-      msg += ` • Grid dimensions not auto-detected`;
-      detectMsg.style.color = "var(--color-text-muted)";
+      // Auto-fill the dimension fields
+      gridW.value = pxW;
+      gridH.value = pxH;
+      
+      let msg = `Image Resolution: ${pxW} x ${pxH} px`;
+      detectMsg.style.color = "var(--palette-success)";
       detectMsg.textContent = msg;
     };
     img.onerror = () => {
       detectMsg.textContent = "Image loaded but couldn't analyze dimensions";
+      detectMsg.style.color = "var(--color-text-muted)";
     };
     img.src = url;
   }
@@ -231,6 +270,13 @@ title: Submit / Edit Battle Map
   ------------------------- */
   document.getElementById("map-form").addEventListener("submit", async (e) => {
     e.preventDefault(); 
+    
+    // Check if free use is confirmed
+    if (!document.getElementById("freeUse").checked) {
+      alert("Please confirm that this map was made available for free to the public.");
+      return;
+    }
+    
     btn.textContent = "Saving...";
     btn.disabled = true;
 
@@ -272,7 +318,7 @@ title: Submit / Edit Battle Map
       alert("Error saving map: " + result.error.message);
       resetButton();
     } else {
-      window.location.href = "/battlemaps-view.html";
+      window.location.href = "/codex/battlemaps-view";
     }
   });
 

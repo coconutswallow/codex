@@ -8,8 +8,8 @@ title: Battle Maps
 <section class="hero-block">
   <h1>Curated Battle Maps</h1>
   <p>
-    High-quality battle maps shared by the community.
-    Optimized for fast browsing and Avrae use.
+    Curated battlemaps submitted by the community. Browse, search, and download.  All maps uploaded are free to use by the original creator, and each image is credited to the creator with links to the creator's page (click on creator name to link to creator's page).
+    
   </p>
 
   <p id="map-count-display">Loading maps…</p>
@@ -46,15 +46,25 @@ title: Battle Maps
   let currentSearch = "";
   let loading = false;
   let reachedEnd = false;
+  let currentUser = null;
 
   const gallery = document.getElementById("gallery-container");
   const countDisplay = document.getElementById("map-count-display");
   const loadMoreBtn = document.getElementById("load-more-btn");
 
   /* -----------------------------
+     GET CURRENT USER
+  ----------------------------- */
+  async function getCurrentUser() {
+    const { data: { user } } = await supabase.auth.getUser();
+    currentUser = user;
+  }
+
+  /* -----------------------------
      INITIAL LOAD
   ----------------------------- */
-  document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("DOMContentLoaded", async () => {
+    await getCurrentUser();
     resetGallery();
 
     const search = document.getElementById("mapSearchInput");
@@ -143,19 +153,22 @@ title: Battle Maps
   ----------------------------- */
   function renderMaps(maps) {
     maps.forEach(map => {
-      const thumb = `${map.image_url}?tr=w-420`;
+      // Use thumbnail for display, full image for link
+      const thumb = map.thumbnail_url || map.image_url;
+      const fullImage = map.image_url;
+      const isOwner = currentUser && currentUser.id === map.submitted_by;
 
       const card = document.createElement("div");
       card.className = "map-card";
 
       card.innerHTML = `
-        <a href="${map.image_url}" target="_blank" class="map-thumb">
+        <div class="map-thumb">
           <img
             src="${thumb}"
             loading="lazy"
             alt="${map.name}"
           />
-        </a>
+        </div>
 
         <div class="map-info">
           <h3>${map.name}</h3>
@@ -168,41 +181,33 @@ title: Battle Maps
           </p>
 
           <p>
-            <strong>Size:</strong>
-            ${map.grid_width} × ${map.grid_height}
+            <strong>Dimensions:</strong>
+            ${map.grid_width && map.grid_height 
+              ? `${map.grid_width} × ${map.grid_height} px`
+              : 'Not specified'}
           </p>
 
           ${
-            map.avrae_cmd
-              ? `<div class="avrae">
-                  <code>${map.avrae_cmd}</code>
-                  <button class="copy-btn">Copy</button>
-                </div>`
+            map.keywords
+              ? `<div class="tags" style="font-size: 0.85em; color: var(--color-text-muted); margin-top: 5px;">${map.keywords}</div>`
               : ""
           }
 
-          ${
-            map.keywords
-              ? `<div class="tags">${map.keywords}</div>`
-              : ""
-          }
+          <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+            <a href="${fullImage}" target="_blank" class="tool-btn" style="flex: 1; text-align: center; padding: 8px 12px; text-decoration: none;">
+              🖼️ Full Image
+            </a>
+            ${isOwner 
+              ? `<a href="battlemaps-edit?id=${map.id}" class="tool-btn" style="flex: 1; text-align: center; padding: 8px 12px; text-decoration: none; background: var(--palette-accent);">
+                  ✏️ Edit
+                </a>`
+              : ''
+            }
+          </div>
         </div>
       `;
 
       gallery.appendChild(card);
-    });
-
-    wireCopyButtons();
-  }
-
-  function wireCopyButtons() {
-    document.querySelectorAll(".copy-btn").forEach(btn => {
-      btn.onclick = () => {
-        const code = btn.previousElementSibling.textContent;
-        navigator.clipboard.writeText(code);
-        btn.textContent = "Copied!";
-        setTimeout(() => (btn.textContent = "Copy"), 1200);
-      };
     });
   }
 </script>
