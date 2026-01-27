@@ -1,0 +1,255 @@
+---
+layout: default
+title: Battle Map Admin
+---
+
+{% include auth-header.html %}
+
+<section class="hero-block">
+  <h1>Battle Map Admin</h1>
+  <p>Review and approve pending map submissions.</p>
+</section>
+
+<style>
+  .admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--palette-bg-page-light);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .admin-table th, .admin-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .admin-table th {
+    background-color: var(--palette-bg-dark);
+    font-weight: bold;
+  }
+
+  .thumb-preview {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 4px;
+    background: #000;
+  }
+
+  .action-btn {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 0.85em;
+    cursor: pointer;
+    border: none;
+    margin-right: 5px;
+  }
+
+  .btn-edit {
+    background: var(--palette-accent);
+    color: white;
+  }
+
+  .btn-approve {
+    background: var(--palette-success);
+    color: white;
+  }
+  
+  .btn-approve:hover {
+    opacity: 0.9;
+  }
+
+  @media (max-width: 768px) {
+    .admin-table {
+      display: block;
+      overflow-x: auto;
+    }
+  }
+</style>
+
+<div class="admin-container">
+  <div id="loading-msg">Loading pending maps...</div>
+  
+  <table id="map-table" class="admin-table" style="display:none;">
+    <thead>
+      <tr>
+        <th style="width: 100px;">Image</th>
+        <th>Map Info</th>
+        <th>Creator Details</th>
+        <th>Submitter</th>
+        <th style="width: 160px;">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="table-body">
+      </tbody>
+  </table>
+</div>
+
+<script type="module">
+  // UPDATED IMPORT PATH (assuming this file is now in /battlemaps/ subdirectory)
+  import { supabase } from "../assets/js/supabaseClient.js";
+
+  const ADMIN_ID = "c565b7c8-5bdb-4bf4-a56e-663c1f50fa13";
+  const tableBody = document.getElementById("table-body");
+  const loadingMsg = document.getElementById("loading-msg");
+  const mapTable = document.getElementById("map-table");
+
+  /* -----------------------------
+     INIT
+  ----------------------------- */
+  document.addEventListener("DOMContentLoaded", async () => {
+    // 1. Auth Check
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user || user.id !== ADMIN_ID) {
+      document.querySelector('.admin-container').innerHTML = 
+        "<p style='text-align:center; color:red;'>⛔ Access Denied: You are not authorized to view this page.</p>";
+      return;
+    }
+
+    fetchPendingMaps();
+  });
+
+  /* -----------------------------
+     FETCH DATA
+  ----------------------------- */
+  async function fetchPendingMaps() {
+    loadingMsg.style.display = "block";
+    mapTable.style.display = "none";
+    tableBody.innerHTML = "";
+
+    const { data: maps, error } = await supabase
+      .from("battlemaps")
+      .select("*")
+      .eq("is_approved", false)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      loadingMsg.textContent = "Error loading maps: " + error.message;
+      return;
+    }
+
+    if (maps.length === 0) {
+      loadingMsg.textContent = "No pending maps found. All clear! 🎉";
+      return;
+    }
+
+    const submitterIds = [...new Set(maps.map(m => m.submitted_by))];
+    const userMap = {};
+
+    if (submitterIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("discord_users")
+        .select("user_id, username, discord_username")
+        .in("user_id", submitterIds);
+        
+      if (profiles) {
+        profiles.forEach(p => {
+          userMap[p.user_id] = p.username || p.discord_username || "Unknown";
+        });
+      }
+    }
+
+    renderTable(maps, userMap);
+  }
+
+  /* -----------------------------
+     RENDER
+  ----------------------------- */
+  function renderTable(maps, userMap) {
+    loadingMsg.style.display = "none";
+    mapTable.style.display = "table";
+
+    maps.forEach(map => {
+      const row = document.createElement("tr");
+      row.id = `row-${map.id}`;
+      
+      const thumb = map.thumbnail_url || map.image_url;
+      const submitterName = userMap[map.submitted_by] || map.submitted_by.substring(0, 8) + "...";
+
+      // UPDATED LINK: 'edit' (relative path, since both are in /battlemaps/)
+      row.innerHTML = `
+        <td>
+          <a href="${map.image_url}" target="_blank">
+            <img src="${thumb}" class="thumb-preview" alt="Thumb" loading="lazy">
+          </a>
+        </td>
+        <td>
+          <strong>${escapeHtml(map.name)}</strong><br>
+          <small style="color: var(--color-text-muted);">
+            Grid: ${map.grid_width || '?'}x${map.grid_height || '?'}<br>
+            Keys: ${map.keywords ? escapeHtml(map.keywords) : '-'}
+          </small>
+        </td>
+        <td>
+          Creator: <strong>${escapeHtml(map.creator)}</strong><br>
+          ${map.source_url 
+            ? `<a href="${map.source_url}" target="_blank" style="font-size:0.85em;">Source Link 🔗</a>` 
+            : '<span style="font-size:0.85em; color:red;">No Source URL</span>'}
+        </td>
+        <td>
+          ${escapeHtml(submitterName)}
+        </td>
+        <td>
+          <a href="edit?id=${map.id}" class="action-btn btn-edit">Edit</a>
+          <button class="action-btn btn-approve" onclick="approveMap(${map.id})">Approve</button>
+        </td>
+      `;
+      
+      tableBody.appendChild(row);
+    });
+  }
+
+  /* -----------------------------
+     ACTIONS
+  ----------------------------- */
+  window.approveMap = async (id) => {
+    if (!confirm("Are you sure you want to approve this map?")) return;
+
+    const btn = document.querySelector(`#row-${id} .btn-approve`);
+    const originalText = btn.textContent;
+    btn.textContent = "Processing...";
+    btn.disabled = true;
+
+    const { error } = await supabase
+      .from("battlemaps")
+      .update({ is_approved: true })
+      .eq("id", id);
+
+    if (error) {
+      alert("Error approving map: " + error.message);
+      btn.textContent = originalText;
+      btn.disabled = false;
+    } else {
+      const row = document.getElementById(`row-${id}`);
+      row.style.opacity = "0.5";
+      setTimeout(() => row.remove(), 500);
+      
+      if (tableBody.children.length <= 1) {
+         fetchPendingMaps(); 
+      }
+    }
+  };
+
+  function escapeHtml(text) {
+    if (!text) return "";
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+</script>

@@ -1,0 +1,322 @@
+---
+layout: default
+title: Battle Maps
+---
+
+{% include auth-header.html %}
+
+<section class="hero-block">
+  <h1>Curated Battle Maps</h1>
+  <p align="left">Curated battlemaps submitted by the community. All maps uploaded are free to use by the original creator, and each image is credited to the creator with links to the creator's page.</p>  
+  <br>
+  <p align="left">To contribute to the maps database, please use the <strong>Discord login</strong>, and note that submitted maps will be reviewed by Coconut before made public.  These features are to prevent unauthorised uses of this function (spammers, inappropriate non-map images, etc. - thanks for understanding). To be added to the auto-approval list, please message Coconut on Discord.</p>
+  <br>
+  <p id="map-count-display"><strong>Loading maps…</strong></p>
+</section>
+
+<div class="map-search-wrapper">
+  <input
+    type="text"
+    id="mapSearchInput"
+    placeholder="Search by name, creator, or keyword…"
+  />
+
+  <a href="edit" class="tool-btn">
+    + Submit Map
+  </a>
+</div>
+
+<style>
+  .map-gallery {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .map-card {
+    display: flex;
+    flex-direction: row;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--palette-bg-page-light);
+    height: fit-content;
+  }
+  
+  .map-thumb {
+    flex-shrink: 0;
+    width: 160px; 
+    height: 160px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    cursor: pointer; 
+  }
+  
+  .map-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s;
+  }
+
+  .map-thumb:hover img {
+    transform: scale(1.05); 
+  }
+  
+  .map-info {
+    flex: 1;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .map-info h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.05em;
+    line-height: 1.2;
+  }
+  
+  .map-info p {
+    margin: 3px 0;
+    font-size: 0.85em;
+  }
+  
+  .map-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  
+  .map-actions a {
+    flex: 1;
+    text-align: center;
+    padding: 6px 10px;
+    text-decoration: none;
+    font-size: 0.8em;
+  }
+  
+  @media (max-width: 1200px) {
+    .map-gallery {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .map-gallery {
+      grid-template-columns: 1fr;
+    }
+    
+    .map-card {
+      flex-direction: row; 
+    }
+  }
+
+  @media (max-width: 500px) {
+    .map-card {
+      flex-direction: column;
+    }
+    .map-thumb {
+      width: 100%;
+      height: 200px;
+    }
+  }
+</style>
+
+<div id="gallery-container" class="map-gallery"></div>
+
+<button
+  id="load-more-btn"
+  class="tool-btn"
+  style="display:none; margin:20px auto;"
+>
+  Load More
+</button>
+
+<script type="module">
+  // UPDATED IMPORT PATH
+  import { supabase } from "../assets/js/supabaseClient.js";
+
+  const PAGE_SIZE = 24;
+
+  let currentPage = 0;
+  let currentSearch = "";
+  let loading = false;
+  let reachedEnd = false;
+  let currentUser = null;
+
+  const gallery = document.getElementById("gallery-container");
+  const countDisplay = document.getElementById("map-count-display");
+  const loadMoreBtn = document.getElementById("load-more-btn");
+
+  /* -----------------------------
+     GET CURRENT USER
+  ----------------------------- */
+  async function getCurrentUser() {
+    const { data: { user } } = await supabase.auth.getUser();
+    currentUser = user;
+  }
+
+  /* -----------------------------
+     INITIAL LOAD
+  ----------------------------- */
+  document.addEventListener("DOMContentLoaded", async () => {
+    await getCurrentUser();
+
+    const searchInput = document.getElementById("mapSearchInput");
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchParam = urlParams.get('search');
+    
+    if (searchParam) {
+      currentSearch = searchParam.trim();
+      searchInput.value = currentSearch; 
+    }
+
+    resetGallery();
+
+    let timeout = null;
+    searchInput.addEventListener("input", e => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        currentSearch = e.target.value.trim();
+        resetGallery();
+      }, 400);
+    });
+
+    loadMoreBtn.onclick = fetchMaps;
+  });
+
+  /* -----------------------------
+     DATA FETCHING
+  ----------------------------- */
+  async function fetchMaps() {
+    if (loading || reachedEnd) return;
+    loading = true;
+
+    loadMoreBtn.textContent = "Loading…";
+
+    let query = supabase
+      .from("battlemaps")
+      .select("*", { count: "exact" })
+      .eq("is_approved", true)
+      .order("created_at", { ascending: false })
+      .range(
+        currentPage * PAGE_SIZE,
+        currentPage * PAGE_SIZE + PAGE_SIZE - 1
+      );
+
+    if (currentSearch) {
+      const words = currentSearch.split(/\s+/); 
+      words.forEach(word => {
+        const term = `%${word}%`;
+        query = query.or(`name.ilike.${term},creator.ilike.${term},keywords.ilike.${term}`);
+      });
+    }
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    if (currentPage === 0) {
+      countDisplay.textContent =
+        count === 1
+          ? "1 map available"
+          : `${count.toLocaleString()} maps available`;
+    }
+
+    if (!data || data.length === 0) {
+      reachedEnd = true;
+      loadMoreBtn.style.display = "none";
+      return;
+    }
+
+    renderMaps(data);
+
+    if (data.length < PAGE_SIZE) {
+      reachedEnd = true;
+      loadMoreBtn.style.display = "none";
+    } else {
+      loadMoreBtn.style.display = "block";
+      loadMoreBtn.textContent = "Load More";
+    }
+
+    currentPage++;
+    loading = false;
+  }
+
+  function resetGallery() {
+    gallery.innerHTML = "";
+    currentPage = 0;
+    reachedEnd = false;
+    fetchMaps();
+  }
+
+  /* -----------------------------
+     RENDERING
+  ----------------------------- */
+  function renderMaps(maps) {
+    maps.forEach(map => {
+      const thumb = map.thumbnail_url || map.image_url;
+      const fullImage = map.image_url;
+      const isOwner = currentUser && currentUser.id === map.submitted_by;
+
+      const card = document.createElement("div");
+      card.className = "map-card";
+
+      // UPDATED LINK: 'edit?id=' (relative path)
+      card.innerHTML = `
+        <a href="${fullImage}" target="_blank" class="map-thumb" title="Click to view full image">
+          <img
+            src="${thumb}"
+            loading="lazy"
+            alt="${map.name}"
+          />
+        </a>
+
+        <div class="map-info">
+          <div>
+            <h3>${map.name}</h3>
+
+            <p>
+              <strong>Creator:</strong>
+              ${map.source_url
+                ? `<a href="${map.source_url}" target="_blank" rel="noopener">${map.creator}</a>`
+                : map.creator}
+            </p>
+
+            <p>
+              <strong>Dim:</strong>
+              ${map.grid_width && map.grid_height 
+                ? `${map.grid_width} × ${map.grid_height}`
+                : 'N/A'}
+            </p>
+
+            ${
+              map.keywords
+                ? `<div style="font-size: 0.8em; color: var(--color-text-muted); margin-top: 5px; line-height:1.2;">${map.keywords}</div>`
+                : ""
+            }
+          </div>
+
+          <div class="map-actions">
+            ${isOwner 
+              ? `<a href="edit?id=${map.id}" class="tool-btn" style="background: var(--palette-accent);">
+                  ✏️ Edit
+                </a>`
+              : ''
+            }
+          </div>
+        </div>
+      `;
+
+      gallery.appendChild(card);
+    });
+  }
+</script>

@@ -10,8 +10,6 @@ title: Bulk Submit Battle Maps
   <p>Upload multiple maps at once with shared creator information.</p>
 </section>
 
-<script src="/codex/assets/js/upload-bulk.js"></script>
-
 <style>
   .bulk-container {
     max-width: 1200px;
@@ -257,6 +255,7 @@ title: Bulk Submit Battle Maps
 </div>
 
 <script type="module">
+  // UPDATED IMPORT PATH
   import { supabase } from "../assets/js/supabaseClient.js";
 
   // Elements
@@ -283,11 +282,11 @@ title: Bulk Submit Battle Maps
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     alert("You must be logged in to submit maps.");
-    window.location.href = "/codex/battlemaps-view";
+    // UPDATED REDIRECT URL
+    window.location.href = "/codex/battlemaps/view";
   }
   currentUser = user;
 
-  // Fetch approval status
   const { data: profile } = await supabase
     .from("discord_users")
     .select("approved_map_submitter")
@@ -328,7 +327,6 @@ title: Bulk Submit Battle Maps
   async function handleFiles(files) {
     if (files.length === 0) return;
 
-    // Validate shared fields
     if (!creatorInput.value.trim()) {
       alert("Please enter the creator name first.");
       return;
@@ -338,7 +336,6 @@ title: Bulk Submit Battle Maps
       return;
     }
 
-    // Show progress
     uploadProgress.style.display = 'block';
     imagesGrid.style.display = 'grid';
     bulkActions.style.display = 'block';
@@ -347,34 +344,29 @@ title: Bulk Submit Battle Maps
     let completed = 0;
 
     for (const file of filesArray) {
-      // Create card immediately with loading state
       const cardId = `card-${Date.now()}-${Math.random()}`;
       const card = createImageCard(file, cardId);
       imagesGrid.appendChild(card);
 
-      // Upload the file
       try {
         const result = await uploadFile(file);
         completed++;
         updateProgress(completed, filesArray.length);
 
         if (result.success) {
-          // Get image dimensions
           const dimensions = await getImageDimensions(result.url);
           
-          // Store the uploaded image data
           const imageData = {
             id: cardId,
             dbId: result.id,
             thumbUrl: result.thumb,
             fullUrl: result.url,
-            filename: file.name.replace(/\.[^/.]+$/, ""), // Remove extension
+            filename: file.name.replace(/\.[^/.]+$/, ""),
             width: dimensions.width,
             height: dimensions.height
           };
           uploadedImages.push(imageData);
 
-          // Update the card
           updateImageCard(cardId, imageData, null);
         } else {
           updateImageCard(cardId, null, result.error || "Upload failed");
@@ -387,7 +379,6 @@ title: Bulk Submit Battle Maps
       }
     }
 
-    // Hide progress when done
     setTimeout(() => {
       uploadProgress.style.display = 'none';
     }, 1000);
@@ -432,7 +423,6 @@ title: Bulk Submit Battle Maps
       return;
     }
 
-    // Success - update card
     const preview = card.querySelector('.image-preview');
     preview.src = data.thumbUrl;
 
@@ -573,7 +563,8 @@ title: Bulk Submit Battle Maps
       saveAllBtn.disabled = false;
     } else {
       alert(`Successfully saved ${mapsToInsert.length} maps!`);
-      window.location.href = '/codex/battlemaps-view';
+      // UPDATED REDIRECT URL
+      window.location.href = '/codex/battlemaps/view';
     }
   });
 </script>

@@ -178,15 +178,17 @@ title: Submit / Edit Battle Map
     // Auto-fill name if blank
     if (!nameInput.value.trim() && dbId) {
       try {
-        const { data: imgData } = await supabase
+        const { data: imgData, error } = await supabase
           .from('freehost_images')
           .select('original_filename')
           .eq('id', dbId)
-          .single();
+          .maybeSingle(); // FIX: Use maybeSingle() to prevent 406 errors
 
         if (imgData && imgData.original_filename) {
           const cleanName = imgData.original_filename.replace(/\.[^/.]+$/, "");
           nameInput.value = cleanName;
+        } else if (error) {
+          console.warn("Filename fetch error (safe to ignore):", error);
         }
       } catch (err) {
         console.warn("Could not auto-fetch filename:", err);
