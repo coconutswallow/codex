@@ -7,11 +7,11 @@ title: Battle Maps
 
 <section class="hero-block">
   <h1>Curated Battle Maps</h1>
-  <p align="left">Curated battlemaps submitted by the community. Browse, search, and download.  All maps uploaded are free to use by the original creator, and each image is credited to the creator with links to the creator's page (click on creator name to link to creator's page).</p>  
+  <p align="left">Curated battlemaps submitted by the community. All maps uploaded are free to use by the original creator, and each image is credited to the creator with links to the creator's page.</p>  
   <br>
-  <p align="left">To contribute to the maps database, please use the <strong>Discord login</strong>, and note that submitted maps will be reviewed by Coconut before made public.  These features are to prevent unauthorised uses of this function (spammers uploading inappropriate non-map images, etc. - thanks for understanding). To be added to the auto-approval list, please message Coconut on Discord.</p>
+  <p align="left">To contribute to the maps database, please use the <strong>Discord login</strong>, and note that submitted maps will be reviewed by Coconut before made public.  These features are to prevent unauthorised uses of this function (spammers, inappropriate non-map images, etc. - thanks for understanding). To be added to the auto-approval list, please message Coconut on Discord.</p>
   <br>
-  <p id="map-count-display">Loading maps…</p>
+  <p id="map-count-display"><strong>Loading maps…</strong></p>
 </section>
 
 <div class="map-search-wrapper">
@@ -27,10 +27,10 @@ title: Battle Maps
 </div>
 
 <style>
-  /* Horizontal card layout - 2 columns */
+  /* Horizontal card layout - 3 columns */
   .map-gallery {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
     padding: 20px;
   }
@@ -45,67 +45,90 @@ title: Battle Maps
     height: fit-content;
   }
   
+  /* Converted to anchor tag, reduced width for 3-col fit */
   .map-thumb {
     flex-shrink: 0;
-    width: 200px;
-    height: 200px;
+    width: 160px; 
+    height: 160px;
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #000;
+    cursor: pointer; /* Indicates clickable */
   }
   
   .map-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.2s;
+  }
+
+  .map-thumb:hover img {
+    transform: scale(1.05); /* subtle zoom effect on hover */
   }
   
   .map-info {
     flex: 1;
-    padding: 15px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
   }
   
   .map-info h3 {
-    margin: 0 0 10px 0;
-    font-size: 1.1em;
+    margin: 0 0 5px 0;
+    font-size: 1.05em;
+    line-height: 1.2;
   }
   
   .map-info p {
-    margin: 5px 0;
-    font-size: 0.9em;
+    margin: 3px 0;
+    font-size: 0.85em;
   }
   
   .map-actions {
     display: flex;
     gap: 10px;
-    margin-top: 10px;
+    margin-top: 8px;
   }
   
   .map-actions a {
     flex: 1;
     text-align: center;
-    padding: 8px 12px;
+    padding: 6px 10px;
     text-decoration: none;
-    font-size: 0.85em;
+    font-size: 0.8em;
   }
   
-  /* Responsive - single column on mobile */
-  @media (max-width: 1024px) {
+  /* Responsive Breakpoints */
+  
+  /* Tablet/Small Laptop - 2 columns */
+  @media (max-width: 1200px) {
+    .map-gallery {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  /* Mobile - 1 column */
+  @media (max-width: 768px) {
     .map-gallery {
       grid-template-columns: 1fr;
     }
+    
+    .map-card {
+      /* On very small screens, keep horizontal or stack? 
+         Keeping horizontal usually works if thumb is small, 
+         but stacking is safer for narrow phones. */
+      flex-direction: row; 
+    }
   }
-  
-  @media (max-width: 600px) {
+
+  @media (max-width: 500px) {
     .map-card {
       flex-direction: column;
     }
-    
     .map-thumb {
       width: 100%;
       height: 200px;
@@ -248,13 +271,13 @@ title: Battle Maps
       card.className = "map-card";
 
       card.innerHTML = `
-        <div class="map-thumb">
+        <a href="${fullImage}" target="_blank" class="map-thumb" title="Click to view full image">
           <img
             src="${thumb}"
             loading="lazy"
             alt="${map.name}"
           />
-        </div>
+        </a>
 
         <div class="map-info">
           <div>
@@ -268,23 +291,20 @@ title: Battle Maps
             </p>
 
             <p>
-              <strong>Dimensions:</strong>
+              <strong>Dim:</strong>
               ${map.grid_width && map.grid_height 
-                ? `${map.grid_width} × ${map.grid_height} px`
-                : 'Not specified'}
+                ? `${map.grid_width} × ${map.grid_height}`
+                : 'N/A'}
             </p>
 
             ${
               map.keywords
-                ? `<div style="font-size: 0.85em; color: var(--color-text-muted); margin-top: 5px;">${map.keywords}</div>`
+                ? `<div style="font-size: 0.8em; color: var(--color-text-muted); margin-top: 5px; line-height:1.2;">${map.keywords}</div>`
                 : ""
             }
           </div>
 
           <div class="map-actions">
-            <a href="${fullImage}" target="_blank" class="tool-btn">
-              🖼️ Full Image
-            </a>
             ${isOwner 
               ? `<a href="../battlemaps-edit?id=${map.id}" class="tool-btn" style="background: var(--palette-accent);">
                   ✏️ Edit

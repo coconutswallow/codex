@@ -10,7 +10,6 @@ title: Submit / Edit Battle Map
   <p>Share a map with the community.</p>
 </section>
 
-<!-- Load the freehost upload.js -->
 <script src="/codex/assets/js/upload.js"></script>
 
 <style>
@@ -87,7 +86,6 @@ title: Submit / Edit Battle Map
           
           <div id="upload-status" style="margin-top: 10px; font-size: 0.9em; color: var(--color-text-muted);"></div>
           
-          <!-- Hidden fields to store the upload IDs -->
           <input type="hidden" id="image-id" />
           <input type="hidden" id="image-url" />
           <input type="hidden" id="thumb-url" />
@@ -144,6 +142,7 @@ title: Submit / Edit Battle Map
   const detectMsg = document.getElementById("detect-msg");
   const uploadStatus = document.getElementById("upload-status");
   const btn = document.getElementById("submit-btn");
+  const nameInput = document.getElementById("name");
 
   let currentUser = null;
   let existingImageUrl = null;
@@ -164,7 +163,7 @@ title: Submit / Edit Battle Map
   const { data: profile } = await supabase
     .from("discord_users")
     .select("approved_map_submitter")
-    .eq("user_id", currentUser.id) // CHANGED from 'id' to 'user_id'
+    .eq("user_id", currentUser.id)
     .single();
 
   if (profile && profile.approved_map_submitter === true) {
@@ -178,9 +177,29 @@ title: Submit / Edit Battle Map
     console.log("Upload complete event:", event.detail);
     
     const dbId = event.detail.id;  // Database ID from freehost_images
-    const thumbUrl = event.detail.thumb;  // Thumbnail URL
-    const fullUrl = event.detail.url;  // Full image URL
+    const thumbUrl = event.detail.thumb;
+    const fullUrl = event.detail.url;
     
+    // AUTO-FILL NAME LOGIC
+    // If the name input is blank, try to fetch the original filename
+    if (!nameInput.value.trim() && dbId) {
+      try {
+        const { data: imgData, error: imgError } = await supabase
+          .from('freehost_images')
+          .select('original_filename')
+          .eq('id', dbId)
+          .single();
+
+        if (imgData && imgData.original_filename) {
+          // Remove extension (e.g., "Battlemap01.png" -> "Battlemap01")
+          const cleanName = imgData.original_filename.replace(/\.[^/.]+$/, "");
+          nameInput.value = cleanName;
+        }
+      } catch (err) {
+        console.warn("Could not auto-fetch filename:", err);
+      }
+    }
+
     if (!fullUrl) {
       console.error("No full URL in event data - using thumb as fallback");
       document.getElementById('image-id').value = dbId;
@@ -194,8 +213,6 @@ title: Submit / Edit Battle Map
       uploadStatus.textContent = "✓ Uploaded (using thumbnail as image)";
       return;
     }
-    
-    console.log("Full URL:", fullUrl, "Thumb:", thumbUrl);
     
     // Store in hidden fields
     document.getElementById('image-id').value = dbId;
@@ -257,7 +274,7 @@ title: Submit / Edit Battle Map
       .single();
 
     if (!error && data) {
-      document.getElementById("name").value = data.name;
+      nameInput.value = data.name;
       gridW.value = data.grid_width || "";
       gridH.value = data.grid_height || "";
       document.getElementById("creator").value = data.creator;
@@ -295,7 +312,7 @@ document.getElementById("map-form").addEventListener("submit", async (e) => {
     const finalThumbUrl = document.getElementById('thumb-url').value || existingThumbUrl;
 
     const payload = {
-      name: document.getElementById("name").value,
+      name: nameInput.value,
       grid_width: gridW.value ? parseInt(gridW.value) : null,
       grid_height: gridH.value ? parseInt(gridH.value) : null,
       creator: document.getElementById("creator").value,
@@ -309,7 +326,6 @@ document.getElementById("map-form").addEventListener("submit", async (e) => {
 
     let result;
     if (mapId) {
-      // FIX: Ensure numeric ID for bigint column
       result = await supabase.from("battlemaps").update(payload).eq("id", parseInt(mapId));
     } else {
       payload.submitted_by = currentUser.id;
