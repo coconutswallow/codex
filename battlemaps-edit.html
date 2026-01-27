@@ -149,15 +149,27 @@ title: Submit / Edit Battle Map
   let existingImageUrl = null;
   let existingThumbUrl = null;
 
-  /* -------------------------
-     1. AUTH CHECK
-  ------------------------- */
+ /* -------------------------
+   1. AUTH CHECK & PERMISSIONS
+------------------------- */
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     alert("You must be logged in to submit maps.");
     window.location.href = "/codex/battlemaps-view";
   }
   currentUser = user;
+
+  // NEW: Fetch approval status from discord_users
+  let isApprovedSubmitter = false;
+  const { data: profile } = await supabase
+    .from("discord_users")
+    .select("approved_map_submitter")
+    .eq("id", currentUser.id)
+    .single();
+
+  if (profile && profile.approved_map_submitter === true) {
+    isApprovedSubmitter = true;
+  }
 
   /* -------------------------
      2. LISTEN FOR UPLOAD COMPLETE
@@ -303,7 +315,8 @@ title: Submit / Edit Battle Map
       is_free_use: document.getElementById("freeUse").checked,
       image_url: finalImageUrl,
       thumbnail_url: finalThumbUrl,
-      submitted_by: currentUser.id
+      submitted_by: currentUser.id,
+      is_approved: isApprovedSubmitter
     };
 
     let result;
