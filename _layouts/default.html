@@ -1,20 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ page.title | default: site.title }}</title>
-    
+
     <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
-    
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     {% for stylesheet in page.extra_css %}
-        <link rel="stylesheet" href="{{ stylesheet | relative_url }}">
+    <link rel="stylesheet" href="{{ stylesheet | relative_url }}">
     {% endfor %}
 </head>
+
 <body class="{{ page.body_class }} {{ layout.body_class }}">
-    
+
     <header class="site-header">
         <div class="header-content">
             <button id="menu-toggle" aria-label="Toggle Navigation">
@@ -24,13 +26,11 @@
             </button>
 
             <a href="{{ '/' | relative_url }}" class="site-logo">
-                <img src="{{ '/assets/images/tokens/coconut.png' | relative_url }}" class="guild-icon" style="height:30px; margin-right:10px;" onerror="this.style.display='none'">
+                <img src="{{ '/assets/images/tokens/coconut.png' | relative_url }}" class="guild-icon"
+                    style="height:30px; margin-right:10px;" onerror="this.style.display='none'">
                 {{ site.title }}
             </a>
-            
-            <button id="theme-toggle" class="tool-btn" aria-label="Toggle Dark Mode" style="margin-left:auto;">
-                <span class="icon-text">🌗</span>
-            </button>
+
         </div>
     </header>
 
@@ -41,56 +41,57 @@
         </div>
         <nav class="sidebar-links">
             {% for item in site.navigation %}
-                <a href="{{ item.url | relative_url }}" class="nav-link">{{ item.title }}</a>
+            <a href="{{ item.url | relative_url }}" class="nav-link">{{ item.title }}</a>
             {% endfor %}
         </nav>
     </div>
-    
+
     <div id="menu-overlay"></div>
 
     <main class="page-content">
         {{ content }}
     </main>
-    
+
     <footer class="site-footer">
         <div class="footer-content">
         </div>
     </footer>
 
     <script>
-    (function() {
-        /* --- THEME TOGGLE --- */
-        const themeToggle = document.getElementById('theme-toggle');
-        const htmlElement = document.documentElement;
-        const currentTheme = localStorage.getItem('theme') || 'light';
-        htmlElement.setAttribute('data-theme', currentTheme);
-        
-        if (themeToggle) {
-            themeToggle.addEventListener('click', () => {
-                const currentTheme = htmlElement.getAttribute('data-theme');
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                htmlElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
-            });
-        }
+        (function () {
+            /* --- THEME TOGGLE --- */
+            const themeToggle = document.getElementById('theme-toggle');
+            const htmlElement = document.documentElement;
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            htmlElement.setAttribute('data-theme', currentTheme);
 
-        /* --- HAMBURGER MENU LOGIC --- */
-        const menuToggle = document.getElementById('menu-toggle');
-        const closeMenu = document.getElementById('close-menu');
-        const sidebar = document.getElementById('sidebar-menu');
-        const overlay = document.getElementById('menu-overlay');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', () => {
+                    const currentTheme = htmlElement.getAttribute('data-theme');
+                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                    htmlElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                });
+            }
 
-        function toggleMenu() {
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-        }
+            /* --- HAMBURGER MENU LOGIC --- */
+            const menuToggle = document.getElementById('menu-toggle');
+            const closeMenu = document.getElementById('close-menu');
+            const sidebar = document.getElementById('sidebar-menu');
+            const overlay = document.getElementById('menu-overlay');
 
-        if(menuToggle) {
-            menuToggle.addEventListener('click', toggleMenu);
-            closeMenu.addEventListener('click', toggleMenu);
-            overlay.addEventListener('click', toggleMenu);
-        }
-    })();
+            function toggleMenu() {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+            }
+
+            if (menuToggle) {
+                menuToggle.addEventListener('click', toggleMenu);
+                closeMenu.addEventListener('click', toggleMenu);
+                overlay.addEventListener('click', toggleMenu);
+            }
+        })();
     </script>
 </body>
+
 </html>
