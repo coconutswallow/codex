@@ -164,7 +164,7 @@ title: Submit / Edit Battle Map
   const { data: profile } = await supabase
     .from("discord_users")
     .select("approved_map_submitter")
-    .eq("id", currentUser.id)
+    .eq("user_id", currentUser.id) // CHANGED from 'id' to 'user_id'
     .single();
 
   if (profile && profile.approved_map_submitter === true) {
