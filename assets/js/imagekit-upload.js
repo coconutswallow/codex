@@ -33,8 +33,8 @@ export async function uploadImage() {
 
     // Initialize ImageKit
     const imagekit = new ImageKit({
-      publicKey: "public_bPs07/2jWzBhLfDfD3Rl0KLaRgo=", // Replace with your ImageKit public key
-      urlEndpoint: "https://ik.imagekit.io/coconutsw" // Replace with your ImageKit URL endpoint
+      publicKey: "public_bPs07/2jWzBhLfDfD3Rl0KLaRgo=",
+      urlEndpoint: "https://ik.imagekit.io/coconutsw"
     });
 
     // Read file as base64
@@ -43,6 +43,18 @@ export async function uploadImage() {
       reader.onload = (e) => resolve(e.target.result);
       reader.onerror = reject;
       reader.readAsDataURL(file);
+    });
+
+    // Upload without transformation (for testing)
+    const result = await imagekit.upload({
+      file: fileData,
+      fileName: file.name,
+      folder: "/battlemaps",
+      useUniqueFileName: true,
+      // Pass auth parameters from Supabase function
+      signature: authData.signature,
+      expire: authData.expire,
+      token: authData.token
     });
  
     console.log("Upload successful:", result);
