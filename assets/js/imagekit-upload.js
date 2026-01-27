@@ -1,7 +1,7 @@
 // ImageKit Upload Helper with Automatic Image Optimization
 // Uses Supabase Edge Function for secure authentication
 
-import { supabase } from "../assets/js/supabaseClient.js";
+import { supabase } from "./supabaseClient.js";
 
 export async function uploadImage() {
   const fileInput = document.getElementById("ik-file");
@@ -33,8 +33,8 @@ export async function uploadImage() {
 
     // Initialize ImageKit
     const imagekit = new ImageKit({
-      publicKey: "public_bPs07/2jWzBhLfDfD3Rl0KLaRgo=", // Replace with your ImageKit public key
-      urlEndpoint: "https://ik.imagekit.io/coconutsw" // Replace with your ImageKit URL endpoint
+      publicKey: "your_imagekit_public_key", // Replace with your ImageKit public key
+      urlEndpoint: "https://ik.imagekit.io/your_id" // Replace with your ImageKit URL endpoint
     });
 
     // Read file as base64
