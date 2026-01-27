@@ -121,15 +121,31 @@ title: Submit / Edit Battle Map
      2. LISTEN FOR UPLOAD COMPLETE
   ------------------------- */
   window.addEventListener('image-upload-complete', async (event) => {
-    const imageId = event.detail.id;
-    const thumbUrl = event.detail.thumb;
+    console.log("Upload complete event:", event.detail);
     
-    // Construct the full image URL from the ID
-    // Freehost pattern: https://iili.io/[ID].jpg
-    const fullUrl = `https://iili.io/${imageId}.jpg`;
+    const dbId = event.detail.id;  // This is the freehost_images table ID
+    const thumbUrl = event.detail.thumb;  // This is already the full thumbnail URL
+    
+    // Query the freehost_images table to get the full image URL
+    const { data, error } = await supabase
+      .from('freehost_images')
+      .select('image_url')
+      .eq('id', dbId)
+      .single();
+    
+    if (error || !data) {
+      console.error("Error fetching image URL:", error);
+      uploadStatus.style.color = "var(--color-error)";
+      uploadStatus.textContent = "⚠ Upload succeeded but couldn't retrieve full URL";
+      return;
+    }
+    
+    const fullUrl = data.image_url;
+    
+    console.log("Full URL:", fullUrl, "Thumb:", thumbUrl);
     
     // Store in hidden fields
-    document.getElementById('image-id').value = imageId;
+    document.getElementById('image-id').value = dbId;
     document.getElementById('thumb-url').value = thumbUrl;
     document.getElementById('image-url').value = fullUrl;
     
