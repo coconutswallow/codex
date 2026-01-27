@@ -222,10 +222,12 @@ title: Battle Maps
       );
 
     if (currentSearch) {
-      const term = `%${currentSearch}%`;
-      query = query.or(
-        `name.ilike.${term},creator.ilike.${term},keywords.ilike.${term}`
-      );
+      const words = currentSearch.split(/\s+/); // Split by spaces
+      words.forEach(word => {
+        const term = `%${word}%`;
+        // Every word must be found in Name, Creator, or Keywords
+        query = query.or(`name.ilike.${term},creator.ilike.${term},keywords.ilike.${term}`);
+      });
     }
 
     const { data, error, count } = await query;
