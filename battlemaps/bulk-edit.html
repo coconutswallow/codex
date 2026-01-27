@@ -255,8 +255,8 @@ title: Bulk Submit Battle Maps
 </div>
 
 <script type="module">
-  // UPDATED IMPORT PATH
-  import { supabase } from "../assets/js/supabaseClient.js";
+  // FIXED IMPORT: Use absolute path
+  import { supabase } from "/codex/assets/js/supabaseClient.js";
 
   // Elements
   const dropZone = document.getElementById('drop-zone');
@@ -282,7 +282,6 @@ title: Bulk Submit Battle Maps
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     alert("You must be logged in to submit maps.");
-    // UPDATED REDIRECT URL
     window.location.href = "/codex/battlemaps/view";
   }
   currentUser = user;
@@ -563,7 +562,6 @@ title: Bulk Submit Battle Maps
       saveAllBtn.disabled = false;
     } else {
       alert(`Successfully saved ${mapsToInsert.length} maps!`);
-      // UPDATED REDIRECT URL
       window.location.href = '/codex/battlemaps/view';
     }
   });

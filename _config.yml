@@ -28,7 +28,7 @@ navigation:
   - title: "Avrae Quick Reference"
     url: "/avrae"
   - title: "Battle Maps"
-    url: "/battlemaps-view"
+    url: "/battlemaps/view"
   - title: "Useful Links for DMs"
     url: "/dm-links"
   - title: "Session Assets"

@@ -138,8 +138,8 @@ title: Battle Maps
 </button>
 
 <script type="module">
-  // UPDATED IMPORT PATH
-  import { supabase } from "../assets/js/supabaseClient.js";
+  // FIXED IMPORT: Use absolute path to avoid 404
+  import { supabase } from "/codex/assets/js/supabaseClient.js";
 
   const PAGE_SIZE = 24;
 
@@ -270,7 +270,7 @@ title: Battle Maps
       const card = document.createElement("div");
       card.className = "map-card";
 
-      // UPDATED LINK: 'edit?id=' (relative path)
+      // FIXED LINK: Relative path for edit
       card.innerHTML = `
         <a href="${fullImage}" target="_blank" class="map-thumb" title="Click to view full image">
           <img

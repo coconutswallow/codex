@@ -7,13 +7,12 @@ title: Submit / Edit Battle Map
 
 <section class="hero-block">
   <h1 id="page-title">Submit Battle Map</h1>
-  <p>Share a map with the community.  If you want to bulk load (i.e. upload a set of maps by the same creator, there is a <a href="/codex/battlemaps-bulk">Bulk Upload Page</a></p>
+  <p>Share a map with the community.  If you want to bulk load (i.e. upload a set of maps by the same creator, there is a <a href="/codex/battlemaps/bulk-edit">Bulk Upload Page</a></p>
 </section>
 
-<script src="/codex/assets/js/upload.js"></script>
+<script src="/codex/assets/js/freeimage-upload.js"></script>
 
 <style>
-  /* Full width layout */
   .submit-container {
     max-width: 100% !important;
     width: 100%;
@@ -21,7 +20,6 @@ title: Submit / Edit Battle Map
     margin: 0 auto;
   }
   
-  /* Two column layout for upload section */
   .upload-section {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -128,9 +126,9 @@ title: Submit / Edit Battle Map
 </div>
 
 <script type="module">
-  import { supabase } from "../assets/js/supabaseClient.js";
+  // FIXED IMPORT: Use absolute path
+  import { supabase } from "/codex/assets/js/supabaseClient.js";
 
-  // --- 1. PAGE VARIABLES & LOGIC ---
   const params = new URLSearchParams(window.location.search);
   const mapId = params.get("id");
 
@@ -148,11 +146,10 @@ title: Submit / Edit Battle Map
   let existingImageUrl = null;
   let existingThumbUrl = null;
 
-  // --- AUTH CHECK ---
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     alert("You must be logged in to submit maps.");
-    window.location.href = "/codex/battlemaps-view";
+    window.location.href = "/codex/battlemaps/view";
   }
   currentUser = user;
 
@@ -167,7 +164,6 @@ title: Submit / Edit Battle Map
     isApprovedSubmitter = true;
   }
 
-  // --- EVENT: UPLOAD COMPLETE ---
   window.addEventListener('image-upload-complete', async (event) => {
     console.log("Upload complete event:", event.detail);
     
@@ -175,14 +171,13 @@ title: Submit / Edit Battle Map
     const thumbUrl = event.detail.thumb;
     const fullUrl = event.detail.url;
     
-    // Auto-fill name if blank
     if (!nameInput.value.trim() && dbId) {
       try {
         const { data: imgData, error } = await supabase
           .from('freehost_images')
           .select('original_filename')
           .eq('id', dbId)
-          .maybeSingle(); // FIX: Use maybeSingle() to prevent 406 errors
+          .maybeSingle();
 
         if (imgData && imgData.original_filename) {
           const cleanName = imgData.original_filename.replace(/\.[^/.]+$/, "");
@@ -218,7 +213,6 @@ title: Submit / Edit Battle Map
     uploadStatus.textContent = "✓ Image uploaded successfully";
   });
 
-  // --- HELPER: ANALYZE DIMENSIONS ---
   async function analyzeImageFromUrl(url) {
     const img = new Image();
     img.crossOrigin = "Anonymous";
@@ -244,7 +238,6 @@ title: Submit / Edit Battle Map
     previewContainer.style.display = "block";
   }
 
-  // --- EDIT MODE LOADING ---
   if (mapId) {
     document.getElementById("page-title").innerText = "Edit Battle Map";
     const { data, error } = await supabase.from("battlemaps").select("*").eq("id", mapId).single();
@@ -270,7 +263,6 @@ title: Submit / Edit Battle Map
     }
   }
 
-  // --- SUBMIT HANDLER ---
   document.getElementById("map-form").addEventListener("submit", async (e) => {
     e.preventDefault(); 
     
@@ -311,7 +303,7 @@ title: Submit / Edit Battle Map
       alert("Error saving map: " + result.error.message);
       resetButton();
     } else {
-      window.location.href = "/codex/battlemaps-view";
+      window.location.href = "/codex/battlemaps/view";
     }
   });
 

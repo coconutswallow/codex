@@ -97,8 +97,8 @@ title: Battle Map Admin
 </div>
 
 <script type="module">
-  // UPDATED IMPORT PATH (assuming this file is now in /battlemaps/ subdirectory)
-  import { supabase } from "../assets/js/supabaseClient.js";
+  // FIXED IMPORT: Use absolute path
+  import { supabase } from "/codex/assets/js/supabaseClient.js";
 
   const ADMIN_ID = "c565b7c8-5bdb-4bf4-a56e-663c1f50fa13";
   const tableBody = document.getElementById("table-body");
@@ -178,7 +178,7 @@ title: Battle Map Admin
       const thumb = map.thumbnail_url || map.image_url;
       const submitterName = userMap[map.submitted_by] || map.submitted_by.substring(0, 8) + "...";
 
-      // UPDATED LINK: 'edit' (relative path, since both are in /battlemaps/)
+      // FIXED LINK: Relative path for edit
       row.innerHTML = `
         <td>
           <a href="${map.image_url}" target="_blank">
