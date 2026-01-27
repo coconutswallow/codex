@@ -153,17 +153,15 @@ title: Submit / Edit Battle Map
     img.onload = () => {
       const pxW = img.naturalWidth;
       const pxH = img.naturalHeight;
-      let msg = `Image Resolution: ${pxW} x ${pxH} px.`;
+      let msg = `Image Resolution: ${pxW} x ${pxH} px`;
 
       if (gridMatch) {
-        // SUCCESS: Found grid in filename
-        gridW.value = gridMatch[1];
-        gridH.value = gridMatch[2];
-        msg += ` Auto-detected Grid: ${gridMatch[1]}x${gridMatch[2]}`;
+        // SUCCESS: Found grid in filename - show as info, don't auto-fill
+        msg += ` • Detected grid in filename: ${gridMatch[1]}x${gridMatch[2]} squares`;
         detectMsg.style.color = "var(--palette-success)";
       } else {
-        // FAIL: No grid in filename, but we have pixels
-        msg += ` (Could not find 'WxH' in filename)`;
+        // FAIL: No grid in filename
+        msg += ` • No grid dimensions found in filename`;
         detectMsg.style.color = "var(--color-text-muted)";
       }
       detectMsg.textContent = msg;
