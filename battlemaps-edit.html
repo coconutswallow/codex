@@ -112,6 +112,14 @@ title: Submit / Edit Battle Map
   }
   currentUser = user;
 
+  // TEMPORARY TEST - Remove after testing
+  console.log("Testing Edge Function...");
+  const { data: testData, error: testError } = await supabase.functions.invoke('imagekit-auth', {
+    body: {}
+  });
+  console.log('Test Data:', testData);
+  console.log('Test Error:', testError);
+
   /* -------------------------
      2. AUTO-DETECT LOGIC
   ------------------------- */
