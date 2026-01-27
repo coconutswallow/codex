@@ -51,13 +51,11 @@ export async function uploadImage() {
       fileName: file.name,
       folder: "/battlemaps",
       transformation: {
-        // Apply transformations at upload time to save storage/bandwidth
-        pre: 'w-4096,h-4096,c-at_max,q-85,f-auto'
+        // Simplified transformations - just resize to max dimensions
+        pre: 'w-4096,h-4096,c-at_max'
         // w-4096: Max width 4096px
         // h-4096: Max height 4096px  
         // c-at_max: Fit within dimensions, maintain aspect ratio
-        // q-85: 85% quality (good balance of quality vs file size)
-        // f-auto: Auto-select best format (WebP for modern browsers)
       },
       useUniqueFileName: true,
       // Pass auth parameters from Supabase function
