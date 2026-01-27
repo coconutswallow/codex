@@ -82,8 +82,8 @@ title: Submit / Edit Battle Map
 </div>
 
 <script type="module">
-  import { supabase } from "/assets/js/supabaseClient.js";
-  import { uploadImage } from "/assets/js/imagekit-upload.js";
+  import { supabase } from "./assets/js/supabaseClient.js";
+  import { uploadImage } from "./assets/js/imagekit-upload.js";
 
   const params = new URLSearchParams(window.location.search);
   const mapId = params.get("id");
