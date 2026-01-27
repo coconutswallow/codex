@@ -2,8 +2,8 @@
   /* FIX: Use "/assets/..." instead of "../assets/..." 
      This ensures it finds the folder regardless of where this file is located.
   */
-  import { supabase } from "assets/js/supabaseClient.js";
-  import { uploadImage } from "assets/js/imagekit-upload.js";
+  import { supabase } from "./assets/js/supabaseClient.js";
+  import { uploadImage } from "./assets/js/imagekit-upload.js";
 
   const params = new URLSearchParams(window.location.search);
   const mapId = params.get("id");
