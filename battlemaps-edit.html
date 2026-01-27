@@ -129,61 +129,8 @@ title: Submit / Edit Battle Map
 
 <script type="module">
   import { supabase } from "../assets/js/supabaseClient.js";
-  import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
-  // --- 1. AI CONFIGURATION ---
-  // Replace with your VALID API Key.
-  const genAI = new GoogleGenerativeAI("AIzaSyDthqoHCBkJs2oIQi2bgCrhfLo2WizSomo");
-  
-  // FIX 1: Use specific model version 'gemini-1.5-flash-001' to avoid 404 errors
-  const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-  // --- 2. HELPER FUNCTION: Blob to Base64 ---
-  async function blobToBase64(blob) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result.split(',')[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  }
-
-  // --- 3. MAIN AI TAGGING FUNCTION ---
-  async function autoTagMap(imageUrl) {
-    try {
-      const prompt = "Act as a TTRPG expert. Look at this battlemap and provide 8-10 descriptive search keywords (e.g., forest, dungeon, night, ruins, river). Return ONLY the keywords separated by commas.";
-      
-      const resp = await fetch(imageUrl, { mode: 'cors' });
-      if (!resp.ok) throw new Error("Could not fetch image for AI");
-      
-      const blob = await resp.blob();
-      const base64Data = await blobToBase64(blob); 
-
-      const result = await aiModel.generateContent([
-        prompt,
-        { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
-      ]);
-
-      const keywords = result.response.text();
-      
-      // Update UI
-      const keywordsInput = document.getElementById("keywords");
-      if (keywordsInput) {
-          keywordsInput.value = keywords.toLowerCase().trim().replace(/\*/g, ""); 
-      }
-      
-      const statusEl = document.getElementById("upload-status");
-      statusEl.textContent = "✓ Image uploaded + AI Keywords Generated";
-      statusEl.style.color = "var(--palette-success)";
-      
-    } catch (err) {
-      console.error("AI Tagging failed:", err);
-      const statusEl = document.getElementById("upload-status");
-      statusEl.textContent = "✓ Image uploaded (AI Tagging failed)";
-    }
-  }
-
-  // --- 4. PAGE VARIABLES & LOGIC ---
+  // --- 1. PAGE VARIABLES & LOGIC ---
   const params = new URLSearchParams(window.location.search);
   const mapId = params.get("id");
 
@@ -227,22 +174,15 @@ title: Submit / Edit Battle Map
     const dbId = event.detail.id;
     const thumbUrl = event.detail.thumb;
     const fullUrl = event.detail.url;
-
-    if (fullUrl) {
-      uploadStatus.textContent = "✓ Image uploaded. AI is analyzing...";
-      // We don't await here so the UI updates immediately
-      autoTagMap(fullUrl);
-    }
     
     // Auto-fill name if blank
     if (!nameInput.value.trim() && dbId) {
       try {
-        // FIX 2: Use .maybeSingle() instead of .single() to prevent 406 Error
         const { data: imgData } = await supabase
           .from('freehost_images')
           .select('original_filename')
           .eq('id', dbId)
-          .maybeSingle();
+          .single();
 
         if (imgData && imgData.original_filename) {
           const cleanName = imgData.original_filename.replace(/\.[^/.]+$/, "");
