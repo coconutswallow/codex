@@ -146,13 +146,6 @@ title: Battle Maps
   Load More
 </button>
 
-It looks like the mistake happened when merging the new URL parameter logic into your battlemaps-view.html file. You have a "double" DOMContentLoaded listener and a stray await getCurrentUser() call that broke the script's structure.
-
-Here is the corrected code for both the HTML/JavaScript and the Discord Bot.
-
-1. Fixed Website Code (battlemaps-view.html)
-The main issue was that you had two document.addEventListener("DOMContentLoaded"...) blocks and some redundant code at the top of your script. This version cleans that up and correctly handles the ?search= parameter.
-
 JavaScript
 <script type="module">
   import { supabase } from "../assets/js/supabaseClient.js";
