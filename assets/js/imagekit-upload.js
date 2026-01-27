@@ -33,8 +33,8 @@ export async function uploadImage() {
 
     // Initialize ImageKit
     const imagekit = new ImageKit({
-      publicKey: "your_imagekit_public_key", // Replace with your ImageKit public key
-      urlEndpoint: "https://ik.imagekit.io/your_id" // Replace with your ImageKit URL endpoint
+      publicKey: "public_bPs07/2jWzBhLfDfD3Rl0KLaRgo=", // Replace with your ImageKit public key
+      urlEndpoint: "https://ik.imagekit.io/coconutsw" // Replace with your ImageKit URL endpoint
     });
 
     // Read file as base64
