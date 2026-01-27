@@ -280,7 +280,7 @@ title: Submit / Edit Battle Map
   /* -------------------------
      5. SUBMIT HANDLER
   ------------------------- */
-  document.getElementById("map-form").addEventListener("submit", async (e) => {
+document.getElementById("map-form").addEventListener("submit", async (e) => {
     e.preventDefault(); 
     
     if (!document.getElementById("freeUse").checked) {
@@ -294,20 +294,10 @@ title: Submit / Edit Battle Map
     const finalImageUrl = document.getElementById('image-url').value || existingImageUrl;
     const finalThumbUrl = document.getElementById('thumb-url').value || existingThumbUrl;
 
-    if (!finalImageUrl) {
-      alert("Please upload a map image.");
-      resetButton();
-      return;
-    }
-
-    const wVal = gridW.value ? parseInt(gridW.value) : null;
-    const hVal = gridH.value ? parseInt(gridH.value) : null;
-
-    // Define payload FIRST
     const payload = {
       name: document.getElementById("name").value,
-      grid_width: wVal,
-      grid_height: hVal,
+      grid_width: gridW.value ? parseInt(gridW.value) : null,
+      grid_height: gridH.value ? parseInt(gridH.value) : null,
       creator: document.getElementById("creator").value,
       source_url: document.getElementById("source").value,
       keywords: document.getElementById("keywords").value,
@@ -317,17 +307,12 @@ title: Submit / Edit Battle Map
       is_approved: isApprovedSubmitter
     };
 
-    // ONLY add submitted_by if it's a new entry to avoid RLS conflicts on updates
-    if (!mapId) {
-      payload.submitted_by = currentUser.id;
-    }
-
-    let result; // Declare result BEFORE using it
+    let result;
     if (mapId) {
-      console.log("Attempting UPDATE for ID:", mapId);
-      result = await supabase.from("battlemaps").update(payload).eq("id", mapId);
+      // FIX: Ensure numeric ID for bigint column
+      result = await supabase.from("battlemaps").update(payload).eq("id", parseInt(mapId));
     } else {
-      console.log("Attempting INSERT (New Row)");
+      payload.submitted_by = currentUser.id;
       result = await supabase.from("battlemaps").insert(payload);
     }
 
