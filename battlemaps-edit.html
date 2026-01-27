@@ -122,15 +122,27 @@ title: Submit / Edit Battle Map
   ------------------------- */
   window.addEventListener('image-upload-complete', async (event) => {
     console.log("Upload complete event:", event.detail);
+    console.log("Event detail keys:", Object.keys(event.detail));
+    console.log("id:", event.detail.id);
+    console.log("thumb:", event.detail.thumb);
+    console.log("url:", event.detail.url);
     
     const dbId = event.detail.id;  // Database ID from freehost_images
     const thumbUrl = event.detail.thumb;  // Thumbnail URL
     const fullUrl = event.detail.url;  // Full image URL (now included in event)
     
     if (!fullUrl) {
-      console.error("No full URL in event data");
-      uploadStatus.style.color = "var(--color-error)";
-      uploadStatus.textContent = "⚠ Upload succeeded but URL not returned";
+      console.error("No full URL in event data - using thumb as fallback");
+      // Use thumb URL as fallback for now
+      document.getElementById('image-id').value = dbId;
+      document.getElementById('thumb-url').value = thumbUrl;
+      document.getElementById('image-url').value = thumbUrl;
+      
+      showPreview(thumbUrl, thumbUrl);
+      analyzeImageFromUrl(thumbUrl);
+      
+      uploadStatus.style.color = "orange";
+      uploadStatus.textContent = "✓ Uploaded (using thumbnail as image)";
       return;
     }
     
