@@ -9,7 +9,6 @@ title: Battle Maps
   <h1>Curated Battle Maps</h1>
   <p>
     Curated battlemaps submitted by the community. Browse, search, and download.  All maps uploaded are free to use by the original creator, and each image is credited to the creator with links to the creator's page (click on creator name to link to creator's page).
-    
   </p>
 
   <p id="map-count-display">Loading maps…</p>
@@ -26,6 +25,93 @@ title: Battle Maps
     + Submit Map
   </a>
 </div>
+
+<style>
+  /* Horizontal card layout - 2 columns */
+  .map-gallery {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .map-card {
+    display: flex;
+    flex-direction: row;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--palette-bg-page-light);
+    height: fit-content;
+  }
+  
+  .map-thumb {
+    flex-shrink: 0;
+    width: 200px;
+    height: 200px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+  }
+  
+  .map-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .map-info {
+    flex: 1;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  
+  .map-info h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.1em;
+  }
+  
+  .map-info p {
+    margin: 5px 0;
+    font-size: 0.9em;
+  }
+  
+  .map-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  .map-actions a {
+    flex: 1;
+    text-align: center;
+    padding: 8px 12px;
+    text-decoration: none;
+    font-size: 0.85em;
+  }
+  
+  /* Responsive - single column on mobile */
+  @media (max-width: 1024px) {
+    .map-gallery {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  @media (max-width: 600px) {
+    .map-card {
+      flex-direction: column;
+    }
+    
+    .map-thumb {
+      width: 100%;
+      height: 200px;
+    }
+  }
+</style>
 
 <div id="gallery-container" class="map-gallery"></div>
 
@@ -171,34 +257,36 @@ title: Battle Maps
         </div>
 
         <div class="map-info">
-          <h3>${map.name}</h3>
+          <div>
+            <h3>${map.name}</h3>
 
-          <p>
-            <strong>Creator:</strong>
-            ${map.source_url
-              ? `<a href="${map.source_url}" target="_blank">${map.creator}</a>`
-              : map.creator}
-          </p>
+            <p>
+              <strong>Creator:</strong>
+              ${map.source_url
+                ? `<a href="${map.source_url}" target="_blank" rel="noopener">${map.creator}</a>`
+                : map.creator}
+            </p>
 
-          <p>
-            <strong>Dimensions:</strong>
-            ${map.grid_width && map.grid_height 
-              ? `${map.grid_width} × ${map.grid_height} px`
-              : 'Not specified'}
-          </p>
+            <p>
+              <strong>Dimensions:</strong>
+              ${map.grid_width && map.grid_height 
+                ? `${map.grid_width} × ${map.grid_height} px`
+                : 'Not specified'}
+            </p>
 
-          ${
-            map.keywords
-              ? `<div class="tags" style="font-size: 0.85em; color: var(--color-text-muted); margin-top: 5px;">${map.keywords}</div>`
-              : ""
-          }
+            ${
+              map.keywords
+                ? `<div style="font-size: 0.85em; color: var(--color-text-muted); margin-top: 5px;">${map.keywords}</div>`
+                : ""
+            }
+          </div>
 
-          <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
-            <a href="${fullImage}" target="_blank" class="tool-btn" style="flex: 1; text-align: center; padding: 8px 12px; text-decoration: none;">
+          <div class="map-actions">
+            <a href="${fullImage}" target="_blank" class="tool-btn">
               🖼️ Full Image
             </a>
             ${isOwner 
-              ? `<a href="battlemaps-edit?id=${map.id}" class="tool-btn" style="flex: 1; text-align: center; padding: 8px 12px; text-decoration: none; background: var(--palette-accent);">
+              ? `<a href="battlemaps-edit?id=${map.id}" class="tool-btn" style="background: var(--palette-accent);">
                   ✏️ Edit
                 </a>`
               : ''
