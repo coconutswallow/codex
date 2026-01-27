@@ -135,31 +135,40 @@ title: Submit / Edit Battle Map
   const genAI = new GoogleGenerativeAI("AIzaSyDthqoHCBkJs2oIQi2bgCrhfLo2WizSomo");
   const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-  async function autoTagMap(imageUrl) {
-    try {
-      const prompt = "Act as a TTRPG expert. Look at this battlemap and provide 8-10 descriptive search keywords (e.g., forest, dungeon, night, ruins, river). Return ONLY the keywords separated by commas.";
-      
-      // Fetch image as base64 for Gemini
-      const resp = await fetch(imageUrl);
-      const blob = await resp.blob();
-      const base64Data = await new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result.split(',')[1]);
-        reader.readAsDataURL(blob);
-      });
+  try {
+    // 1. Act as a TTRPG expert prompt
+    const prompt = "Act as a TTRPG expert. Look at this battlemap and provide 8-10 descriptive search keywords (e.g., forest, dungeon, night, ruins, river). Return ONLY the keywords separated by commas.";
+    
+    // 2. Fetch image 
+    const resp = await fetch(imageUrl, { mode: 'cors' }); // Added cors mode
+    if (!resp.ok) throw new Error("Could not fetch image for AI");
+    
+    const blob = await resp.blob();
+    const base64Data = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result.split(',')[1]);
+      reader.readAsDataURL(blob);
+    });
 
-      const result = await aiModel.generateContent([
-        prompt,
-        { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
-      ]);
+    const result = await aiModel.generateContent([
+      prompt,
+      { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
+    ]);
 
-      const keywords = result.response.text();
-      document.getElementById("keywords").value = keywords.toLowerCase().trim();
-      uploadStatus.textContent += " + AI Keywords Generated";
-    } catch (err) {
-      console.error("AI Tagging failed:", err);
-    }
+    const keywords = result.response.text();
+    
+    // 3. Update the UI explicitly
+    const keywordsInput = document.getElementById("keywords");
+    keywordsInput.value = keywords.toLowerCase().trim().replace(/\*/g, ""); // Remove AI formatting
+    
+    uploadStatus.textContent = "✓ Image uploaded + AI Keywords Generated";
+    uploadStatus.style.color = "var(--palette-success)";
+    
+  } catch (err) {
+    console.error("AI Tagging failed:", err);
+    uploadStatus.textContent = "✓ Image uploaded (AI Tagging failed)";
   }
+}
 
   const params = new URLSearchParams(window.location.search);
   const mapId = params.get("id");

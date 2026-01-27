@@ -336,6 +336,14 @@ title: Bulk Submit Battle Maps
   /* -------------------------
      FILE HANDLING
   ------------------------- */
+  async function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
   async function handleFiles(files) {
     if (files.length === 0) return;
 
@@ -391,6 +399,7 @@ title: Bulk Submit Battle Maps
           updateImageCard(cardId, null, result.error || "Upload failed");
         }
         
+        
       } catch (error) {
         completed++;
         updateProgress(completed, filesArray.length);
@@ -398,16 +407,17 @@ title: Bulk Submit Battle Maps
       }
       try {
         const aiPrompt = "Provide 8 RPG battlemap keywords for this image, comma-separated.";
+        // This call requires the blobToBase64 helper you just added above
         const aiResult = await aiModel.generateContent([
-          aiPrompt,
-          { inlineData: { data: await blobToBase64(file), mimeType: file.type } }
+            aiPrompt,
+            { inlineData: { data: await blobToBase64(file), mimeType: file.type } }
         ]);
         
+        // This fills the input field on the card
         const keywordsInput = document.getElementById(cardId).querySelector('.map-keywords');
-        keywordsInput.value = aiResult.response.text().toLowerCase().trim();
-      } catch (aiErr) {
+        keywordsInput.value = aiResult.response.text().toLowerCase().trim().replace(/\*/g, "");
+    } catch (aiErr) {
         console.warn("AI tagging skipped for this map", aiErr);
-      }
     }
 
     // Hide progress when done
