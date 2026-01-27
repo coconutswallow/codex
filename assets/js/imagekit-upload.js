@@ -1,6 +1,8 @@
 // ImageKit Upload Helper with Automatic Image Optimization
 // Uses Supabase Edge Function for secure authentication
 
+import { supabase } from "../assets/js/supabaseClient.js";
+
 export async function uploadImage() {
   const fileInput = document.getElementById("ik-file");
   const file = fileInput.files[0];
@@ -11,27 +13,27 @@ export async function uploadImage() {
   }
 
   try {
-    // Get your Supabase project URL from environment or hardcode it
-    const SUPABASE_URL = "https://kcbvryvmcbfpsibxthhn.supabase.co"; // Replace with your Supabase URL
+    // Get the current session
+    const { data: { session } } = await supabase.auth.getSession();
     
-    // Call Supabase Edge Function for authentication
-    const authResponse = await fetch(`${SUPABASE_URL}/functions/v1/imagekit-auth`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (!authResponse.ok) {
-      throw new Error(`Auth failed: ${authResponse.status}`);
+    if (!session) {
+      throw new Error('You must be logged in to upload images');
     }
     
-    const authData = await authResponse.json();
+    // Call Supabase Edge Function for authentication
+    const { data: authData, error: authError } = await supabase.functions.invoke('imagekit-auth', {
+      method: 'POST'
+    });
+    
+    if (authError) {
+      throw new Error(`Auth failed: ${authError.message}`);
+    }
+    
     console.log("Auth successful:", authData);
 
     // Initialize ImageKit
     const imagekit = new ImageKit({
-      publicKey: "your_imagekit_public_keypublic_bPs07/2jWzBhLfDfD3Rl0KLaRgo=", // Replace with your ImageKit public key
+      publicKey: "public_bPs07/2jWzBhLfDfD3Rl0KLaRgo=", // Replace with your ImageKit public key
       urlEndpoint: "https://ik.imagekit.io/coconutsw" // Replace with your ImageKit URL endpoint
     });
 
