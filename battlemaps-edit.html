@@ -124,33 +124,23 @@ title: Submit / Edit Battle Map
     const imageId = event.detail.id;
     const thumbUrl = event.detail.thumb;
     
+    // Construct the full image URL from the ID
+    // Freehost pattern: https://iili.io/[ID].jpg
+    const fullUrl = `https://iili.io/${imageId}.jpg`;
+    
     // Store in hidden fields
     document.getElementById('image-id').value = imageId;
     document.getElementById('thumb-url').value = thumbUrl;
+    document.getElementById('image-url').value = fullUrl;
     
-    // Get the full image URL from the uploads table
-    const { data, error } = await supabase
-      .from('uploads')
-      .select('url')
-      .eq('id', imageId)
-      .single();
+    // Show preview
+    showPreview(thumbUrl, fullUrl);
     
-    if (!error && data) {
-      const fullUrl = data.url;
-      document.getElementById('image-url').value = fullUrl;
-      
-      // Show preview
-      showPreview(thumbUrl, fullUrl);
-      
-      // Try to analyze image dimensions
-      analyzeImageFromUrl(fullUrl);
-      
-      uploadStatus.style.color = "var(--palette-success)";
-      uploadStatus.textContent = "✓ Image uploaded successfully";
-    } else {
-      uploadStatus.style.color = "var(--color-error)";
-      uploadStatus.textContent = "⚠ Upload succeeded but couldn't retrieve URL";
-    }
+    // Try to analyze image dimensions
+    analyzeImageFromUrl(fullUrl);
+    
+    uploadStatus.style.color = "var(--palette-success)";
+    uploadStatus.textContent = "✓ Image uploaded successfully";
   });
 
   /* -------------------------
