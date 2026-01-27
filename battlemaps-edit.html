@@ -10,7 +10,8 @@ title: Submit / Edit Battle Map
   <p>Share a map with the community.</p>
 </section>
 
-<script type="text/javascript" src="https://unpkg.com/imagekit-javascript/dist/imagekit.min.js"></script>
+<!-- Load the freehost upload.js -->
+<script src="/codex/assets/js/upload.js"></script>
 
 <div class="submit-container" style="display: block; max-width: 800px; margin: 40px auto;">
   
@@ -24,15 +25,19 @@ title: Submit / Edit Battle Map
     <div class="section">
       <label>Map File</label>
       <p style="font-size: 0.85em; color: var(--color-text-muted); margin-top:0;">
-        Upload a file OR paste a direct URL.
+        Click to upload an image file.
       </p>
       
-      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-        <input type="file" id="ik-file" accept="image/*" style="flex: 1; min-width: 200px;" />
-        <span style="font-weight: bold; color: var(--color-text-muted);">OR</span>
-        <input type="url" id="ik-url" placeholder="https://..." style="flex: 2; margin-top:0;" />
-      </div>
-      <p id="detect-msg" style="font-size: 0.85em; color: var(--palette-brand-accent); font-weight: bold; margin-top: 5px; min-height: 1.2em;"></p>
+      <button type="button" class="trigger-upload" style="padding: 10px 20px; cursor: pointer;">
+        📤 Upload Image
+      </button>
+      
+      <div id="upload-status" style="margin-top: 10px; font-size: 0.9em; color: var(--color-text-muted);"></div>
+      
+      <!-- Hidden fields to store the upload IDs -->
+      <input type="hidden" id="image-id" />
+      <input type="hidden" id="image-url" />
+      <input type="hidden" id="thumb-url" />
     </div>
 
     <div class="section">
@@ -48,6 +53,7 @@ title: Submit / Edit Battle Map
           <span style="font-size: 0.8em; color: var(--color-text-muted);">Squares Tall</span>
         </div>
       </div>
+      <p id="detect-msg" style="font-size: 0.85em; color: var(--palette-brand-accent); font-weight: bold; margin-top: 5px; min-height: 1.2em;"></p>
     </div>
 
     <div class="section">
@@ -83,24 +89,23 @@ title: Submit / Edit Battle Map
 
 <script type="module">
   import { supabase } from "../assets/js/supabaseClient.js";
-  import { uploadImage } from "../assets/js/imagekit-upload.js";
 
   const params = new URLSearchParams(window.location.search);
   const mapId = params.get("id");
 
   // Elements
-  const fileInput = document.getElementById("ik-file");
-  const urlInput = document.getElementById("ik-url");
   const gridW = document.getElementById("gridW");
   const gridH = document.getElementById("gridH");
   const previewContainer = document.getElementById("preview-container");
   const previewImg = document.getElementById("preview");
   const fullSizeLink = document.getElementById("full-size-link");
   const detectMsg = document.getElementById("detect-msg");
+  const uploadStatus = document.getElementById("upload-status");
   const btn = document.getElementById("submit-btn");
 
   let currentUser = null;
   let existingImageUrl = null;
+  let existingThumbUrl = null;
 
   /* -------------------------
      1. AUTH CHECK
@@ -112,79 +117,74 @@ title: Submit / Edit Battle Map
   }
   currentUser = user;
 
-  // TEMPORARY TEST - Remove after testing
-  console.log("Testing Edge Function...");
-  const { data: testData, error: testError } = await supabase.functions.invoke('imagekit-auth', {
-    body: {}
+  /* -------------------------
+     2. LISTEN FOR UPLOAD COMPLETE
+  ------------------------- */
+  window.addEventListener('image-upload-complete', async (event) => {
+    const imageId = event.detail.id;
+    const thumbUrl = event.detail.thumb;
+    
+    // Store in hidden fields
+    document.getElementById('image-id').value = imageId;
+    document.getElementById('thumb-url').value = thumbUrl;
+    
+    // Get the full image URL from the uploads table
+    const { data, error } = await supabase
+      .from('uploads')
+      .select('url')
+      .eq('id', imageId)
+      .single();
+    
+    if (!error && data) {
+      const fullUrl = data.url;
+      document.getElementById('image-url').value = fullUrl;
+      
+      // Show preview
+      showPreview(thumbUrl, fullUrl);
+      
+      // Try to analyze image dimensions
+      analyzeImageFromUrl(fullUrl);
+      
+      uploadStatus.style.color = "var(--palette-success)";
+      uploadStatus.textContent = "✓ Image uploaded successfully";
+    } else {
+      uploadStatus.style.color = "var(--color-error)";
+      uploadStatus.textContent = "⚠ Upload succeeded but couldn't retrieve URL";
+    }
   });
-  console.log('Test Data:', testData);
-  console.log('Test Error:', testError);
 
   /* -------------------------
-     2. AUTO-DETECT LOGIC
+     3. AUTO-DETECT LOGIC
   ------------------------- */
-  fileInput.addEventListener("change", (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    urlInput.value = ""; // Clear URL input to avoid confusion
-    
-    // A. Create Preview & Load Image for Pixel Data
-    const objectUrl = URL.createObjectURL(file);
-    showPreview(objectUrl);
-    
-    // B. Analyze Filename & Pixels
-    analyzeImage(file.name, objectUrl);
-  });
-
-  urlInput.addEventListener("input", (e) => {
-    const url = e.target.value.trim();
-    if (!url) {
-      previewContainer.style.display = "none";
-      detectMsg.textContent = "";
-      return;
-    }
-    fileInput.value = ""; // Clear file input
-    showPreview(url);
-    
-    // Analyze URL (we treat the URL string as the "filename")
-    analyzeImage(url, url);
-  });
-
-  function analyzeImage(filename, src) {
-    // 1. Try to find Grid Size in Filename (e.g. "Map 30x20.jpg")
-    const gridMatch = filename.match(/(\d+)\s?[xX*]\s?(\d+)/);
-    
-    // 2. Load the image to get Pixel Dimensions
+  async function analyzeImageFromUrl(url) {
+    // Load the image to get dimensions
     const img = new Image();
-    img.crossOrigin = "Anonymous"; // Try to avoid CORS issues with external URLs
+    img.crossOrigin = "Anonymous";
     img.onload = () => {
       const pxW = img.naturalWidth;
       const pxH = img.naturalHeight;
       let msg = `Image Resolution: ${pxW} x ${pxH} px`;
-
-      if (gridMatch) {
-        // SUCCESS: Found grid in filename - show as info, don't auto-fill
-        msg += ` • Detected grid in filename: ${gridMatch[1]}x${gridMatch[2]} squares`;
-        detectMsg.style.color = "var(--palette-success)";
-      } else {
-        // FAIL: No grid in filename
-        msg += ` • No grid dimensions found in filename`;
-        detectMsg.style.color = "var(--color-text-muted)";
-      }
+      
+      // Try to detect grid from filename if possible
+      // (For freehost URLs, this won't work, but we show dimensions)
+      msg += ` • Grid dimensions not auto-detected`;
+      detectMsg.style.color = "var(--color-text-muted)";
       detectMsg.textContent = msg;
     };
-    img.src = src;
+    img.onerror = () => {
+      detectMsg.textContent = "Image loaded but couldn't analyze dimensions";
+    };
+    img.src = url;
   }
 
-  function showPreview(src) {
-    previewImg.src = src;
-    fullSizeLink.href = src;
+  function showPreview(thumbSrc, fullSrc) {
+    previewImg.src = thumbSrc;
+    fullSizeLink.href = fullSrc;
     previewContainer.style.display = "block";
   }
 
   /* -------------------------
-     3. LOAD EXISTING (EDIT MODE)
+     4. LOAD EXISTING (EDIT MODE)
   ------------------------- */
   if (mapId) {
     document.getElementById("page-title").innerText = "Edit Battle Map";
@@ -205,39 +205,30 @@ title: Submit / Edit Battle Map
       document.getElementById("freeUse").checked = data.is_free_use;
 
       existingImageUrl = data.image_url;
-      showPreview(existingImageUrl);
+      existingThumbUrl = data.thumbnail_url;
+      
+      if (existingImageUrl) {
+        document.getElementById('image-url').value = existingImageUrl;
+        document.getElementById('thumb-url').value = existingThumbUrl || existingImageUrl;
+        showPreview(existingThumbUrl || existingImageUrl, existingImageUrl);
+        uploadStatus.textContent = "Using existing image";
+      }
     }
   }
 
   /* -------------------------
-     4. SUBMIT HANDLER
+     5. SUBMIT HANDLER
   ------------------------- */
   document.getElementById("map-form").addEventListener("submit", async (e) => {
     e.preventDefault(); 
     btn.textContent = "Saving...";
     btn.disabled = true;
 
-    let finalImageUrl = existingImageUrl;
-
-    // A. Handle File Upload
-    if (fileInput.files.length > 0) {
-      const upload = await uploadImage();
-      if (!upload) {
-        alert("Image upload failed.");
-        resetButton();
-        return;
-      }
-      finalImageUrl = upload.url;
-    } 
-    // B. Handle URL
-    else if (urlInput.value) {
-      if (urlInput.value !== existingImageUrl) {
-         finalImageUrl = urlInput.value;
-      }
-    }
+    const finalImageUrl = document.getElementById('image-url').value || existingImageUrl;
+    const finalThumbUrl = document.getElementById('thumb-url').value || existingThumbUrl;
 
     if (!finalImageUrl) {
-      alert("Please upload a map image or provide a URL.");
+      alert("Please upload a map image.");
       resetButton();
       return;
     }
@@ -255,6 +246,7 @@ title: Submit / Edit Battle Map
       keywords: document.getElementById("keywords").value,
       is_free_use: document.getElementById("freeUse").checked,
       image_url: finalImageUrl,
+      thumbnail_url: finalThumbUrl,
       submitted_by: currentUser.id
     };
 
