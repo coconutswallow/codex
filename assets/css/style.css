@@ -9,9 +9,12 @@
 :root {
   /* Brand Colors */
   --palette-brand-main: #4A332A;          /* Deep Coconut Husk */
-  --palette-brand-accent: #6B8E23;        /* Palm Leaf */
-  --palette-brand-highlight: #D7C49E;     /* Dried Fiber */
+  --palette-brand-accent: #6B8E23;        /* Palm Leaf (Dark Green) */
+  --palette-brand-highlight: #D7C49E;     /* Dried Fiber (Beige) */
   
+  /* NEW: Bright Accent for Dark Mode readability */
+  --palette-brand-accent-pop: #A8C96C;    /* Lighter Palm */
+
   /* Discord Brand */
   --palette-brand-discord: #5865F2;
   --palette-brand-discord-dark: #4752C4;
@@ -22,21 +25,21 @@
   --palette-bg-row-light: #F4EFEA;        
   --palette-bg-controls-light: #EBE5DE;   
   
-  /* Backgrounds - Dark Mode */
-  --palette-bg-page-dark: #1C1410;        
-  --palette-bg-card-dark: #2A1F1A;        
-  --palette-bg-controls-dark: #362924;    
+  /* Backgrounds - Dark Mode (Refined for Contrast) */
+  --palette-bg-page-dark: #0F0A08;        /* Almost black/brown */
+  --palette-bg-card-dark: #1E1714;        /* Rich dark brown */
+  --palette-bg-controls-dark: #2D231E;    /* Lighter control bg */
 
   /* Text */
   --palette-text-main-light: #3E2723;     
   --palette-text-muted-light: #6D4C41;    
   
-  --palette-text-main-dark: #EFEBE9;      
-  --palette-text-muted-dark: #BCAAA4;     
+  --palette-text-main-dark: #E6E0DC;      /* Brighter white/grey */
+  --palette-text-muted-dark: #A18E85;     /* Warm grey */
 
   /* Borders */
   --palette-border-light: #D7CCC8;        
-  --palette-border-dark: #4E342E;         
+  --palette-border-dark: #45352F;         /* Visible dark border */
 
   /* Map Viewer Specifics */
   --palette-viewer-bg: #111111;
@@ -45,7 +48,7 @@
   
   /* System */
   --palette-success: #6B8E23;             
-  --palette-danger: #D32F2F;              
+  --palette-danger: #ef4444;              /* Brighter Red for dark mode visibility */
   --palette-white: #ffffff;
 }
 
@@ -73,8 +76,9 @@
 
 /* Dark Mode Overrides */
 [data-theme="dark"] {
-  --color-primary: var(--palette-brand-highlight);
-  --color-secondary: var(--palette-brand-accent);
+  --color-primary: var(--palette-brand-highlight); /* Text Headers become Beige */
+  --color-secondary: var(--palette-brand-accent-pop); /* Links become Light Green */
+  --color-highlight: var(--palette-brand-main); /* Highlight bgs become dark brown */
   
   --color-bg-page: var(--palette-bg-page-dark);
   --color-bg-card: var(--palette-bg-card-dark);
@@ -84,7 +88,32 @@
   --color-text-muted: var(--palette-text-muted-dark);
   
   --color-border: var(--palette-border-dark);
-  --color-input-bg: #2A1F1A;
+  --color-input-bg: #140e0c; /* Very dark for inputs */
+}
+
+/* Specific Dark Mode element fixes */
+[data-theme="dark"] a {
+  color: var(--palette-brand-accent-pop);
+}
+
+[data-theme="dark"] a:hover {
+  color: var(--palette-brand-highlight);
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  border-color: #5d4a41;
+}
+
+[data-theme="dark"] .tool-btn {
+  background: var(--palette-bg-controls-dark);
+  border-color: var(--palette-border-dark);
+}
+
+[data-theme="dark"] .tool-btn:hover {
+  background: var(--palette-brand-main);
+  border-color: var(--palette-brand-highlight);
 }
 
 /* ============================================
@@ -1176,15 +1205,31 @@ tbody tr:hover {
 [data-theme="dark"] table {
   background-color: var(--palette-bg-card-dark);
   color: var(--palette-text-main-dark);
+  border-color: var(--palette-border-dark);
 }
+
+[data-theme="dark"] thead {
+  background-color: #2D1B15; /* Darker header */
+  border-bottom: 2px solid var(--palette-brand-accent-pop);
+}
+
 [data-theme="dark"] th {
   color: var(--palette-brand-highlight);
+  text-shadow: none;
 }
+
+[data-theme="dark"] td {
+  border-bottom: 1px solid var(--palette-border-dark);
+}
+
 [data-theme="dark"] tr:nth-child(even) {
-  background-color: rgba(255, 255, 255, 0.03);
+  /* Slightly lighter row for zebra stripe */
+  background-color: rgba(255, 255, 255, 0.03); 
 }
+
 [data-theme="dark"] tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  /* Green tint on hover */
+  background-color: rgba(168, 201, 108, 0.1); 
 }
 
 /* ============================================
@@ -1221,7 +1266,7 @@ a:hover { text-decoration: underline; color: var(--palette-brand-main); }
   /* Frame Logic */
   max-width: 1400px;           /* Restrict width so you can see the background */
   margin: 0 auto;              /* Center it */
-  background-color: var(--color-bg-page); /* Solid background so text is readable */
+  background-color: var(--color-bg-page);
   box-shadow: 0 0 50px rgba(0,0,0,0.5);   /* Drop shadow to make it "pop" off the background */
   position: relative;
   z-index: 1;
