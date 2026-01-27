@@ -283,8 +283,6 @@ title: Submit / Edit Battle Map
   document.getElementById("map-form").addEventListener("submit", async (e) => {
     e.preventDefault(); 
     
-    
-    // Check if free use is confirmed
     if (!document.getElementById("freeUse").checked) {
       alert("Please confirm that this map was made available for free to the public.");
       return;
@@ -302,10 +300,10 @@ title: Submit / Edit Battle Map
       return;
     }
 
-    // Convert inputs to numbers (or null if empty)
     const wVal = gridW.value ? parseInt(gridW.value) : null;
     const hVal = gridH.value ? parseInt(gridH.value) : null;
 
+    // Define payload FIRST
     const payload = {
       name: document.getElementById("name").value,
       grid_width: wVal,
@@ -316,12 +314,15 @@ title: Submit / Edit Battle Map
       is_free_use: document.getElementById("freeUse").checked,
       image_url: finalImageUrl,
       thumbnail_url: finalThumbUrl,
-      submitted_by: currentUser.id,
       is_approved: isApprovedSubmitter
     };
 
-    console.log("Current mapId is:", mapId); 
-    
+    // ONLY add submitted_by if it's a new entry to avoid RLS conflicts on updates
+    if (!mapId) {
+      payload.submitted_by = currentUser.id;
+    }
+
+    let result; // Declare result BEFORE using it
     if (mapId) {
       console.log("Attempting UPDATE for ID:", mapId);
       result = await supabase.from("battlemaps").update(payload).eq("id", mapId);
@@ -330,21 +331,14 @@ title: Submit / Edit Battle Map
       result = await supabase.from("battlemaps").insert(payload);
     }
 
-    let result;
-    if (mapId) {
-      result = await supabase.from("battlemaps").update(payload).eq("id", mapId);
-    } else {
-      result = await supabase.from("battlemaps").insert(payload);
-    }
-
     if (result.error) {
-      console.error(result.error);
+      console.error("Supabase Error:", result.error);
       alert("Error saving map: " + result.error.message);
       resetButton();
     } else {
       window.location.href = "/codex/battlemaps-view";
     }
-  });
+});
 
   function resetButton() {
     btn.textContent = "Save Map";
