@@ -7,27 +7,43 @@ title: Submit / Edit Battle Map
 
 <section class="hero-block">
   <h1 id="page-title">Submit Battle Map</h1>
-  <p>Share a map with the community. If you want to bulk load maps by the same creator, use the <a href="/codex/battlemaps-bulk">Bulk Upload Page</a></p>
+  <p>Share a map with the community. If you want to bulk load (i.e. upload a set of maps by the same creator), use the <a href="/codex/battlemaps-bulk">Bulk Upload Page</a></p>
 </section>
 
 <script src="/codex/assets/js/upload.js"></script>
 
 <style>
+  /* Restored your original CSS exactly */
   .submit-container {
     max-width: 100% !important;
     width: 100%;
     padding: 40px;
     margin: 0 auto;
   }
+  
   .upload-section {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 30px;
     align-items: start;
   }
-  .upload-left { display: flex; flex-direction: column; }
-  .upload-right { display: flex; justify-content: center; align-items: center; }
-  @media (max-width: 768px) { .upload-section { grid-template-columns: 1fr; } }
+  
+  .upload-left {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .upload-right {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  @media (max-width: 768px) {
+    .upload-section {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
 
 <div class="submit-container">
@@ -60,8 +76,8 @@ title: Submit / Edit Battle Map
       </div>
 
       <div style="margin-bottom: 20px;">
-        <label for="keywords">Search Keywords</label>
-        <input id="keywords" type="text" placeholder="forest, dungeon, night..." style="width: 100%; padding: 10px;" />
+        <label for="keywords">Search Keywords (Auto-generated)</label>
+        <input id="keywords" type="text" placeholder="Uploading image will generate keywords..." style="width: 100%; padding: 10px;" />
       </div>
 
       <label class="checkbox" style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; color: var(--color-text);">
@@ -77,9 +93,11 @@ title: Submit / Edit Battle Map
     <div class="upload-right">
       <div id="upload-widget-container" style="width: 100%; text-align: center;">
         <p id="upload-status" style="margin-top: 10px; font-weight: bold;">Loading upload tool...</p>
+        
         <div id="image-preview-container" style="margin-top: 20px; display: none;">
           <img id="image-preview" src="" style="max-width: 100%; border-radius: 8px; border: 1px solid var(--color-border);" />
         </div>
+        
         <input type="hidden" id="image-url" />
         <input type="hidden" id="thumb-url" />
       </div>
@@ -91,9 +109,11 @@ title: Submit / Edit Battle Map
   import { supabase } from "../assets/js/supabaseClient.js";
   import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
+  // --- AI CONFIGURATION ---
   const genAI = new GoogleGenerativeAI("AIzaSyAnfiXcRrAUwX5_ogCYYygycRD0uZVKbw8");
   const aiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
+  // --- DOM ELEMENTS & VARIABLES ---
   const urlParams = new URLSearchParams(window.location.search);
   const mapId = urlParams.get("id");
 
@@ -109,6 +129,7 @@ title: Submit / Edit Battle Map
   let existingImageUrl = null;
   let existingThumbUrl = null;
 
+  // --- HELPER: Convert Blob to Base64 (Required for AI) ---
   async function blobToBase64(blob) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -118,6 +139,7 @@ title: Submit / Edit Battle Map
     });
   }
 
+  // --- FUNCTION: Run AI Tagging ---
   async function autoTagMap(imageUrl) {
     try {
       const prompt = "Act as a TTRPG expert. Look at this battlemap and provide 8-10 descriptive search keywords (e.g., forest, dungeon, night, ruins, river). Return ONLY the keywords separated by commas.";
@@ -132,14 +154,20 @@ title: Submit / Edit Battle Map
       ]);
 
       const keywords = result.response.text();
-      document.getElementById("keywords").value = keywords.toLowerCase().trim().replace(/\*/g, "");
+      const keyInput = document.getElementById("keywords");
+      if(keyInput) {
+        keyInput.value = keywords.toLowerCase().trim().replace(/\*/g, "");
+      }
       uploadStatus.textContent = "✓ Image uploaded + AI Keywords Generated";
+      uploadStatus.style.color = "var(--palette-success)";
+      
     } catch (err) {
       console.error("AI Tagging failed:", err);
       uploadStatus.textContent = "✓ Image uploaded (AI analysis skipped)";
     }
   }
 
+  // --- EVENT LISTENER: Trigger AI after Upload ---
   window.addEventListener('image-upload-complete', async (event) => {
     const fullUrl = event.detail.url;
     const thumbUrl = event.detail.thumbUrl;
@@ -152,9 +180,12 @@ title: Submit / Edit Battle Map
     document.getElementById('image-preview-container').style.display = 'block';
     
     uploadStatus.textContent = "✓ Image uploaded. AI is analyzing...";
+    
+    // Call the AI function here
     await autoTagMap(fullUrl);
   });
 
+  // --- AUTH CHECK ---
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     alert("Please log in.");
@@ -163,8 +194,11 @@ title: Submit / Edit Battle Map
   currentUser = user;
 
   const { data: profile } = await supabase.from("discord_users").select("approved_map_submitter").eq("user_id", user.id).single();
-  if (profile?.approved_map_submitter) isApprovedSubmitter = true;
+  if (profile && profile.approved_map_submitter) {
+    isApprovedSubmitter = true;
+  }
 
+  // --- LOAD EXISTING MAP (IF EDITING) ---
   if (mapId) {
     pageTitle.textContent = "Edit Battle Map";
     const { data: map } = await supabase.from("battlemaps").select("*").eq("id", mapId).single();
@@ -186,6 +220,7 @@ title: Submit / Edit Battle Map
     }
   }
 
+  // --- SAVE BUTTON HANDLER ---
   saveBtn.onclick = async () => {
     if (!nameInput.value || !document.getElementById("creator").value || !document.getElementById("freeUse").checked) {
       alert("Please fill in required fields.");
@@ -195,6 +230,9 @@ title: Submit / Edit Battle Map
     saveBtn.textContent = "Saving...";
     saveBtn.disabled = true;
 
+    const finalImageUrl = document.getElementById('image-url').value || existingImageUrl;
+    const finalThumbUrl = document.getElementById('thumb-url').value || existingThumbUrl;
+
     const payload = {
       name: nameInput.value,
       grid_width: gridW.value ? parseInt(gridW.value) : null,
@@ -203,20 +241,22 @@ title: Submit / Edit Battle Map
       source_url: document.getElementById("source").value,
       keywords: document.getElementById("keywords").value,
       is_free_use: document.getElementById("freeUse").checked,
-      image_url: document.getElementById('image-url').value || existingImageUrl,
-      thumbnail_url: document.getElementById('thumb-url').value || existingThumbUrl,
+      image_url: finalImageUrl,
+      thumbnail_url: finalThumbUrl,
       is_approved: isApprovedSubmitter
     };
 
-    let res;
-    if (mapId) res = await supabase.from("battlemaps").update(payload).eq("id", mapId);
-    else {
+    let result;
+    if (mapId) {
+      result = await supabase.from("battlemaps").update(payload).eq("id", parseInt(mapId));
+    } else {
       payload.submitted_by = currentUser.id;
-      res = await supabase.from("battlemaps").insert(payload);
+      result = await supabase.from("battlemaps").insert(payload);
     }
 
-    if (res.error) {
-      alert("Error: " + res.error.message);
+    if (result.error) {
+      console.error("Supabase Error:", result.error);
+      alert("Error saving map: " + result.error.message);
       saveBtn.disabled = false;
       saveBtn.textContent = "Save Map";
     } else {
