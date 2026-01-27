@@ -128,16 +128,18 @@ title: Submit / Edit Battle Map
     
     console.log("Querying freehost_images with ID:", dbId);
     
+    // Add a small delay to ensure the database insert has completed
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     // Query the freehost_images table to get the full image URL
     const { data, error } = await supabase
       .from('freehost_images')
       .select('image_url')
-      .eq('id', dbId)
-      .single();
+      .eq('id', dbId);
     
     console.log("Query result - Data:", data, "Error:", error);
     
-    if (error || !data) {
+    if (error || !data || data.length === 0) {
       console.error("Error fetching image URL:", error);
       uploadStatus.style.color = "var(--color-error)";
       uploadStatus.textContent = "⚠ Error: " + (error?.message || "No data returned");
@@ -149,7 +151,7 @@ title: Submit / Edit Battle Map
       return;
     }
     
-    const fullUrl = data.image_url;
+    const fullUrl = data[0].image_url;  // Get first result
     
     console.log("Full URL:", fullUrl, "Thumb:", thumbUrl);
     
