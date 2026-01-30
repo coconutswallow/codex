@@ -79,7 +79,7 @@
       <h3>Select Image to Upload</h3>
       
       <div class="file-input-wrapper">
-        <input type="file" id="u-file" accept="image/*">
+        <input type="file" id="u-file" accept="image/png, image/jpeg, image/jpg, image/webp, image/bmp">
       </div>
 
       <div class="btn-group">
@@ -124,11 +124,20 @@
       return;
     }
 
+    const file = fileInput.files[0];
+
+    // UPDATED: Strict check to block GIFs if the user bypasses the system picker
+    if (file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif')) {
+      statusDiv.style.color = '#ff6b6b';
+      statusDiv.innerText = "GIF files are not supported. Please use PNG, JPG, or WEBP.";
+      return;
+    }
+
     statusDiv.style.color = '#fff';
     statusDiv.innerHTML = 'Uploading... <div class="spinner"></div>';
     
     const formData = new FormData();
-    formData.append('file', fileInput.files[0]);
+    formData.append('file', file);
 
     try {
       const response = await fetch(FUNCTION_URL, {
@@ -146,7 +155,7 @@
             detail: { 
               id: result.id, 
               thumb: result.thumb,
-              url: result.url  // ADDED: Pass through the full URL
+              url: result.url 
             } 
           }));
           closeAndReset(); 
