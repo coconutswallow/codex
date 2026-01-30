@@ -8,16 +8,17 @@ title: Token Library | Battlemaps
 <link rel="stylesheet" href="/codex/assets/css/style.css">
 <style>
     /* Layout & Filtering */
-    .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .filter-bar { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
     .filter-btn { 
-        background: transparent; 
+        background: rgba(215, 196, 158, 0.05); 
         border: 1px solid var(--palette-brand-highlight); 
         color: var(--palette-brand-highlight); 
-        padding: 8px 16px; 
+        padding: 8px 18px; 
         border-radius: 20px; 
         cursor: pointer; 
         transition: all 0.2s;
         font-family: var(--font-header);
+        font-size: 0.9em;
     }
     .filter-btn.active, .filter-btn:hover { 
         background: var(--palette-brand-highlight); 
@@ -26,117 +27,119 @@ title: Token Library | Battlemaps
     }
 
     /* Category Sections */
-    .category-section { margin-bottom: 40px; display: none; /* Hidden until loaded */ }
+    .category-section { margin-bottom: 45px; display: none; }
     .category-section.visible { display: block; }
     .category-header { 
         border-bottom: 2px solid var(--palette-brand-main); 
-        margin-bottom: 15px; 
+        margin-bottom: 20px; 
         color: var(--palette-brand-accent-pop);
         font-family: var(--font-header);
         display: flex;
         align-items: center;
         gap: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
-    /* Token Cards */
+    /* Token Grid & Cards */
     .token-grid { 
         display: grid; 
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); 
         gap: 20px; 
     }
     .token-card { 
         background: var(--palette-bg-card-dark); 
-        border: 1px solid rgba(255,255,255,0.1); 
-        border-radius: 8px; 
-        padding: 15px; 
+        border: 1px solid rgba(215, 196, 158, 0.15); 
+        border-radius: 10px; 
+        padding: 18px; 
         display: flex; 
         align-items: center; 
         gap: 15px;
+        transition: transform 0.2s;
     }
+    .token-card:hover { transform: translateY(-2px); border-color: var(--palette-brand-highlight); }
+
     .token-thumb { 
-        width: 80px; height: 80px; 
+        width: 85px; height: 85px; 
         object-fit: cover; 
         border-radius: 50%; 
         border: 3px solid var(--palette-brand-accent); 
         background: #000;
         flex-shrink: 0;
     }
+
     .token-info { flex: 1; overflow: hidden; }
-    .token-name { font-weight: bold; font-size: 1.1em; margin-bottom: 8px; color: #fff; }
+    .token-name { font-weight: bold; font-size: 1.2em; margin-bottom: 8px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     
-    /* Code & Copy Button */
-    .code-wrapper { display: flex; gap: 0; align-items: stretch; }
+    /* Code & Copy UI */
+    .code-wrapper { display: flex; align-items: stretch; border-radius: 6px; overflow: hidden; border: 1px solid #333; }
     .token-code { 
-        background: #111; 
+        background: #0a0a0a; 
         color: var(--palette-brand-accent-pop); 
-        font-family: monospace; 
-        padding: 10px; 
-        border-top-left-radius: 4px;
-        border-bottom-left-radius: 4px;
-        font-size: 1.2em; /* Larger Code */
-        letter-spacing: 0.5px;
+        font-family: 'Courier New', monospace; 
+        padding: 10px 12px; 
+        font-size: 1.3em; /* Larger Code */
+        font-weight: bold;
         flex: 1;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        border: 1px solid #333;
-        border-right: none;
     }
     .copy-btn { 
-        background: #333; 
-        border: 1px solid #333; 
-        border-left: 1px solid #444;
-        color: #fff; 
-        border-top-right-radius: 4px;
-        border-bottom-right-radius: 4px;
+        background: #222; 
+        border: none;
+        border-left: 1px solid #333;
+        color: var(--palette-brand-highlight); 
         cursor: pointer; 
-        width: 44px; 
+        width: 48px; 
         display: flex; 
         align-items: center; 
         justify-content: center; 
-        transition: background 0.2s;
+        transition: all 0.2s;
     }
-    .copy-btn:hover { background: #555; }
-    .copy-btn.copied { background: #4cd964; border-color: #4cd964; }
+    .copy-btn:hover { background: #333; color: #fff; }
+    .copy-btn.copied { background: #4cd964; color: white; }
 
     /* Add Button */
-    .add-token-container { display: flex; justify-content: space-between; align-items: center; margin: 20px 0; }
-    .save-btn { background: var(--palette-brand-accent); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    .add-token-container { display: flex; justify-content: space-between; align-items: center; margin: 30px 0; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px; }
+    .save-btn { background: var(--palette-brand-accent); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1em; }
+    .save-btn:hover { filter: brightness(1.1); }
 
-    /* Modal */
+    /* Modal Overlay */
     #details-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 2000;
+        background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 2000;
+        backdrop-filter: blur(4px);
     }
-    .details-modal { background: var(--palette-bg-card-light); padding: 2rem; border-radius: 12px; width: 400px; color: var(--palette-brand-main); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+    .details-modal { background: var(--palette-bg-card-light); padding: 2.5rem; border-radius: 12px; width: 420px; color: var(--palette-brand-main); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
     .form-group { margin-bottom: 1.5rem; }
-    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
-    .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    .form-group label { display: block; margin-bottom: 0.6rem; font-weight: bold; color: var(--palette-brand-main); }
+    .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1em; }
 </style>
 
 <main class="container">
     <div class="add-token-container">
         <h1>Token Library</h1>
-        <button class="trigger-upload save-btn" id="add-token-btn" style="display:none;">+ New Token</button>
+        <button class="trigger-upload save-btn" id="add-token-btn" style="display:none;">+ Add New Token</button>
     </div>
 
     <div class="filter-bar" id="filter-bar" style="display:none;">
-        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn active" data-filter="all">All Library</button>
         <button class="filter-btn" data-filter="My Characters">My Characters</button>
         <button class="filter-btn" data-filter="Other Characters">Other Characters</button>
         <button class="filter-btn" data-filter="Monsters">Monsters</button>
     </div>
 
-    <div id="loading-status" style="padding: 20px; text-align: center;">Loading tokens...</div>
+    <div id="loading-status" style="padding: 40px; text-align: center; font-style: italic; opacity: 0.7;">Gathering tokens from the archives...</div>
     <div id="library-container"></div>
 </main>
 
 <div id="details-overlay">
     <div class="details-modal">
-        <h3>New Token Details</h3>
+        <h2 style="margin-top:0;">Token Details</h2>
         <div class="form-group">
             <label>Name</label>
-            <input type="text" id="t-name" placeholder="e.g. Grom the Barbarian">
+            <input type="text" id="t-name" placeholder="Character or Monster Name">
         </div>
         <div class="form-group">
             <label>Category</label>
@@ -146,8 +149,8 @@ title: Token Library | Battlemaps
                 <option value="Monsters">Monsters</option>
             </select>
         </div>
-        <button id="save-token-db" class="save-btn" style="width:100%">Save Token</button>
-        <p id="save-status" style="text-align:center; margin-top:10px; font-weight:bold;"></p>
+        <button id="save-token-db" class="save-btn" style="width:100%">Register Token</button>
+        <p id="save-status" style="text-align:center; margin-top:15px; font-weight:bold; min-height: 1.2em;"></p>
     </div>
 </div>
 
@@ -165,7 +168,7 @@ title: Token Library | Battlemaps
             document.getElementById('filter-bar').style.display = 'flex';
             fetchTokens();
         } else {
-            document.getElementById('loading-status').innerHTML = "Please log in with Discord.";
+            document.getElementById('loading-status').innerHTML = "Access Denied. Please log in with Discord.";
         }
     };
 
@@ -175,7 +178,7 @@ title: Token Library | Battlemaps
             .from('tokens')
             .select(`
                 id, name, type, token_code,
-                freehost_images ( thumb_url )
+                freehost_images ( image_url )
             `)
             .order('name', { ascending: true });
 
@@ -183,7 +186,6 @@ title: Token Library | Battlemaps
 
         document.getElementById('loading-status').style.display = 'none';
         
-        // Group data by Type
         const grouped = {
             "My Characters": [],
             "Other Characters": [],
@@ -191,14 +193,13 @@ title: Token Library | Battlemaps
         };
 
         data.forEach(token => {
-            // FIX 404: Safe check for image URL
-            const imgUrl = token.freehost_images?.thumb_url 
-                ? token.freehost_images.thumb_url 
-                : 'https://placehold.co/80x80?text=?'; 
+            // FIXED: Using image_url from the joined table
+            const imgUrl = (token.freehost_images && token.freehost_images.image_url) 
+                ? token.freehost_images.image_url 
+                : 'https://placehold.co/150x150?text=No+Image'; 
 
             const tokenObj = { ...token, safeImg: imgUrl };
 
-            // Assign to group or fallback to 'Misc'
             if (grouped[token.type]) {
                 grouped[token.type].push(tokenObj);
             } else {
@@ -211,34 +212,31 @@ title: Token Library | Battlemaps
     }
 
     function renderSections(groupedTokens) {
-        container.innerHTML = ''; // Clear
+        container.innerHTML = ''; 
 
         for (const [type, tokens] of Object.entries(groupedTokens)) {
             if (!tokens || tokens.length === 0) continue;
 
-            // Section Container
             const section = document.createElement('div');
             section.className = `category-section visible`;
             section.dataset.category = type;
 
-            // Header
             const header = document.createElement('h3');
             header.className = 'category-header';
-            header.innerHTML = `${type} <span style="font-size:0.6em; opacity:0.6; margin-left:auto;">${tokens.length}</span>`;
+            header.innerHTML = `${type} <span style="font-size:0.65em; opacity:0.5; margin-left:auto; font-family: sans-serif;">${tokens.length} TOKENS</span>`;
             section.appendChild(header);
 
-            // Grid
             const grid = document.createElement('div');
             grid.className = 'token-grid';
             
             grid.innerHTML = tokens.map(t => `
                 <div class="token-card">
-                    <img src="${t.safeImg}" class="token-thumb" loading="lazy">
+                    <img src="${t.safeImg}" class="token-thumb" alt="${t.name}" loading="lazy" onerror="this.src='https://placehold.co/150x150?text=Error'">
                     <div class="token-info">
                         <div class="token-name">${t.name}</div>
                         <div class="code-wrapper">
-                            <div class="token-code" title="${t.token_code || ''}">${t.token_code || '---'}</div>
-                            <button class="copy-btn" onclick="copyToClipboard('${t.token_code || ''}', this)" title="Copy to Clipboard">
+                            <div class="token-code">${t.token_code || '---'}</div>
+                            <button class="copy-btn" onclick="copyToClipboard('${t.token_code || ''}', this)" title="Copy OTFBM Code">
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                             </button>
                         </div>
@@ -254,32 +252,23 @@ title: Token Library | Battlemaps
     // --- FILTER LOGIC ---
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            // Update active state
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
 
             const filter = e.target.dataset.filter;
-            const sections = document.querySelectorAll('.category-section');
-
-            sections.forEach(sec => {
-                if (filter === 'all' || sec.dataset.category === filter) {
-                    sec.style.display = 'block';
-                } else {
-                    sec.style.display = 'none';
-                }
+            document.querySelectorAll('.category-section').forEach(sec => {
+                sec.style.display = (filter === 'all' || sec.dataset.category === filter) ? 'block' : 'none';
             });
         });
     });
 
-    // --- GLOBAL COPY FUNCTION ---
+    // --- CLIPBOARD ---
     window.copyToClipboard = (text, btnElement) => {
         if (!text) return;
         navigator.clipboard.writeText(text).then(() => {
-            // Visual Feedback
             const originalHTML = btnElement.innerHTML;
             btnElement.classList.add('copied');
             btnElement.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-            
             setTimeout(() => {
                 btnElement.classList.remove('copied');
                 btnElement.innerHTML = originalHTML;
@@ -287,7 +276,7 @@ title: Token Library | Battlemaps
         });
     };
 
-    // --- UPLOAD & SAVE LOGIC ---
+    // --- UPLOAD & PARSE ---
     window.addEventListener('image-upload-complete', (e) => {
         currentUploadData = e.detail;
         document.getElementById('details-overlay').style.display = 'flex';
@@ -301,33 +290,29 @@ title: Token Library | Battlemaps
         
         if (!name) {
             status.style.color = '#ff6b6b';
-            status.innerText = "Please enter a name.";
+            status.innerText = "Name required.";
             return;
         }
 
         status.style.color = 'inherit';
-        status.innerText = "Generating token code...";
+        status.innerText = "Finalizing token...";
         
         try {
-            // 1. Fetch from OTFBM via AllOrigins Proxy
             const base64Url = btoa(currentUploadData.url);
             const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://token.otfbm.io/meta/' + base64Url)}`;
             
             const response = await fetch(proxyUrl);
             const json = await response.json();
             
-            // 2. PARSE HTML: Extract only the text inside <body>
-            //    The proxy returns "<html>...<body>cdsdz</body></html>"
+            // Extract code from proxy HTML wrapper
             const parser = new DOMParser();
             const doc = parser.parseFromString(json.contents, 'text/html');
             const tokenCode = doc.body.textContent.trim();
 
-            // Validation to ensure we actually got a code and not an HTML error page
             if(!tokenCode || tokenCode.length < 2 || tokenCode.includes("<")) {
-                 throw new Error("Could not generate valid code.");
+                 throw new Error("OTFBM parsing failed.");
             }
 
-            // 3. Save to Supabase
             const { data: { user } } = await supabase.auth.getUser();
 
             const { error } = await supabase.from('tokens').insert([{
@@ -339,16 +324,13 @@ title: Token Library | Battlemaps
             }]);
 
             if (error) throw error;
-            
             location.reload(); 
         } catch (err) {
             status.style.color = '#ff6b6b';
             status.innerText = "Error: " + err.message;
-            console.error(err);
         }
     });
 
-    // Close Modal on Escape
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') document.getElementById('details-overlay').style.display = 'none';
     });
