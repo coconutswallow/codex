@@ -160,40 +160,32 @@ title: Token Library | Battlemaps
         }
     };
 
+    // FETCHING DATA
     async function fetchTokens() {
-        // Updated Select: Specifically fetching image_url
         const { data, error } = await supabase
             .from('tokens')
             .select(`
                 id, name, type, token_code,
-                freehost_images ( image_url )
-            `)
+                freehost_images ( image_url ) 
+            `) // This specifies the join via the FK
             .order('name', { ascending: true });
 
         if (error) return console.error(error);
 
-        document.getElementById('loading-status').style.display = 'none';
-        
-        const grouped = {
-            "My Characters": [],
-            "Other Characters": [],
-            "Monsters": []
-        };
-
-        data.forEach(token => {
-            // Check for image_url from join, fallback to placeholder if missing
-            const imgUrl = token.freehost_images?.image_url || 'https://placehold.co/100x100?text=No+Img';
-            const tokenObj = { ...token, safeImg: imgUrl };
-
-            if (grouped[token.type]) {
-                grouped[token.type].push(tokenObj);
-            } else {
-                if(!grouped["Misc"]) grouped["Misc"] = [];
-                grouped["Misc"].push(tokenObj);
-            }
-        });
-
-        renderSections(grouped);
+        // RENDERING DATA
+        tokenList.innerHTML = data.map(token => {
+            // Access the joined object. Use image_url instead of thumb_url
+            const displayImg = token.freehost_images?.image_url || 'path/to/placeholder.png';
+            
+            return `
+                <tr>
+                    <td><img src="${displayImg}" class="token-thumb"></td>
+                    <td>${token.name}</td>
+                    <td>${token.type}</td>
+                    <td><code>${token.token_code || 'N/A'}</code></td>
+                </tr>
+            `;
+        }).join('');
     }
 
     function renderSections(groupedTokens) {
