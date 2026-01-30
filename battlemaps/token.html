@@ -5,7 +5,7 @@ title: Token Library | Battlemaps
 
 {% include auth-header.html %}
 
-<link rel="stylesheet" href="../assets/css/style.css">
+<link rel="stylesheet" href="/codex/assets/css/style.css">
 
 <style>
     .token-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: var(--palette-bg-card-dark); border-radius: 8px; overflow: hidden; }
@@ -13,22 +13,17 @@ title: Token Library | Battlemaps
     .token-table td { padding: 12px; border-bottom: 1px solid rgba(215, 196, 158, 0.1); vertical-align: middle; color: #fff; }
     .token-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 50%; border: 2px solid var(--palette-brand-accent); }
     .add-token-container { display: flex; justify-content: space-between; align-items: center; margin: 20px 0; padding: 0 10px; }
-    
-    /* Token Code Styling */
-    .code-block { background: #222; padding: 4px 8px; border-radius: 4px; font-family: monospace; color: var(--palette-brand-accent-pop); font-size: 0.9em; }
+    .code-block { background: #222; padding: 4px 8px; border-radius: 4px; font-family: monospace; color: var(--palette-brand-accent-pop); font-size: 0.85em; word-break: break-all; }
 
-    /* Modal for Token Details */
     #details-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 2000;
     }
-    .details-modal { background: var(--palette-bg-card-light); padding: 2rem; border-radius: 12px; width: 400px; color: var(--palette-brand-main); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-    .details-modal h3 { margin-top: 0; color: var(--palette-brand-main); border-bottom: 2px solid var(--palette-brand-highlight); padding-bottom: 10px; }
+    .details-modal { background: var(--palette-bg-card-light); padding: 2rem; border-radius: 12px; width: 400px; color: var(--palette-brand-main); }
     .form-group { margin-bottom: 1.5rem; }
-    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; font-size: 0.9em; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
     .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--palette-brand-highlight); border-radius: 6px; box-sizing: border-box; }
-    .save-btn { background: var(--palette-brand-accent); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: opacity 0.2s; }
-    .save-btn:hover { opacity: 0.9; }
+    .save-btn { background: var(--palette-brand-accent); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 </style>
 
 <main class="container">
@@ -48,8 +43,7 @@ title: Token Library | Battlemaps
                 <th>Token Code</th>
             </tr>
         </thead>
-        <tbody id="token-list">
-            </tbody>
+        <tbody id="token-list"></tbody>
     </table>
 </main>
 
@@ -58,7 +52,7 @@ title: Token Library | Battlemaps
         <h3>Token Details</h3>
         <div class="form-group">
             <label>Token Name</label>
-            <input type="text" id="t-name" placeholder="e.g. Grom the Barbarian">
+            <input type="text" id="t-name" placeholder="Character Name">
         </div>
         <div class="form-group">
             <label>Type</label>
@@ -68,104 +62,77 @@ title: Token Library | Battlemaps
                 <option value="Monsters">Monsters</option>
             </select>
         </div>
-        <button id="save-token-db" class="save-btn">Create Token</button>
+        <button id="save-token-db" class="save-btn" style="width:100%">Create Token</button>
         <p id="save-status" style="font-size: 0.85em; margin-top: 15px; text-align: center; font-weight: bold;"></p>
     </div>
 </div>
 
 <script type="module">
-    import { supabase } from '../assets/js/supabaseClient.js';
+    // --- 2. CORRECTED IMPORT PATH ---
+    import { supabase } from '/codex/assets/js/supabaseClient.js';
 
     const tokenList = document.getElementById('token-list');
     const tokenTable = document.getElementById('token-table');
     const addBtn = document.getElementById('add-token-btn');
-    const statusText = document.getElementById('loading-status');
     let currentUploadData = null;
 
-    // --- AUTH GUARD ---
+    // Hook for auth-header logic
     window.handlePageAuth = (user) => {
         if (user) {
             addBtn.style.display = 'block';
             fetchTokens();
         } else {
-            addBtn.style.display = 'none';
-            tokenTable.style.display = 'none';
-            statusText.innerHTML = `<p style="color: #ff6b6b;">Please log in with Discord to manage your tokens.</p>`;
+            document.getElementById('loading-status').innerHTML = "Please log in with Discord.";
         }
     };
 
-    // --- 2. FETCH & DISPLAY (SORT BY TYPE) ---
+    // 2. Display Table (Sorted by Type)
     async function fetchTokens() {
         const { data, error } = await supabase
             .from('tokens')
-            .select(`
-                id, name, type, token_code,
-                freehost_images ( thumb_url )
-            `)
-            .order('type', { ascending: true })
-            .order('name', { ascending: true });
+            .select(`id, name, type, token_code, freehost_images ( thumb_url )`)
+            .order('type', { ascending: true });
 
-        if (error) {
-            console.error("Fetch Error:", error);
-            return;
-        }
+        if (error) return console.error(error);
 
-        statusText.style.display = 'none';
+        document.getElementById('loading-status').style.display = 'none';
         tokenTable.style.display = 'table';
         
-        if (data.length === 0) {
-            tokenList.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px;">No tokens found. Upload your first one!</td></tr>`;
-            return;
-        }
-
         tokenList.innerHTML = data.map(token => `
             <tr>
-                <td><img src="${token.freehost_images?.thumb_url}" class="token-thumb" onerror="this.src='https://placehold.co/60x60?text=Error'"></td>
-                <td style="font-weight: bold;">${token.name}</td>
-                <td><span style="opacity: 0.7;">${token.type}</span></td>
-                <td><code class="code-block">${token.token_code || '---'}</code></td>
+                <td><img src="${token.freehost_images?.thumb_url}" class="token-thumb"></td>
+                <td style="font-weight:bold">${token.name}</td>
+                <td>${token.type}</td>
+                <td><code class="code-block">${token.token_code || ''}</code></td>
             </tr>
         `).join('');
     }
 
-    // --- 3. HANDLE IMAGE UPLOAD COMPLETION ---
+    // 3. Handle Upload Completion
     window.addEventListener('image-upload-complete', (e) => {
-        currentUploadData = e.detail; // result.id, result.url, result.thumb
+        currentUploadData = e.detail; 
         document.getElementById('details-overlay').style.display = 'flex';
-        document.getElementById('save-status').innerText = "";
-        document.getElementById('t-name').focus();
     });
 
-    // --- 3a & 4. GENERATE CODE AND SAVE ---
+    // 3a & 4. Generate Code & Save
     document.getElementById('save-token-db').addEventListener('click', async () => {
-        const name = document.getElementById('t-name').value.trim();
+        const name = document.getElementById('t-name').value;
         const type = document.getElementById('t-type').value;
         const status = document.getElementById('save-status');
 
-        if (!name) {
-            status.style.color = '#ff6b6b';
-            status.innerText = "Error: Name is required.";
-            return;
-        }
-
-        status.style.color = 'inherit';
-        status.innerText = "Generating OTFBM meta code...";
+        status.innerText = "Generating token code...";
         
         try {
-            // Step 3a: Generate Token Code via API
-            // URL -> Base64
+            // Convert image URL to Base64 and fetch meta code
             const base64Url = btoa(currentUploadData.url);
             const otfbmResponse = await fetch(`https://token.otfbm.io/meta/${base64Url}`);
-            if (!otfbmResponse.ok) throw new Error("Could not reach OTFBM API");
             const tokenCode = await otfbmResponse.text();
 
-            // Get current user for RLS user_id
             const { data: { user } } = await supabase.auth.getUser();
 
-            // Step 4: Save everything to tokens table
             const { error } = await supabase.from('tokens').insert([{
                 image_id: currentUploadData.id,
-                user_id: user.id, 
+                user_id: user.id,
                 name: name,
                 type: type,
                 token_code: tokenCode
@@ -173,25 +140,12 @@ title: Token Library | Battlemaps
 
             if (error) throw error;
 
-            // Cleanup & Refresh
-            status.innerText = "Saved successfully!";
-            setTimeout(() => {
-                document.getElementById('details-overlay').style.display = 'none';
-                document.getElementById('t-name').value = '';
-                fetchTokens();
-            }, 1000);
-
+            location.reload(); // Quickest way to refresh table and reset modal
         } catch (err) {
-            status.style.color = '#ff6b6b';
+            status.style.color = 'red';
             status.innerText = "Error: " + err.message;
-            console.error(err);
         }
-    });
-
-    // Close modal on escape key
-    window.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') document.getElementById('details-overlay').style.display = 'none';
     });
 </script>
 
-<script src="../assets/js/freeimage-upload.js"></script>
+<script src="/codex/assets/js/freeimage-upload.js"></script>
