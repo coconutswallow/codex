@@ -72,13 +72,13 @@ title: Token Library | Battlemaps
         color: var(--palette-brand-accent-pop); 
         font-family: monospace; 
         padding: 10px; 
-        font-size: 1.4em;
+        font-size: 1.4em; /* Larger Code */
         flex: 1;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    .copy-btn, .delete-btn { 
+    .copy-btn { 
         background: #222; 
         border: none;
         border-left: 1px solid #333;
@@ -90,7 +90,6 @@ title: Token Library | Battlemaps
         justify-content: center; 
     }
     .copy-btn:hover { background: #444; }
-    .delete-btn:hover { background: #8b0000; }
     .copy-btn.copied { background: #4cd964; }
 
     /* Buttons & Modals */
@@ -105,10 +104,6 @@ title: Token Library | Battlemaps
     .form-group { margin-bottom: 1.5rem; }
     .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
     .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-    
-    /* Preview Styles */
-    .preview-box { text-align: center; margin-bottom: 20px; }
-    #t-preview-img { width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--palette-brand-accent); object-fit: cover; background: #000; }
 </style>
 
 <main class="container">
@@ -131,12 +126,9 @@ title: Token Library | Battlemaps
 <div id="details-overlay">
     <div class="details-modal">
         <h3>Token Details</h3>
-        <div class="preview-box">
-            <img id="t-preview-img" src="" alt="Preview">
-        </div>
         <div class="form-group">
             <label>Name</label>
-            <input type="text" id="t-name" placeholder="Character Name">
+            <input type="text" id="t-name" placeholder="Name">
         </div>
         <div class="form-group">
             <label>Category</label>
@@ -169,23 +161,23 @@ title: Token Library | Battlemaps
     };
 
     async function fetchTokens() {
-        // Fetch tokens and try to join image data
         const { data, error } = await supabase
             .from('tokens')
             .select(`
-                id, name, type, token_code, image_id,
+                id, name, type, token_code,
                 freehost_images ( image_url ) 
             `)
             .order('name', { ascending: true });
 
         if (error) {
-            console.error("Supabase Error:", error);
+            console.error(error);
             document.getElementById('loading-status').innerText = "Error loading tokens.";
             return;
         }
 
         document.getElementById('loading-status').style.display = 'none';
 
+        // Prepare grouped categories
         const grouped = {
             "My Characters": [],
             "Other Characters": [],
@@ -193,18 +185,7 @@ title: Token Library | Battlemaps
         };
 
         data.forEach(token => {
-            // FIX: Robust check for Array vs Object return from Supabase
-            const imgData = token.freehost_images;
-            let displayImg = 'https://placehold.co/100x100?text=No+Img';
-
-            if (imgData) {
-                if (Array.isArray(imgData) && imgData.length > 0) {
-                    displayImg = imgData[0].image_url;
-                } else if (imgData.image_url) {
-                    displayImg = imgData.image_url;
-                }
-            }
-
+            const displayImg = token.freehost_images?.image_url || 'https://placehold.co/100x100?text=No+Img';
             const tokenObj = { ...token, safeImg: displayImg };
 
             if (grouped[token.type]) {
@@ -238,16 +219,13 @@ title: Token Library | Battlemaps
             
             grid.innerHTML = tokens.map(t => `
                 <div class="token-card">
-                    <img src="${t.safeImg}" class="token-thumb" onerror="this.src='https://placehold.co/100x100?text=Error'">
+                    <img src="${t.safeImg}" class="token-thumb" loading="lazy">
                     <div class="token-info">
                         <div class="token-name">${t.name}</div>
                         <div class="code-wrapper">
                             <div class="token-code">${t.token_code || '---'}</div>
                             <button class="copy-btn" onclick="copyToClipboard('${t.token_code || ''}', this)" title="Copy Code">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                            </button>
-                            <button class="delete-btn" onclick="deleteToken('${t.id}', '${t.image_id}')" title="Delete Token">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                             </button>
                         </div>
                     </div>
@@ -259,90 +237,6 @@ title: Token Library | Battlemaps
         }
     }
 
-    // --- Actions ---
-
-    window.copyToClipboard = (text, btnElement) => {
-        if (!text) return;
-        navigator.clipboard.writeText(text).then(() => {
-            const originalHTML = btnElement.innerHTML;
-            btnElement.classList.add('copied');
-            btnElement.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-            setTimeout(() => {
-                btnElement.classList.remove('copied');
-                btnElement.innerHTML = originalHTML;
-            }, 1500);
-        });
-    };
-
-    window.deleteToken = async (tokenId, imageId) => {
-        if (!confirm("Are you sure you want to delete this token? This will also remove the image reference.")) return;
-        
-        try {
-            const { error: tErr } = await supabase.from('tokens').delete().eq('id', tokenId);
-            if (tErr) throw tErr;
-
-            if (imageId) {
-                await supabase.from('freehost_images').delete().eq('id', imageId);
-            }
-            location.reload();
-        } catch (err) {
-            alert("Delete failed: " + err.message);
-        }
-    };
-
-    // --- Upload & Save Logic ---
-
-    window.addEventListener('image-upload-complete', (e) => {
-        currentUploadData = e.detail;
-        document.getElementById('t-preview-img').src = currentUploadData.url; 
-        document.getElementById('t-name').value = ""; 
-        document.getElementById('details-overlay').style.display = 'flex';
-    });
-
-    document.getElementById('save-token-db').addEventListener('click', async () => {
-        const name = document.getElementById('t-name').value;
-        const type = document.getElementById('t-type').value;
-        const status = document.getElementById('save-status');
-        
-        if (!name) { alert("Please enter a name."); return; }
-
-        status.innerText = "Extracting code...";
-        
-        try {
-            const base64Url = btoa(currentUploadData.url);
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://token.otfbm.io/meta/' + base64Url)}`;
-            
-            const response = await fetch(proxyUrl);
-            const json = await response.json();
-            
-            // FIX: Parse HTML string and extract ONLY text content
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(json.contents, 'text/html');
-            const cleanCode = doc.body.textContent.trim();
-
-            // Validate code length to ensure we didn't capture an error page
-            if(!cleanCode || cleanCode.length > 10) {
-                throw new Error("Invalid code generated. The image host might be blocking the generator.");
-            }
-
-            const { data: { user } } = await supabase.auth.getUser();
-            const { error } = await supabase.from('tokens').insert([{
-                image_id: currentUploadData.id,
-                user_id: user.id,
-                name: name,
-                type: type,
-                token_code: cleanCode 
-            }]);
-
-            if (error) throw error;
-            location.reload(); 
-        } catch (err) {
-            status.style.color = '#ff6b6b';
-            status.innerText = "Error: " + err.message;
-        }
-    });
-
-    // Filtering Logic
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -352,6 +246,61 @@ title: Token Library | Battlemaps
                 sec.style.display = (filter === 'all' || sec.dataset.category === filter) ? 'block' : 'none';
             });
         });
+    });
+
+    window.copyToClipboard = (text, btnElement) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            const originalHTML = btnElement.innerHTML;
+            btnElement.classList.add('copied');
+            btnElement.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+            setTimeout(() => {
+                btnElement.classList.remove('copied');
+                btnElement.innerHTML = originalHTML;
+            }, 1500);
+        });
+    };
+
+    window.addEventListener('image-upload-complete', (e) => {
+        currentUploadData = e.detail;
+        document.getElementById('details-overlay').style.display = 'flex';
+    });
+
+    document.getElementById('save-token-db').addEventListener('click', async () => {
+        const name = document.getElementById('t-name').value;
+        const type = document.getElementById('t-type').value;
+        const status = document.getElementById('save-status');
+        
+        status.innerText = "Processing...";
+        
+        try {
+            const base64Url = btoa(currentUploadData.url);
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://token.otfbm.io/meta/' + base64Url)}`;
+            
+            const response = await fetch(proxyUrl);
+            const json = await response.json();
+            
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(json.contents, 'text/html');
+            const tokenCode = doc.body.textContent.trim();
+
+            if(!tokenCode || tokenCode.length < 2) throw new Error("Invalid code generated");
+
+            const { data: { user } } = await supabase.auth.getUser();
+            const { error } = await supabase.from('tokens').insert([{
+                image_id: currentUploadData.id,
+                user_id: user.id,
+                name: name,
+                type: type,
+                token_code: tokenCode 
+            }]);
+
+            if (error) throw error;
+            location.reload(); 
+        } catch (err) {
+            status.style.color = '#ff6b6b';
+            status.innerText = "Error: " + err.message;
+        }
     });
 
     window.addEventListener('keydown', (e) => {
