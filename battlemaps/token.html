@@ -8,17 +8,97 @@ title: Token Library | Battlemaps
 <link rel="stylesheet" href="/codex/assets/css/style.css">
 <style>
     /* ... (Existing Styles) ... */
-    .filter-bar { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
-    .filter-btn { background: rgba(215, 196, 158, 0.05); border: 1px solid var(--palette-brand-highlight); color: var(--palette-brand-highlight); padding: 8px 18px; border-radius: 20px; cursor: pointer; transition: all 0.2s; font-family: var(--font-header); }
-    .filter-btn.active, .filter-btn:hover { background: var(--palette-brand-highlight); color: #000; font-weight: bold; }
     
-    .category-section { margin-bottom: 45px; display: none; }
-    .category-section.visible { display: block; }
-    .category-header { border-bottom: 2px solid var(--palette-brand-main); margin-bottom: 20px; color: var(--palette-brand-accent-pop); font-family: var(--font-header); display: flex; align-items: center; gap: 10px; text-transform: uppercase; }
+    /* 1. Page Padding */
+    .page-padding { padding: 0 25px; }
+
+    /* Filter & Search Layout */
+    .filter-container { 
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 15px; 
+        margin-bottom: 25px; 
+        align-items: center; 
+        justify-content: space-between; 
+    }
+
+    .filter-group { display: flex; gap: 8px; flex-wrap: wrap; }
     
-    .token-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
-    .token-card { background: var(--palette-bg-card-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; display: flex; align-items: center; gap: 15px; position: relative; }
-    .token-thumb { width: 90px; height: 90px; object-fit: cover; border-radius: 50%; border: 3px solid var(--palette-brand-accent); background: #000; flex-shrink: 0; }
+    .filter-btn { 
+        background: rgba(215, 196, 158, 0.05); 
+        border: 1px solid var(--palette-brand-highlight); 
+        color: var(--palette-brand-highlight); 
+        padding: 8px 18px; 
+        border-radius: 20px; 
+        cursor: pointer; 
+        transition: all 0.2s; 
+        font-family: var(--font-header); 
+        font-size: 0.9rem;
+    }
+    .filter-btn.active, .filter-btn:hover { 
+        background: var(--palette-brand-highlight); 
+        color: #000; 
+        font-weight: bold; 
+    }
+
+    /* Search Input Style */
+    .search-wrapper { flex-grow: 1; max-width: 300px; position: relative; }
+    #token-search {
+        width: 100%;
+        padding: 8px 15px;
+        padding-left: 35px; /* Space for icon */
+        border-radius: 20px;
+        background: rgba(0,0,0,0.3);
+        border: 1px solid var(--palette-brand-highlight);
+        color: white;
+        font-family: inherit;
+        outline: none;
+    }
+    #token-search:focus { border-color: var(--palette-brand-accent); background: rgba(0,0,0,0.5); }
+    
+    .search-icon {
+        position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+        pointer-events: none; opacity: 0.7; color: var(--palette-brand-highlight);
+    }
+
+    /* Grid Layout */
+    .category-section { margin-bottom: 45px; }
+    .category-header { 
+        border-bottom: 2px solid var(--palette-brand-main); 
+        margin-bottom: 20px; 
+        color: var(--palette-brand-accent-pop); 
+        font-family: var(--font-header); 
+        display: flex; align-items: center; gap: 10px; 
+        text-transform: uppercase; 
+    }
+    
+    .token-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+        gap: 20px; 
+    }
+    
+    .token-card { 
+        background: var(--palette-bg-card-dark); 
+        border: 1px solid rgba(255,255,255,0.1); 
+        border-radius: 10px; 
+        padding: 15px; 
+        display: flex; 
+        align-items: center; 
+        gap: 15px; 
+        position: relative; 
+        transition: transform 0.2s;
+    }
+    .token-card:hover { border-color: var(--palette-brand-accent); transform: translateY(-2px); }
+
+    .token-thumb { 
+        width: 90px; height: 90px; 
+        object-fit: cover; 
+        border-radius: 50%; 
+        border: 3px solid var(--palette-brand-accent); 
+        background: #000; 
+        flex-shrink: 0; 
+    }
     .token-info { flex: 1; overflow: hidden; }
     .token-name { font-weight: bold; font-size: 1.2em; margin-bottom: 8px; color: #fff; }
     
@@ -49,19 +129,32 @@ title: Token Library | Battlemaps
     /* New Animation for Generating State */
     @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     .blink { animation: blink 1.5s infinite; }
+
+    @media (max-width: 600px) {
+        .filter-container { flex-direction: column-reverse; align-items: stretch; }
+        .search-wrapper { max-width: 100%; }
+        .page-padding { padding: 0 15px; }
+    }
 </style>
 
-<main class="container">
+<main class="container page-padding">
     <div class="add-token-container">
         <h1>Token Library</h1>
         <button class="trigger-upload save-btn" id="add-token-btn" style="display:none;">+ New Token</button>
     </div>
 
-    <div class="filter-bar" id="filter-bar" style="display:none;">
-        <button class="filter-btn active" data-filter="all">All</button>
-        <button class="filter-btn" data-filter="My Characters">My Characters</button>
-        <button class="filter-btn" data-filter="Other Characters">Other Characters</button>
-        <button class="filter-btn" data-filter="Monsters">Monsters</button>
+    <div class="filter-container" id="filter-bar" style="display:none;">
+        <div class="filter-group">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="My Characters">My Characters</button>
+            <button class="filter-btn" data-filter="Other Characters">Other Characters</button>
+            <button class="filter-btn" data-filter="Monsters">Monsters</button>
+        </div>
+        
+        <div class="search-wrapper">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="token-search" placeholder="Search tokens...">
+        </div>
     </div>
 
     <div id="loading-status" style="padding: 20px; text-align: center;">Loading library...</div>
@@ -94,7 +187,12 @@ title: Token Library | Battlemaps
 
     const container = document.getElementById('library-container');
     const addBtn = document.getElementById('add-token-btn');
+    const searchInput = document.getElementById('token-search');
+    
     let currentUploadData = null;
+    let allTokensData = []; 
+    let activeFilter = 'all';
+    let searchTerm = '';
 
     window.handlePageAuth = (user) => {
         if (user) {
@@ -107,13 +205,14 @@ title: Token Library | Battlemaps
     };
 
     async function fetchTokens() {
-        // We order by 'created_at' descending so the "Generating..." card appears first
+        // Fetch tokens, filtering out any that are missing an image_id
         const { data, error } = await supabase
             .from('tokens')
             .select(`
                 id, name, type, token_code, image_id, created_at,
                 freehost_images ( image_url ) 
             `)
+            .not('image_id', 'is', null) // <--- THIS LINE FILTERS NULLs
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -123,20 +222,36 @@ title: Token Library | Battlemaps
         }
 
         document.getElementById('loading-status').style.display = 'none';
-
-        const grouped = { "My Characters": [], "Other Characters": [], "Monsters": [] };
-
-        data.forEach(token => {
+        
+        // Process Images once
+        allTokensData = data.map(token => {
             const imgData = token.freehost_images;
             let displayImg = 'https://placehold.co/100x100?text=No+Img';
             if (imgData) {
                 if (Array.isArray(imgData) && imgData.length > 0) displayImg = imgData[0].image_url;
                 else if (imgData.image_url) displayImg = imgData.image_url;
             }
-            const tokenObj = { ...token, safeImg: displayImg };
+            return { ...token, safeImg: displayImg };
+        });
 
-            if (grouped[token.type]) grouped[token.type].push(tokenObj);
-            else { if(!grouped["Misc"]) grouped["Misc"] = []; grouped["Misc"].push(tokenObj); }
+        applyFilters();
+    }
+
+    // --- Core Filter & Render Logic ---
+    function applyFilters() {
+        // 1. Filter the raw list
+        const filtered = allTokensData.filter(t => {
+            const matchesCategory = activeFilter === 'all' || t.type === activeFilter;
+            const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase());
+            return matchesCategory && matchesSearch;
+        });
+
+        // 2. Group them for display
+        const grouped = { "My Characters": [], "Other Characters": [], "Monsters": [], "Misc": [] };
+
+        filtered.forEach(t => {
+            if (grouped[t.type]) grouped[t.type].push(t);
+            else grouped["Misc"].push(t);
         });
 
         renderSections(grouped);
@@ -144,11 +259,14 @@ title: Token Library | Battlemaps
 
     function renderSections(groupedTokens) {
         container.innerHTML = ''; 
+        let hasContent = false;
+
         for (const [type, tokens] of Object.entries(groupedTokens)) {
             if (tokens.length === 0) continue;
+            hasContent = true;
+
             const section = document.createElement('div');
-            section.className = `category-section visible`;
-            section.dataset.category = type;
+            section.className = `category-section`;
             section.innerHTML = `<h3 class="category-header">${type} <span style="font-size:0.6em; opacity:0.6; margin-left:auto;">${tokens.length}</span></h3>`;
             
             const grid = document.createElement('div');
@@ -156,7 +274,7 @@ title: Token Library | Battlemaps
             grid.innerHTML = tokens.map(t => {
                 let codeHtml = '';
                 
-                // --- STATE 1: Generating ---
+                // STATE 1: Generating
                 if (t.token_code === 'Generating...') {
                     codeHtml = `
                         <div class="token-code" style="color: #888; font-style: italic; display:flex; align-items:center; justify-content:center;">
@@ -164,7 +282,7 @@ title: Token Library | Battlemaps
                         </div>
                     `;
                 } 
-                // --- STATE 2: Has Code ---
+                // STATE 2: Has Code
                 else if (t.token_code && t.token_code.length > 0) {
                     codeHtml = `
                         <div class="token-code" title="${t.token_code}">${t.token_code}</div>
@@ -173,7 +291,7 @@ title: Token Library | Battlemaps
                         </button>
                     `;
                 } 
-                // --- STATE 3: Failed/Empty -> Show Manual Input ---
+                // STATE 3: Failed/Empty -> Show Manual Input
                 else {
                     codeHtml = `
                         <input type="text" class="edit-input" id="input-${t.id}" placeholder="Paste code here...">
@@ -200,9 +318,29 @@ title: Token Library | Battlemaps
             section.appendChild(grid);
             container.appendChild(section);
         }
+
+        if(!hasContent) {
+            container.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">No tokens found matching your search.</div>`;
+        }
     }
 
-    // --- Actions ---
+    // --- Search & Filter Listeners ---
+    
+    searchInput.addEventListener('input', (e) => {
+        searchTerm = e.target.value;
+        applyFilters();
+    });
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            activeFilter = e.target.dataset.filter;
+            applyFilters();
+        });
+    });
+
+    // --- Actions (Copy, Delete, Edit) ---
 
     window.copyToClipboard = (text, btnElement) => {
         if (!text) return;
@@ -246,7 +384,7 @@ title: Token Library | Battlemaps
         document.getElementById('details-overlay').style.display = 'flex';
     });
 
-    // --- NEW SAVE LOGIC ---
+    // --- NEW SAVE LOGIC (Background Edge Function) ---
     document.getElementById('save-token-db').addEventListener('click', async () => {
         const name = document.getElementById('t-name').value;
         const type = document.getElementById('t-type').value;
@@ -274,7 +412,6 @@ title: Token Library | Battlemaps
             await fetchTokens(); // Ensure user sees the card
 
             // 3. Trigger Edge Function (Background)
-            // USING THE CORRECT NAME: 'update-token-code'
             supabase.functions.invoke('update-token-code', {
                 body: { 
                     record_id: insertedData.id, 
@@ -282,7 +419,6 @@ title: Token Library | Battlemaps
                 }
             }).then(({ data, error }) => {
                 if (error) console.error("Edge Function Error:", error);
-                else console.log("Edge Function Success:", data);
                 
                 // 4. Refresh grid again to show result (Code OR Manual Input)
                 fetchTokens();
@@ -294,16 +430,6 @@ title: Token Library | Battlemaps
         }
     });
 
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            const filter = e.target.dataset.filter;
-            document.querySelectorAll('.category-section').forEach(sec => {
-                sec.style.display = (filter === 'all' || sec.dataset.category === filter) ? 'block' : 'none';
-            });
-        });
-    });
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') document.getElementById('details-overlay').style.display = 'none';
     });
