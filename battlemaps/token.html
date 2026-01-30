@@ -45,6 +45,10 @@ title: Token Library | Battlemaps
     .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
     .preview-box { text-align: center; margin-bottom: 20px; }
     #t-preview-img { width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--palette-brand-accent); object-fit: cover; background: #000; }
+
+    /* New Animation for Generating State */
+    @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    .blink { animation: blink 1.5s infinite; }
 </style>
 
 <main class="container">
@@ -103,13 +107,14 @@ title: Token Library | Battlemaps
     };
 
     async function fetchTokens() {
+        // We order by 'created_at' descending so the "Generating..." card appears first
         const { data, error } = await supabase
             .from('tokens')
             .select(`
-                id, name, type, token_code, image_id,
+                id, name, type, token_code, image_id, created_at,
                 freehost_images ( image_url ) 
             `)
-            .order('name', { ascending: true });
+            .order('created_at', { ascending: false });
 
         if (error) {
             console.error(error);
@@ -149,18 +154,27 @@ title: Token Library | Battlemaps
             const grid = document.createElement('div');
             grid.className = 'token-grid';
             grid.innerHTML = tokens.map(t => {
-                // LOGIC: If code is missing, show Input field. If present, show Code + Copy.
-                const hasCode = t.token_code && t.token_code.length > 0 && t.token_code !== 'Generating...';
-                
                 let codeHtml = '';
-                if (hasCode) {
+                
+                // --- STATE 1: Generating ---
+                if (t.token_code === 'Generating...') {
+                    codeHtml = `
+                        <div class="token-code" style="color: #888; font-style: italic; display:flex; align-items:center; justify-content:center;">
+                            <span class="blink">Generating...</span>
+                        </div>
+                    `;
+                } 
+                // --- STATE 2: Has Code ---
+                else if (t.token_code && t.token_code.length > 0) {
                     codeHtml = `
                         <div class="token-code" title="${t.token_code}">${t.token_code}</div>
                         <button class="copy-btn" onclick="copyToClipboard('${t.token_code}', this)">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                         </button>
                     `;
-                } else {
+                } 
+                // --- STATE 3: Failed/Empty -> Show Manual Input ---
+                else {
                     codeHtml = `
                         <input type="text" class="edit-input" id="input-${t.id}" placeholder="Paste code here...">
                         <button class="save-edit-btn" onclick="saveManualCode('${t.id}')" title="Save Code">
@@ -212,7 +226,6 @@ title: Token Library | Battlemaps
         } catch (err) { alert(err.message); }
     };
 
-    // New Function: Manually save code from the grid
     window.saveManualCode = async (tokenId) => {
         const input = document.getElementById(`input-${tokenId}`);
         const newCode = input.value.trim();
@@ -229,61 +242,49 @@ title: Token Library | Battlemaps
         currentUploadData = e.detail;
         document.getElementById('t-preview-img').src = currentUploadData.url; 
         document.getElementById('t-name').value = ""; 
+        document.getElementById('save-status').innerText = ""; 
         document.getElementById('details-overlay').style.display = 'flex';
     });
 
-    // --- Save Logic (Frontend Only) ---
+    // --- NEW SAVE LOGIC ---
     document.getElementById('save-token-db').addEventListener('click', async () => {
         const name = document.getElementById('t-name').value;
         const type = document.getElementById('t-type').value;
         const status = document.getElementById('save-status');
         
         if (!name) { alert("Please enter a name."); return; }
-        status.innerText = "Processing...";
+        status.innerText = "Saving to library...";
         
         try {
-            // 1. Try to get code via Proxy (Best Effort)
-            let finalCode = ""; 
-            const base64Url = btoa(currentUploadData.url);
-            
-            try {
-                const targetUrl = `https://token.otfbm.io/meta/${base64Url}`;
-                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-                const response = await fetch(proxyUrl, { signal: AbortSignal.timeout(3000) }); // 3s Timeout
-                
-                if (response.ok) {
-                    const html = await response.text();
-                    const match = html.match(/\b[a-z0-9]{5}\b/);
-                    if (match && !html.includes("Token ID for")) {
-                         // Parse carefully to avoid title match
-                         const parts = html.split('<body>');
-                         if(parts.length > 1) {
-                             const bodyCode = parts[1].split('</body>')[0].trim();
-                             if(bodyCode.length < 8) finalCode = bodyCode;
-                         } else {
-                             finalCode = match[0];
-                         }
-                    }
-                }
-            } catch (ignored) {
-                console.warn("Auto-gen failed, saving blank for manual edit.");
-            }
-
-            // 2. Save to DB (Even if code is empty)
             const { data: { user } } = await supabase.auth.getUser();
-            const { error } = await supabase.from('tokens').insert([{
+
+            // 1. Insert into DB with "Generating..."
+            const { data: insertedData, error } = await supabase.from('tokens').insert([{
                 image_id: currentUploadData.id,
                 user_id: user.id,
                 name: name,
                 type: type,
-                token_code: finalCode // Can be "" (empty)
-            }]);
+                token_code: 'Generating...' 
+            }]).select().single();
 
             if (error) throw error;
-            
-            // 3. Success
+
+            // 2. Close Modal & Refresh Grid
             document.getElementById('details-overlay').style.display = 'none';
-            fetchTokens(); // Updates grid. If empty, it will show the Input field.
+            await fetchTokens(); // Ensure user sees the card before background task finishes
+
+            // 3. Trigger Edge Function (Background)
+            supabase.functions.invoke('generate-token-code', {
+                body: { 
+                    record_id: insertedData.id, 
+                    image_url: currentUploadData.url 
+                }
+            }).then(({ data, error }) => {
+                if (error) console.error("Edge Function Error:", error);
+                
+                // 4. Refresh grid again to show result (Code OR Manual Input)
+                fetchTokens();
+            });
 
         } catch (err) {
             status.style.color = '#ff6b6b';
