@@ -141,10 +141,12 @@
                 const base64Url = btoa(currentUploadData.url);
                 const otfbmResponse = await fetch(`https://token.otfbm.io/meta/${base64Url}`);
                 const tokenCode = await otfbmResponse.text();
+                const { data: { user } } = await supabase.auth.getUser();
 
                 // 4. Save to tokens table
                 const { error } = await supabase.from('tokens').insert([{
                     image_id: currentUploadData.id,
+                    user_id: user.id, // Explicitly linking the token to the logged-in user
                     name: name,
                     type: type,
                     token_code: tokenCode
@@ -163,11 +165,15 @@
         });
 
         // Load Header Component
-        fetch('../auth-header.html')
-            .then(res => res.text())
+        fetch('/_includes/auth-header.html')
+            .then(res => {
+                if (!res.ok) throw new Error('Header not found');
+                return res.text();
+            })
             .then(html => {
                 document.getElementById('auth-placeholder').innerHTML = html;
-            });
+            })
+            .catch(err => console.error('Error loading auth-header:', err));
     </script>
 
     <script src="../assets/js/freeimage-upload.js"></script>
