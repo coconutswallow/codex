@@ -165,7 +165,7 @@
         });
 
         // Load Header Component
-        fetch('/_includes/auth-header.html')
+        fetch('../_includes/auth-header.html')
             .then(res => {
                 if (!res.ok) throw new Error('Header not found');
                 return res.text();
