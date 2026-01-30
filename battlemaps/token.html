@@ -6,120 +6,299 @@ title: Token Library | Battlemaps
 {% include auth-header.html %}
 
 <link rel="stylesheet" href="/codex/assets/css/style.css">
-
 <style>
-    .token-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: var(--palette-bg-card-dark); border-radius: 8px; overflow: hidden; }
-    .token-table th { text-align: left; padding: 15px; border-bottom: 2px solid var(--palette-brand-main); color: var(--palette-brand-highlight); }
-    .token-table td { padding: 12px; border-bottom: 1px solid rgba(215, 196, 158, 0.1); vertical-align: middle; color: #fff; }
-    .token-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 50%; border: 2px solid var(--palette-brand-accent); }
-    .add-token-container { display: flex; justify-content: space-between; align-items: center; margin: 20px 0; padding: 0 10px; }
-    .code-block { background: #222; padding: 4px 8px; border-radius: 4px; font-family: monospace; color: var(--palette-brand-accent-pop); font-size: 0.85em; word-break: break-all; }
+    /* Layout & Filtering */
+    .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .filter-btn { 
+        background: transparent; 
+        border: 1px solid var(--palette-brand-highlight); 
+        color: var(--palette-brand-highlight); 
+        padding: 8px 16px; 
+        border-radius: 20px; 
+        cursor: pointer; 
+        transition: all 0.2s;
+        font-family: var(--font-header);
+    }
+    .filter-btn.active, .filter-btn:hover { 
+        background: var(--palette-brand-highlight); 
+        color: #000; 
+        font-weight: bold; 
+    }
 
+    /* Category Sections */
+    .category-section { margin-bottom: 40px; display: none; /* Hidden until loaded */ }
+    .category-section.visible { display: block; }
+    .category-header { 
+        border-bottom: 2px solid var(--palette-brand-main); 
+        margin-bottom: 15px; 
+        color: var(--palette-brand-accent-pop);
+        font-family: var(--font-header);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Token Cards */
+    .token-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+        gap: 20px; 
+    }
+    .token-card { 
+        background: var(--palette-bg-card-dark); 
+        border: 1px solid rgba(255,255,255,0.1); 
+        border-radius: 8px; 
+        padding: 15px; 
+        display: flex; 
+        align-items: center; 
+        gap: 15px;
+    }
+    .token-thumb { 
+        width: 80px; height: 80px; 
+        object-fit: cover; 
+        border-radius: 50%; 
+        border: 3px solid var(--palette-brand-accent); 
+        background: #000;
+        flex-shrink: 0;
+    }
+    .token-info { flex: 1; overflow: hidden; }
+    .token-name { font-weight: bold; font-size: 1.1em; margin-bottom: 8px; color: #fff; }
+    
+    /* Code & Copy Button */
+    .code-wrapper { display: flex; gap: 0; align-items: stretch; }
+    .token-code { 
+        background: #111; 
+        color: var(--palette-brand-accent-pop); 
+        font-family: monospace; 
+        padding: 10px; 
+        border-top-left-radius: 4px;
+        border-bottom-left-radius: 4px;
+        font-size: 1.2em; /* Larger Code */
+        letter-spacing: 0.5px;
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        border: 1px solid #333;
+        border-right: none;
+    }
+    .copy-btn { 
+        background: #333; 
+        border: 1px solid #333; 
+        border-left: 1px solid #444;
+        color: #fff; 
+        border-top-right-radius: 4px;
+        border-bottom-right-radius: 4px;
+        cursor: pointer; 
+        width: 44px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        transition: background 0.2s;
+    }
+    .copy-btn:hover { background: #555; }
+    .copy-btn.copied { background: #4cd964; border-color: #4cd964; }
+
+    /* Add Button */
+    .add-token-container { display: flex; justify-content: space-between; align-items: center; margin: 20px 0; }
+    .save-btn { background: var(--palette-brand-accent); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+    /* Modal */
     #details-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 2000;
     }
-    .details-modal { background: var(--palette-bg-card-light); padding: 2rem; border-radius: 12px; width: 400px; color: var(--palette-brand-main); }
+    .details-modal { background: var(--palette-bg-card-light); padding: 2rem; border-radius: 12px; width: 400px; color: var(--palette-brand-main); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
     .form-group { margin-bottom: 1.5rem; }
     .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
-    .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid var(--palette-brand-highlight); border-radius: 6px; box-sizing: border-box; }
-    .save-btn { background: var(--palette-brand-accent); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
 </style>
 
 <main class="container">
     <div class="add-token-container">
         <h1>Token Library</h1>
-        <button class="trigger-upload save-btn" id="add-token-btn" style="display:none; width: auto;">+ Add New Token</button>
+        <button class="trigger-upload save-btn" id="add-token-btn" style="display:none;">+ New Token</button>
+    </div>
+
+    <div class="filter-bar" id="filter-bar" style="display:none;">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="My Characters">My Characters</button>
+        <button class="filter-btn" data-filter="Other Characters">Other Characters</button>
+        <button class="filter-btn" data-filter="Monsters">Monsters</button>
     </div>
 
     <div id="loading-status" style="padding: 20px; text-align: center;">Loading tokens...</div>
-
-    <table class="token-table" id="token-table" style="display:none;">
-        <thead>
-            <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Token Code</th>
-            </tr>
-        </thead>
-        <tbody id="token-list"></tbody>
-    </table>
+    <div id="library-container"></div>
 </main>
 
 <div id="details-overlay">
     <div class="details-modal">
-        <h3>Token Details</h3>
+        <h3>New Token Details</h3>
         <div class="form-group">
-            <label>Token Name</label>
-            <input type="text" id="t-name" placeholder="Character Name">
+            <label>Name</label>
+            <input type="text" id="t-name" placeholder="e.g. Grom the Barbarian">
         </div>
         <div class="form-group">
-            <label>Type</label>
+            <label>Category</label>
             <select id="t-type">
                 <option value="My Characters">My Characters</option>
                 <option value="Other Characters">Other Characters</option>
                 <option value="Monsters">Monsters</option>
             </select>
         </div>
-        <button id="save-token-db" class="save-btn" style="width:100%">Create Token</button>
-        <p id="save-status" style="font-size: 0.85em; margin-top: 15px; text-align: center; font-weight: bold;"></p>
+        <button id="save-token-db" class="save-btn" style="width:100%">Save Token</button>
+        <p id="save-status" style="text-align:center; margin-top:10px; font-weight:bold;"></p>
     </div>
 </div>
 
 <script type="module">
-    // --- 2. CORRECTED IMPORT PATH ---
     import { supabase } from '/codex/assets/js/supabaseClient.js';
 
-    const tokenList = document.getElementById('token-list');
-    const tokenTable = document.getElementById('token-table');
+    const container = document.getElementById('library-container');
     const addBtn = document.getElementById('add-token-btn');
     let currentUploadData = null;
 
-    // Hook for auth-header logic
+    // --- AUTH GUARD ---
     window.handlePageAuth = (user) => {
         if (user) {
             addBtn.style.display = 'block';
+            document.getElementById('filter-bar').style.display = 'flex';
             fetchTokens();
         } else {
             document.getElementById('loading-status').innerHTML = "Please log in with Discord.";
         }
     };
 
-    // 2. Display Table (Sorted by Type)
+    // --- FETCH & RENDER ---
     async function fetchTokens() {
         const { data, error } = await supabase
             .from('tokens')
-            .select(`id, name, type, token_code, freehost_images ( thumb_url )`)
-            .order('type', { ascending: true });
+            .select(`
+                id, name, type, token_code,
+                freehost_images ( thumb_url )
+            `)
+            .order('name', { ascending: true });
 
         if (error) return console.error(error);
 
         document.getElementById('loading-status').style.display = 'none';
-        tokenTable.style.display = 'table';
         
-        tokenList.innerHTML = data.map(token => `
-            <tr>
-                <td><img src="${token.freehost_images?.thumb_url}" class="token-thumb"></td>
-                <td style="font-weight:bold">${token.name}</td>
-                <td>${token.type}</td>
-                <td><code class="code-block">${token.token_code || ''}</code></td>
-            </tr>
-        `).join('');
+        // Group data by Type
+        const grouped = {
+            "My Characters": [],
+            "Other Characters": [],
+            "Monsters": []
+        };
+
+        data.forEach(token => {
+            // FIX 404: Safe check for image URL
+            const imgUrl = token.freehost_images?.thumb_url 
+                ? token.freehost_images.thumb_url 
+                : 'https://placehold.co/80x80?text=?'; 
+
+            const tokenObj = { ...token, safeImg: imgUrl };
+
+            // Assign to group or fallback to 'Misc'
+            if (grouped[token.type]) {
+                grouped[token.type].push(tokenObj);
+            } else {
+                if(!grouped["Misc"]) grouped["Misc"] = [];
+                grouped["Misc"].push(tokenObj);
+            }
+        });
+
+        renderSections(grouped);
     }
 
-    // 3. Handle Upload Completion
-    window.addEventListener('image-upload-complete', (e) => {
-        currentUploadData = e.detail; 
-        document.getElementById('details-overlay').style.display = 'flex';
+    function renderSections(groupedTokens) {
+        container.innerHTML = ''; // Clear
+
+        for (const [type, tokens] of Object.entries(groupedTokens)) {
+            if (!tokens || tokens.length === 0) continue;
+
+            // Section Container
+            const section = document.createElement('div');
+            section.className = `category-section visible`;
+            section.dataset.category = type;
+
+            // Header
+            const header = document.createElement('h3');
+            header.className = 'category-header';
+            header.innerHTML = `${type} <span style="font-size:0.6em; opacity:0.6; margin-left:auto;">${tokens.length}</span>`;
+            section.appendChild(header);
+
+            // Grid
+            const grid = document.createElement('div');
+            grid.className = 'token-grid';
+            
+            grid.innerHTML = tokens.map(t => `
+                <div class="token-card">
+                    <img src="${t.safeImg}" class="token-thumb" loading="lazy">
+                    <div class="token-info">
+                        <div class="token-name">${t.name}</div>
+                        <div class="code-wrapper">
+                            <div class="token-code" title="${t.token_code || ''}">${t.token_code || '---'}</div>
+                            <button class="copy-btn" onclick="copyToClipboard('${t.token_code || ''}', this)" title="Copy to Clipboard">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            section.appendChild(grid);
+            container.appendChild(section);
+        }
+    }
+
+    // --- FILTER LOGIC ---
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // Update active state
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+
+            const filter = e.target.dataset.filter;
+            const sections = document.querySelectorAll('.category-section');
+
+            sections.forEach(sec => {
+                if (filter === 'all' || sec.dataset.category === filter) {
+                    sec.style.display = 'block';
+                } else {
+                    sec.style.display = 'none';
+                }
+            });
+        });
     });
 
-    // 3a & 4. Generate Code & Save
+    // --- GLOBAL COPY FUNCTION ---
+    window.copyToClipboard = (text, btnElement) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            // Visual Feedback
+            const originalHTML = btnElement.innerHTML;
+            btnElement.classList.add('copied');
+            btnElement.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+            
+            setTimeout(() => {
+                btnElement.classList.remove('copied');
+                btnElement.innerHTML = originalHTML;
+            }, 1500);
+        });
+    };
+
+    // --- UPLOAD & SAVE LOGIC ---
+    window.addEventListener('image-upload-complete', (e) => {
+        currentUploadData = e.detail;
+        document.getElementById('details-overlay').style.display = 'flex';
+        document.getElementById('t-name').focus();
+    });
+
     document.getElementById('save-token-db').addEventListener('click', async () => {
         const name = document.getElementById('t-name').value.trim();
         const type = document.getElementById('t-type').value;
         const status = document.getElementById('save-status');
-
+        
         if (!name) {
             status.style.color = '#ff6b6b';
             status.innerText = "Please enter a name.";
@@ -130,24 +309,25 @@ title: Token Library | Battlemaps
         status.innerText = "Generating token code...";
         
         try {
+            // 1. Fetch from OTFBM via AllOrigins Proxy
             const base64Url = btoa(currentUploadData.url);
-            const targetUrl = `https://token.otfbm.io/meta/${base64Url}`;
-            
-            // Using AllOrigins proxy - it handles redirects and returns the content 
-            // inside a JSON wrapper to bypass CORS entirely.
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://token.otfbm.io/meta/' + base64Url)}`;
             
             const response = await fetch(proxyUrl);
-            if (!response.ok) throw new Error("Proxy server error");
-            
             const json = await response.json();
-            // AllOrigins puts the site's content into the .contents property
-            const tokenCode = json.contents;
+            
+            // 2. PARSE HTML: Extract only the text inside <body>
+            //    The proxy returns "<html>...<body>cdsdz</body></html>"
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(json.contents, 'text/html');
+            const tokenCode = doc.body.textContent.trim();
 
-            if (!tokenCode || tokenCode.includes("Error")) {
-                throw new Error("OTFBM failed to generate a code for this image.");
+            // Validation to ensure we actually got a code and not an HTML error page
+            if(!tokenCode || tokenCode.length < 2 || tokenCode.includes("<")) {
+                 throw new Error("Could not generate valid code.");
             }
 
+            // 3. Save to Supabase
             const { data: { user } } = await supabase.auth.getUser();
 
             const { error } = await supabase.from('tokens').insert([{
@@ -155,24 +335,22 @@ title: Token Library | Battlemaps
                 user_id: user.id,
                 name: name,
                 type: type,
-                token_code: tokenCode.trim()
+                token_code: tokenCode 
             }]);
 
             if (error) throw error;
-
-            status.style.color = '#4cd964';
-            status.innerText = "Token Created!";
             
-            setTimeout(() => {
-                document.getElementById('details-overlay').style.display = 'none';
-                fetchTokens(); 
-            }, 1000);
-
+            location.reload(); 
         } catch (err) {
-            console.error("Save Error:", err);
             status.style.color = '#ff6b6b';
             status.innerText = "Error: " + err.message;
+            console.error(err);
         }
+    });
+
+    // Close Modal on Escape
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') document.getElementById('details-overlay').style.display = 'none';
     });
 </script>
 
