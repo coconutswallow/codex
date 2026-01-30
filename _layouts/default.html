@@ -41,7 +41,18 @@
         </div>
         <nav class="sidebar-links">
             {% for item in site.navigation %}
-            <a href="{{ item.url | relative_url }}" class="nav-link">{{ item.title }}</a>
+                {% if item.sublinks %}
+                    <div class="nav-dropdown">
+                        <span class="nav-link dropdown-toggle">{{ item.title }} ▾</span>
+                        <div class="sub-nav">
+                            {% for sub in item.sublinks %}
+                                <a href="{{ sub.url | relative_url }}" class="nav-link sub-link">{{ sub.title }}</a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{{ item.url | relative_url }}" class="nav-link">{{ item.title }}</a>
+                {% endif %}
             {% endfor %}
         </nav>
     </div>
