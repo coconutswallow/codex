@@ -116,7 +116,7 @@ title: Token Library | Battlemaps
 
     // 3a & 4. Generate Code & Save
     document.getElementById('save-token-db').addEventListener('click', async () => {
-        const name = document.getElementById('t-name').value;
+        const name = document.getElementById('t-name').value.trim();
         const type = document.getElementById('t-type').value;
         const status = document.getElementById('save-status');
 
@@ -130,40 +130,42 @@ title: Token Library | Battlemaps
         status.innerText = "Generating token code...";
         
         try {
-            // 1. Convert URL to Base64
             const base64Url = btoa(currentUploadData.url);
+            const targetUrl = `https://token.otfbm.io/meta/${base64Url}`;
             
-            // 2. Fetch via CORS Proxy to handle the 307 Redirect
-            // We use corsproxy.io to wrap the request
-            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent('https://token.otfbm.io/meta/' + base64Url)}`;
+            // Using AllOrigins proxy - it handles redirects and returns the content 
+            // inside a JSON wrapper to bypass CORS entirely.
+            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
             
-            const otfbmResponse = await fetch(proxyUrl);
+            const response = await fetch(proxyUrl);
+            if (!response.ok) throw new Error("Proxy server error");
             
-            if (!otfbmResponse.ok) throw new Error("Failed to reach OTFBM via proxy");
-            
-            const tokenCode = await otfbmResponse.text();
+            const json = await response.json();
+            // AllOrigins puts the site's content into the .contents property
+            const tokenCode = json.contents;
 
-            // 3. Get User ID
+            if (!tokenCode || tokenCode.includes("Error")) {
+                throw new Error("OTFBM failed to generate a code for this image.");
+            }
+
             const { data: { user } } = await supabase.auth.getUser();
 
-            // 4. Save to tokens table
             const { error } = await supabase.from('tokens').insert([{
                 image_id: currentUploadData.id,
                 user_id: user.id,
                 name: name,
                 type: type,
-                token_code: tokenCode.trim() // Clean up any whitespace
+                token_code: tokenCode.trim()
             }]);
 
             if (error) throw error;
 
-            // Success: Close and Refresh
             status.style.color = '#4cd964';
             status.innerText = "Token Created!";
             
             setTimeout(() => {
                 document.getElementById('details-overlay').style.display = 'none';
-                fetchTokens(); // Refresh the table
+                fetchTokens(); 
             }, 1000);
 
         } catch (err) {
