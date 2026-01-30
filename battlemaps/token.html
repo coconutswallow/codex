@@ -120,29 +120,55 @@ title: Token Library | Battlemaps
         const type = document.getElementById('t-type').value;
         const status = document.getElementById('save-status');
 
+        if (!name) {
+            status.style.color = '#ff6b6b';
+            status.innerText = "Please enter a name.";
+            return;
+        }
+
+        status.style.color = 'inherit';
         status.innerText = "Generating token code...";
         
         try {
-            // Convert image URL to Base64 and fetch meta code
+            // 1. Convert URL to Base64
             const base64Url = btoa(currentUploadData.url);
-            const otfbmResponse = await fetch(`https://token.otfbm.io/meta/${base64Url}`);
+            
+            // 2. Fetch via CORS Proxy to handle the 307 Redirect
+            // We use corsproxy.io to wrap the request
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent('https://token.otfbm.io/meta/' + base64Url)}`;
+            
+            const otfbmResponse = await fetch(proxyUrl);
+            
+            if (!otfbmResponse.ok) throw new Error("Failed to reach OTFBM via proxy");
+            
             const tokenCode = await otfbmResponse.text();
 
+            // 3. Get User ID
             const { data: { user } } = await supabase.auth.getUser();
 
+            // 4. Save to tokens table
             const { error } = await supabase.from('tokens').insert([{
                 image_id: currentUploadData.id,
                 user_id: user.id,
                 name: name,
                 type: type,
-                token_code: tokenCode
+                token_code: tokenCode.trim() // Clean up any whitespace
             }]);
 
             if (error) throw error;
 
-            location.reload(); // Quickest way to refresh table and reset modal
+            // Success: Close and Refresh
+            status.style.color = '#4cd964';
+            status.innerText = "Token Created!";
+            
+            setTimeout(() => {
+                document.getElementById('details-overlay').style.display = 'none';
+                fetchTokens(); // Refresh the table
+            }, 1000);
+
         } catch (err) {
-            status.style.color = 'red';
+            console.error("Save Error:", err);
+            status.style.color = '#ff6b6b';
             status.innerText = "Error: " + err.message;
         }
     });
