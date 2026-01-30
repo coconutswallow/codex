@@ -7,26 +7,37 @@ title: Token Library | Battlemaps
 
 <link rel="stylesheet" href="/codex/assets/css/style.css">
 <style>
-    /* ... (Your styles remain unchanged) ... */
+    /* ... (Existing Styles) ... */
     .filter-bar { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
     .filter-btn { background: rgba(215, 196, 158, 0.05); border: 1px solid var(--palette-brand-highlight); color: var(--palette-brand-highlight); padding: 8px 18px; border-radius: 20px; cursor: pointer; transition: all 0.2s; font-family: var(--font-header); }
     .filter-btn.active, .filter-btn:hover { background: var(--palette-brand-highlight); color: #000; font-weight: bold; }
+    
     .category-section { margin-bottom: 45px; display: none; }
     .category-section.visible { display: block; }
     .category-header { border-bottom: 2px solid var(--palette-brand-main); margin-bottom: 20px; color: var(--palette-brand-accent-pop); font-family: var(--font-header); display: flex; align-items: center; gap: 10px; text-transform: uppercase; }
+    
     .token-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
     .token-card { background: var(--palette-bg-card-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; display: flex; align-items: center; gap: 15px; position: relative; }
     .token-thumb { width: 90px; height: 90px; object-fit: cover; border-radius: 50%; border: 3px solid var(--palette-brand-accent); background: #000; flex-shrink: 0; }
     .token-info { flex: 1; overflow: hidden; }
     .token-name { font-weight: bold; font-size: 1.2em; margin-bottom: 8px; color: #fff; }
-    .code-wrapper { display: flex; align-items: stretch; border-radius: 4px; overflow: hidden; border: 1px solid #333; }
-    .token-code { background: #111; color: var(--palette-brand-accent-pop); font-family: monospace; padding: 10px; font-size: 1.4em; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .copy-btn, .delete-btn { background: #222; border: none; border-left: 1px solid #333; color: #fff; cursor: pointer; width: 44px; display: flex; align-items: center; justify-content: center; }
+    
+    .code-wrapper { display: flex; align-items: stretch; border-radius: 4px; overflow: hidden; border: 1px solid #333; height: 40px; }
+    .token-code { background: #111; color: var(--palette-brand-accent-pop); font-family: monospace; padding: 10px; font-size: 1.4em; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 20px;}
+    
+    /* Edit Mode Styles */
+    .edit-input { background: #000; border: none; color: white; padding: 5px 10px; width: 100%; font-family: monospace; font-size: 1.2em; outline: none; }
+    .edit-input::placeholder { color: #555; font-size: 0.8em; }
+    
+    .copy-btn, .delete-btn, .save-edit-btn { background: #222; border: none; border-left: 1px solid #333; color: #fff; cursor: pointer; width: 44px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
     .copy-btn:hover { background: #444; }
     .delete-btn:hover { background: #8b0000; }
+    .save-edit-btn:hover { background: var(--palette-brand-accent); }
     .copy-btn.copied { background: #4cd964; }
+    
     .add-token-container { display: flex; justify-content: space-between; align-items: center; margin: 20px 0; }
     .save-btn { background: var(--palette-brand-accent); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    
     #details-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 2000; }
     .details-modal { background: var(--palette-bg-card-light); padding: 2rem; border-radius: 12px; width: 400px; color: var(--palette-brand-main); }
     .form-group { margin-bottom: 1.5rem; }
@@ -81,15 +92,6 @@ title: Token Library | Battlemaps
     const addBtn = document.getElementById('add-token-btn');
     let currentUploadData = null;
 
-    // --- 1. Realtime Listener ---
-    const channel = supabase
-        .channel('public:tokens')
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tokens' }, (payload) => {
-            console.log('Token updated by Edge Function:', payload);
-            fetchTokens(); // Automatically refresh when the code arrives
-        })
-        .subscribe();
-
     window.handlePageAuth = (user) => {
         if (user) {
             addBtn.style.display = 'block';
@@ -110,7 +112,7 @@ title: Token Library | Battlemaps
             .order('name', { ascending: true });
 
         if (error) {
-            console.error("Supabase Error:", error);
+            console.error(error);
             document.getElementById('loading-status').innerText = "Error loading tokens.";
             return;
         }
@@ -122,12 +124,10 @@ title: Token Library | Battlemaps
         data.forEach(token => {
             const imgData = token.freehost_images;
             let displayImg = 'https://placehold.co/100x100?text=No+Img';
-
             if (imgData) {
                 if (Array.isArray(imgData) && imgData.length > 0) displayImg = imgData[0].image_url;
                 else if (imgData.image_url) displayImg = imgData.image_url;
             }
-
             const tokenObj = { ...token, safeImg: displayImg };
 
             if (grouped[token.type]) grouped[token.type].push(tokenObj);
@@ -148,21 +148,41 @@ title: Token Library | Battlemaps
             
             const grid = document.createElement('div');
             grid.className = 'token-grid';
-            grid.innerHTML = tokens.map(t => `
+            grid.innerHTML = tokens.map(t => {
+                // LOGIC: If code is missing, show Input field. If present, show Code + Copy.
+                const hasCode = t.token_code && t.token_code.length > 0 && t.token_code !== 'Generating...';
+                
+                let codeHtml = '';
+                if (hasCode) {
+                    codeHtml = `
+                        <div class="token-code" title="${t.token_code}">${t.token_code}</div>
+                        <button class="copy-btn" onclick="copyToClipboard('${t.token_code}', this)">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        </button>
+                    `;
+                } else {
+                    codeHtml = `
+                        <input type="text" class="edit-input" id="input-${t.id}" placeholder="Paste code here...">
+                        <button class="save-edit-btn" onclick="saveManualCode('${t.id}')" title="Save Code">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        </button>
+                    `;
+                }
+
+                return `
                 <div class="token-card">
                     <img src="${t.safeImg}" class="token-thumb" onerror="this.src='https://placehold.co/100x100?text=Error'">
                     <div class="token-info">
                         <div class="token-name">${t.name}</div>
                         <div class="code-wrapper">
-                            <div class="token-code" style="${t.token_code === 'Generating...' ? 'color:orange; font-style:italic;' : ''}">
-                                ${t.token_code || '---'}
-                            </div>
-                            <button class="copy-btn" onclick="copyToClipboard('${t.token_code || ''}', this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
-                            <button class="delete-btn" onclick="deleteToken('${t.id}', '${t.image_id}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                            ${codeHtml}
+                            <button class="delete-btn" onclick="deleteToken('${t.id}', '${t.image_id}')">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
             section.appendChild(grid);
             container.appendChild(section);
         }
@@ -171,8 +191,11 @@ title: Token Library | Battlemaps
     // --- Actions ---
 
     window.copyToClipboard = (text, btnElement) => {
-        if (!text || text === 'Generating...') return;
-        navigator.clipboard.writeText(text).then(() => {
+        if (!text) return;
+        let textToCopy = text;
+        if (text.length > 15) textToCopy = `https://token.otfbm.io/token/${text}`;
+
+        navigator.clipboard.writeText(textToCopy).then(() => {
             const originalHTML = btnElement.innerHTML;
             btnElement.classList.add('copied');
             btnElement.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
@@ -181,12 +204,25 @@ title: Token Library | Battlemaps
     };
 
     window.deleteToken = async (tokenId, imageId) => {
-        if (!confirm("Are you sure you want to delete this token?")) return;
+        if (!confirm("Delete this token?")) return;
         try {
             await supabase.from('tokens').delete().eq('id', tokenId);
             if (imageId) await supabase.from('freehost_images').delete().eq('id', imageId);
-            fetchTokens(); 
+            fetchTokens(); // Refresh without reload
         } catch (err) { alert(err.message); }
+    };
+
+    // New Function: Manually save code from the grid
+    window.saveManualCode = async (tokenId) => {
+        const input = document.getElementById(`input-${tokenId}`);
+        const newCode = input.value.trim();
+        if (!newCode) return;
+
+        try {
+            const { error } = await supabase.from('tokens').update({ token_code: newCode }).eq('id', tokenId);
+            if (error) throw error;
+            fetchTokens(); // Refresh to switch back to "Display Mode"
+        } catch (err) { alert("Save failed: " + err.message); }
     };
 
     window.addEventListener('image-upload-complete', (e) => {
@@ -196,41 +232,58 @@ title: Token Library | Battlemaps
         document.getElementById('details-overlay').style.display = 'flex';
     });
 
+    // --- Save Logic (Frontend Only) ---
     document.getElementById('save-token-db').addEventListener('click', async () => {
         const name = document.getElementById('t-name').value;
         const type = document.getElementById('t-type').value;
         const status = document.getElementById('save-status');
         
         if (!name) { alert("Please enter a name."); return; }
-
-        status.innerText = "Saving...";
+        status.innerText = "Processing...";
         
         try {
-            const { data: { user } } = await supabase.auth.getUser();
+            // 1. Try to get code via Proxy (Best Effort)
+            let finalCode = ""; 
+            const base64Url = btoa(currentUploadData.url);
             
-            // 1. Insert row (UI shows "Generating...")
-            const { data: insertedToken, error } = await supabase.from('tokens').insert([{
+            try {
+                const targetUrl = `https://token.otfbm.io/meta/${base64Url}`;
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+                const response = await fetch(proxyUrl, { signal: AbortSignal.timeout(3000) }); // 3s Timeout
+                
+                if (response.ok) {
+                    const html = await response.text();
+                    const match = html.match(/\b[a-z0-9]{5}\b/);
+                    if (match && !html.includes("Token ID for")) {
+                         // Parse carefully to avoid title match
+                         const parts = html.split('<body>');
+                         if(parts.length > 1) {
+                             const bodyCode = parts[1].split('</body>')[0].trim();
+                             if(bodyCode.length < 8) finalCode = bodyCode;
+                         } else {
+                             finalCode = match[0];
+                         }
+                    }
+                }
+            } catch (ignored) {
+                console.warn("Auto-gen failed, saving blank for manual edit.");
+            }
+
+            // 2. Save to DB (Even if code is empty)
+            const { data: { user } } = await supabase.auth.getUser();
+            const { error } = await supabase.from('tokens').insert([{
                 image_id: currentUploadData.id,
                 user_id: user.id,
                 name: name,
                 type: type,
-                token_code: 'Generating...' 
-            }]).select().single();
+                token_code: finalCode // Can be "" (empty)
+            }]);
 
             if (error) throw error;
-
-            // 2. Trigger Edge Function (Server-Side Fetch)
-            const { error: funcError } = await supabase.functions.invoke('update-token-code', {
-                body: { 
-                    record_id: insertedToken.id, 
-                    image_url: currentUploadData.url 
-                }
-            });
-
-            if (funcError) console.error("Edge Function Error:", funcError);
-
+            
+            // 3. Success
             document.getElementById('details-overlay').style.display = 'none';
-            fetchTokens();
+            fetchTokens(); // Updates grid. If empty, it will show the Input field.
 
         } catch (err) {
             status.style.color = '#ff6b6b';
