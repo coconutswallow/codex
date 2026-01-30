@@ -222,7 +222,7 @@ title: Token Library | Battlemaps
         try {
             await supabase.from('tokens').delete().eq('id', tokenId);
             if (imageId) await supabase.from('freehost_images').delete().eq('id', imageId);
-            fetchTokens(); // Refresh without reload
+            fetchTokens(); 
         } catch (err) { alert(err.message); }
     };
 
@@ -234,7 +234,7 @@ title: Token Library | Battlemaps
         try {
             const { error } = await supabase.from('tokens').update({ token_code: newCode }).eq('id', tokenId);
             if (error) throw error;
-            fetchTokens(); // Refresh to switch back to "Display Mode"
+            fetchTokens(); 
         } catch (err) { alert("Save failed: " + err.message); }
     };
 
@@ -271,16 +271,18 @@ title: Token Library | Battlemaps
 
             // 2. Close Modal & Refresh Grid
             document.getElementById('details-overlay').style.display = 'none';
-            await fetchTokens(); // Ensure user sees the card before background task finishes
+            await fetchTokens(); // Ensure user sees the card
 
             // 3. Trigger Edge Function (Background)
-            supabase.functions.invoke('generate-token-code', {
+            // USING THE CORRECT NAME: 'update-token-code'
+            supabase.functions.invoke('update-token-code', {
                 body: { 
                     record_id: insertedData.id, 
                     image_url: currentUploadData.url 
                 }
             }).then(({ data, error }) => {
                 if (error) console.error("Edge Function Error:", error);
+                else console.log("Edge Function Success:", data);
                 
                 // 4. Refresh grid again to show result (Code OR Manual Input)
                 fetchTokens();
