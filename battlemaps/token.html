@@ -304,38 +304,39 @@ title: Token Library | Battlemaps
         const status = document.getElementById('save-status');
         
         if (!name) { alert("Please enter a name."); return; }
-
         status.innerText = "Generating Code...";
         
         try {
-            // 1. Generate Token Code via Proxy
             const base64Url = btoa(currentUploadData.url);
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://token.otfbm.io/meta/' + base64Url)}`;
+            const targetUrl = `https://token.otfbm.io/meta/${base64Url}`;
+            
+            // Switch to a different proxy or use the 'hexar' version of allorigins
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
             
             const response = await fetch(proxyUrl);
-            const json = await response.json();
             
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(json.contents, 'text/html');
-            const tokenCode = doc.body.textContent.trim();
+            if (!response.ok) throw new Error(`Proxy failed with status: ${response.status}`);
+            
+            const tokenCode = await response.text();
+            const cleanCode = tokenCode.trim();
 
-            if(!tokenCode || tokenCode.length < 2) throw new Error("Could not generate code for this image.");
+            if(!cleanCode || cleanCode.length < 2) throw new Error("Invalid code received.");
 
-            // 2. Save to Supabase
             const { data: { user } } = await supabase.auth.getUser();
             const { error } = await supabase.from('tokens').insert([{
                 image_id: currentUploadData.id,
                 user_id: user.id,
                 name: name,
                 type: type,
-                token_code: tokenCode 
+                token_code: cleanCode 
             }]);
 
             if (error) throw error;
             location.reload(); 
         } catch (err) {
+            console.error("Save Error:", err);
             status.style.color = '#ff6b6b';
-            status.innerText = "Error: " + err.message;
+            status.innerText = "Error: " + err.message + ". Try clicking Save again.";
         }
     });
 
