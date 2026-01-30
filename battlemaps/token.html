@@ -72,7 +72,7 @@ title: Token Library | Battlemaps
         color: var(--palette-brand-accent-pop); 
         font-family: monospace; 
         padding: 10px; 
-        font-size: 1.25em; /* Larger Code */
+        font-size: 1.4em; /* Larger Code */
         flex: 1;
         white-space: nowrap;
         overflow: hidden;
@@ -160,32 +160,43 @@ title: Token Library | Battlemaps
         }
     };
 
-    // FETCHING DATA
     async function fetchTokens() {
         const { data, error } = await supabase
             .from('tokens')
             .select(`
                 id, name, type, token_code,
                 freehost_images ( image_url ) 
-            `) // This specifies the join via the FK
+            `)
             .order('name', { ascending: true });
 
-        if (error) return console.error(error);
+        if (error) {
+            console.error(error);
+            document.getElementById('loading-status').innerText = "Error loading tokens.";
+            return;
+        }
 
-        // RENDERING DATA
-        tokenList.innerHTML = data.map(token => {
-            // Access the joined object. Use image_url instead of thumb_url
-            const displayImg = token.freehost_images?.image_url || 'path/to/placeholder.png';
-            
-            return `
-                <tr>
-                    <td><img src="${displayImg}" class="token-thumb"></td>
-                    <td>${token.name}</td>
-                    <td>${token.type}</td>
-                    <td><code>${token.token_code || 'N/A'}</code></td>
-                </tr>
-            `;
-        }).join('');
+        document.getElementById('loading-status').style.display = 'none';
+
+        // Prepare grouped categories
+        const grouped = {
+            "My Characters": [],
+            "Other Characters": [],
+            "Monsters": []
+        };
+
+        data.forEach(token => {
+            const displayImg = token.freehost_images?.image_url || 'https://placehold.co/100x100?text=No+Img';
+            const tokenObj = { ...token, safeImg: displayImg };
+
+            if (grouped[token.type]) {
+                grouped[token.type].push(tokenObj);
+            } else {
+                if(!grouped["Misc"]) grouped["Misc"] = [];
+                grouped["Misc"].push(tokenObj);
+            }
+        });
+
+        renderSections(grouped);
     }
 
     function renderSections(groupedTokens) {
@@ -226,7 +237,6 @@ title: Token Library | Battlemaps
         }
     }
 
-    // Filter Logic
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -238,7 +248,6 @@ title: Token Library | Battlemaps
         });
     });
 
-    // Copy to Clipboard
     window.copyToClipboard = (text, btnElement) => {
         if (!text) return;
         navigator.clipboard.writeText(text).then(() => {
@@ -252,7 +261,6 @@ title: Token Library | Battlemaps
         });
     };
 
-    // Upload & Save
     window.addEventListener('image-upload-complete', (e) => {
         currentUploadData = e.detail;
         document.getElementById('details-overlay').style.display = 'flex';
