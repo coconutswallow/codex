@@ -7,36 +7,32 @@ title: Token Library | Battlemaps
 
 <link rel="stylesheet" href="/codex/assets/css/style.css">
 <style>
-    /* Layout & Filtering */
+    /* ... (Styles remain the same) ... */
     .filter-bar { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
     .filter-btn { background: rgba(215, 196, 158, 0.05); border: 1px solid var(--palette-brand-highlight); color: var(--palette-brand-highlight); padding: 8px 18px; border-radius: 20px; cursor: pointer; transition: all 0.2s; font-family: var(--font-header); }
     .filter-btn.active, .filter-btn:hover { background: var(--palette-brand-highlight); color: #000; font-weight: bold; }
     
-    /* Category Sections */
     .category-section { margin-bottom: 45px; display: none; }
     .category-section.visible { display: block; }
     .category-header { border-bottom: 2px solid var(--palette-brand-main); margin-bottom: 20px; color: var(--palette-brand-accent-pop); font-family: var(--font-header); display: flex; align-items: center; gap: 10px; text-transform: uppercase; }
     
-    /* Token Cards */
     .token-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
     .token-card { background: var(--palette-bg-card-dark); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; display: flex; align-items: center; gap: 15px; position: relative; }
     .token-thumb { width: 90px; height: 90px; object-fit: cover; border-radius: 50%; border: 3px solid var(--palette-brand-accent); background: #000; flex-shrink: 0; }
     .token-info { flex: 1; overflow: hidden; }
     .token-name { font-weight: bold; font-size: 1.2em; margin-bottom: 8px; color: #fff; }
     
-    /* Code UI */
     .code-wrapper { display: flex; align-items: stretch; border-radius: 4px; overflow: hidden; border: 1px solid #333; }
     .token-code { background: #111; color: var(--palette-brand-accent-pop); font-family: monospace; padding: 10px; font-size: 1.4em; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     
-    /* Buttons */
     .copy-btn, .delete-btn { background: #222; border: none; border-left: 1px solid #333; color: #fff; cursor: pointer; width: 44px; display: flex; align-items: center; justify-content: center; }
     .copy-btn:hover { background: #444; }
     .delete-btn:hover { background: #8b0000; }
     .copy-btn.copied { background: #4cd964; }
+    
     .add-token-container { display: flex; justify-content: space-between; align-items: center; margin: 20px 0; }
     .save-btn { background: var(--palette-brand-accent); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
     
-    /* Modal */
     #details-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 2000; }
     .details-modal { background: var(--palette-bg-card-light); padding: 2rem; border-radius: 12px; width: 400px; color: var(--palette-brand-main); }
     .form-group { margin-bottom: 1.5rem; }
@@ -91,15 +87,6 @@ title: Token Library | Battlemaps
     const addBtn = document.getElementById('add-token-btn');
     let currentUploadData = null;
 
-    // --- 1. Realtime Listener: Updates the UI when the Edge Function finishes ---
-    const channel = supabase
-        .channel('public:tokens')
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tokens' }, (payload) => {
-            console.log('Token updated by Edge Function:', payload);
-            fetchTokens(); // Refresh the grid automatically
-        })
-        .subscribe();
-
     window.handlePageAuth = (user) => {
         if (user) {
             addBtn.style.display = 'block';
@@ -130,10 +117,9 @@ title: Token Library | Battlemaps
         const grouped = { "My Characters": [], "Other Characters": [], "Monsters": [] };
 
         data.forEach(token => {
-            // Robust check for Image Join (handles Array or Object)
             const imgData = token.freehost_images;
             let displayImg = 'https://placehold.co/100x100?text=No+Img';
-
+            
             if (imgData) {
                 if (Array.isArray(imgData) && imgData.length > 0) displayImg = imgData[0].image_url;
                 else if (imgData.image_url) displayImg = imgData.image_url;
@@ -165,8 +151,8 @@ title: Token Library | Battlemaps
                     <div class="token-info">
                         <div class="token-name">${t.name}</div>
                         <div class="code-wrapper">
-                            <div class="token-code" style="${t.token_code === 'Generating...' ? 'color:orange; font-style:italic;' : ''}">
-                                ${t.token_code || '---'}
+                            <div class="token-code" title="${t.token_code}">
+                                ${t.token_code && t.token_code.length > 10 ? 'Long Code' : (t.token_code || '---')}
                             </div>
                             <button class="copy-btn" onclick="copyToClipboard('${t.token_code || ''}', this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
                             <button class="delete-btn" onclick="deleteToken('${t.id}', '${t.image_id}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
@@ -181,9 +167,17 @@ title: Token Library | Battlemaps
 
     // --- Actions ---
 
+    // Updated Smart Copy: Handles Short Codes AND Base64 Long Codes
     window.copyToClipboard = (text, btnElement) => {
-        if (!text || text === 'Generating...') return;
-        navigator.clipboard.writeText(text).then(() => {
+        if (!text) return;
+        
+        let textToCopy = text;
+        // If code is long (>15 chars), assume it's Base64 and needs the URL prefix
+        if (text.length > 15) {
+            textToCopy = `https://token.otfbm.io/token/${text}`;
+        }
+
+        navigator.clipboard.writeText(textToCopy).then(() => {
             const originalHTML = btnElement.innerHTML;
             btnElement.classList.add('copied');
             btnElement.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
@@ -196,7 +190,7 @@ title: Token Library | Battlemaps
         try {
             await supabase.from('tokens').delete().eq('id', tokenId);
             if (imageId) await supabase.from('freehost_images').delete().eq('id', imageId);
-            fetchTokens(); 
+            location.reload(); 
         } catch (err) { alert(err.message); }
     };
 
@@ -207,7 +201,7 @@ title: Token Library | Battlemaps
         document.getElementById('details-overlay').style.display = 'flex';
     });
 
-    // --- 2. Save Logic: Uses Edge Function ---
+    // --- FRONTEND GENERATION LOGIC ---
     document.getElementById('save-token-db').addEventListener('click', async () => {
         const name = document.getElementById('t-name').value;
         const type = document.getElementById('t-type').value;
@@ -215,40 +209,54 @@ title: Token Library | Battlemaps
         
         if (!name) { alert("Please enter a name."); return; }
 
-        status.innerText = "Saving...";
+        status.innerText = "Generating...";
         
         try {
+            // 1. Calculate the Base64 String (The "Always Works" Fallback)
+            // btoa() is a built-in browser function for Base64 encoding
+            const base64Url = btoa(currentUploadData.url);
+            let finalCode = base64Url;
+
+            // 2. OPTIONAL: Try to fetch the shortcode (Best Effort)
+            // If this fails due to CORS or 502, we just ignore it and use the Base64
+            try {
+                const targetUrl = `https://token.otfbm.io/meta/${base64Url}`;
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+                
+                const response = await fetch(proxyUrl, { signal: AbortSignal.timeout(3000) }); // 3s timeout
+                if (response.ok) {
+                    const html = await response.text();
+                    
+                    // Simple parsing to find the 5-char code
+                    const match = html.match(/\b[a-z0-9]{5}\b/); 
+                    // Make sure we didn't match something inside a long URL or HTML tag
+                    if (match && !html.includes("Token ID for")) { 
+                         // Check if body split helps precision
+                         const parts = html.split('<body>');
+                         if(parts.length > 1) {
+                             const bodyCode = parts[1].split('</body>')[0].trim();
+                             if(bodyCode.length < 8) finalCode = bodyCode;
+                         } else {
+                             finalCode = match[0];
+                         }
+                    }
+                }
+            } catch (ignore) {
+                console.log("Shortcode fetch failed, using Base64 fallback.");
+            }
+
+            // 3. Save to Supabase
             const { data: { user } } = await supabase.auth.getUser();
-            
-            // A. Insert row immediately with "Generating..."
-            const { data: insertedToken, error } = await supabase.from('tokens').insert([{
+            const { error } = await supabase.from('tokens').insert([{
                 image_id: currentUploadData.id,
                 user_id: user.id,
                 name: name,
                 type: type,
-                token_code: 'Generating...' 
-            }]).select().single();
+                token_code: finalCode 
+            }]);
 
             if (error) throw error;
-
-            // B. Trigger the Edge Function (This runs on the server, solving CORS!)
-            // Make sure your function name here matches EXACTLY what you named it in Supabase
-            const { error: funcError } = await supabase.functions.invoke('update-token-code', {
-                body: { 
-                    record_id: insertedToken.id, 
-                    image_url: currentUploadData.url 
-                }
-            });
-
-            if (funcError) {
-                console.error("Edge Function Error:", funcError);
-                // We don't throw here so the modal still closes, 
-                // but you might want to alert the user if strict
-            }
-
-            // C. Close Modal immediately
-            document.getElementById('details-overlay').style.display = 'none';
-            fetchTokens(); // Show the new card immediately
+            location.reload(); 
 
         } catch (err) {
             status.style.color = '#ff6b6b';
