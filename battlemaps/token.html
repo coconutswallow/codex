@@ -140,7 +140,7 @@ title: Token Library | Battlemaps
 <main class="container page-padding">
     <div class="add-token-container">
         <h1>Token Library</h1>
-        <button class="trigger-upload save-btn" id="add-token-btn" style="display:none;">+ New Token</button>
+        <button class="save-btn" id="add-token-btn" style="display:none;" onclick="openTokenModal()">+ New Token</button>
     </div>
 
     <div class="filter-container" id="filter-bar" style="display:none;">
@@ -164,11 +164,31 @@ title: Token Library | Battlemaps
 <div id="details-overlay">
     <div class="details-modal">
         <h3>Token Details</h3>
-        <div class="preview-box"><img id="t-preview-img" src="" alt="Preview"></div>
+        
+        <div style="display:flex; gap:10px; margin-bottom:15px; justify-content: center;">
+            <button id="tab-upload" class="filter-btn active" onclick="switchTab('upload')">Upload File</button>
+            <button id="tab-url" class="filter-btn" onclick="switchTab('url')">Paste URL</button>
+        </div>
+
+        <div class="preview-box">
+            <img id="t-preview-img" src="https://placehold.co/120x120?text=Preview" alt="Preview">
+        </div>
+
+        <div id="upload-section" style="text-align:center; margin-bottom:15px;">
+            <p style="font-size:0.9em; color:#888; margin-bottom:10px;">Supported: JPG, PNG, GIF</p>
+            <button class="trigger-upload save-btn" style="background:#444;">Select File</button>
+        </div>
+
+        <div id="url-section" class="form-group" style="display:none;">
+            <label>Image URL</label>
+            <input type="text" id="t-url-input" placeholder="https://example.com/image.png">
+        </div>
+
         <div class="form-group">
             <label>Name</label>
-            <input type="text" id="t-name" placeholder="Name">
+            <input type="text" id="t-name" placeholder="Token Name">
         </div>
+        
         <div class="form-group">
             <label>Category</label>
             <select id="t-type">
@@ -177,8 +197,9 @@ title: Token Library | Battlemaps
                 <option value="Monsters">Monsters</option>
             </select>
         </div>
+
         <button id="save-token-db" class="save-btn" style="width:100%">Save Token</button>
-        <p id="save-status" style="text-align:center; margin-top:10px; font-weight:bold;"></p>
+        <p id="save-status" style="text-align:center; margin-top:10px; font-weight:bold; font-size:0.9em;"></p>
     </div>
 </div>
 
@@ -189,7 +210,8 @@ title: Token Library | Battlemaps
     const addBtn = document.getElementById('add-token-btn');
     const searchInput = document.getElementById('token-search');
     
-    let currentUploadData = null;
+    // UI State
+    let currentUploadUrl = null; // Stores URL from either upload or paste
     let allTokensData = []; 
     let activeFilter = 'all';
     let searchTerm = '';
@@ -204,15 +226,12 @@ title: Token Library | Battlemaps
         }
     };
 
+    // --- 1. Refactored Fetch Logic (No Joins) ---
     async function fetchTokens() {
-        // Fetch tokens, filtering out any that are missing an image_id
+        // Now selecting image_url directly from tokens table
         const { data, error } = await supabase
             .from('tokens')
-            .select(`
-                id, name, type, token_code, image_id, created_at,
-                freehost_images ( image_url ) 
-            `)
-            .not('image_id', 'is', null) // <--- THIS LINE FILTERS NULLs
+            .select('id, name, type, token_code, image_url, created_at')
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -223,37 +242,28 @@ title: Token Library | Battlemaps
 
         document.getElementById('loading-status').style.display = 'none';
         
-        // Process Images once
         allTokensData = data.map(token => {
-            const imgData = token.freehost_images;
-            let displayImg = 'https://placehold.co/100x100?text=No+Img';
-            if (imgData) {
-                if (Array.isArray(imgData) && imgData.length > 0) displayImg = imgData[0].image_url;
-                else if (imgData.image_url) displayImg = imgData.image_url;
-            }
+            // Use the direct column, fallback to placeholder
+            const displayImg = token.image_url || 'https://placehold.co/100x100?text=No+Img';
             return { ...token, safeImg: displayImg };
         });
 
         applyFilters();
     }
 
-    // --- Core Filter & Render Logic ---
+    // --- 2. Filter & Render (Unchanged logic, kept for context) ---
     function applyFilters() {
-        // 1. Filter the raw list
         const filtered = allTokensData.filter(t => {
             const matchesCategory = activeFilter === 'all' || t.type === activeFilter;
             const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase());
             return matchesCategory && matchesSearch;
         });
 
-        // 2. Group them for display
         const grouped = { "My Characters": [], "Other Characters": [], "Monsters": [], "Misc": [] };
-
         filtered.forEach(t => {
             if (grouped[t.type]) grouped[t.type].push(t);
             else grouped["Misc"].push(t);
         });
-
         renderSections(grouped);
     }
 
@@ -271,34 +281,24 @@ title: Token Library | Battlemaps
             
             const grid = document.createElement('div');
             grid.className = 'token-grid';
+            
+            // Render Cards
             grid.innerHTML = tokens.map(t => {
                 let codeHtml = '';
-                
-                // STATE 1: Generating
                 if (t.token_code === 'Generating...') {
-                    codeHtml = `
-                        <div class="token-code" style="color: #888; font-style: italic; display:flex; align-items:center; justify-content:center;">
-                            <span class="blink">Generating...</span>
-                        </div>
-                    `;
-                } 
-                // STATE 2: Has Code
-                else if (t.token_code && t.token_code.length > 0) {
+                    codeHtml = `<div class="token-code" style="color:#888; font-style:italic;"><span class="blink">Generating...</span></div>`;
+                } else if (t.token_code) {
                     codeHtml = `
                         <div class="token-code" title="${t.token_code}">${t.token_code}</div>
                         <button class="copy-btn" onclick="copyToClipboard('${t.token_code}', this)">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                        </button>
-                    `;
-                } 
-                // STATE 3: Failed/Empty -> Show Manual Input
-                else {
+                        </button>`;
+                } else {
                     codeHtml = `
-                        <input type="text" class="edit-input" id="input-${t.id}" placeholder="Paste code here...">
-                        <button class="save-edit-btn" onclick="saveManualCode('${t.id}')" title="Save Code">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                        </button>
-                    `;
+                        <input type="text" class="edit-input" id="input-${t.id}" placeholder="Paste code...">
+                        <button class="save-edit-btn" onclick="saveManualCode('${t.id}')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path></svg>
+                        </button>`;
                 }
 
                 return `
@@ -308,7 +308,7 @@ title: Token Library | Battlemaps
                         <div class="token-name">${t.name}</div>
                         <div class="code-wrapper">
                             ${codeHtml}
-                            <button class="delete-btn" onclick="deleteToken('${t.id}', '${t.image_id}')">
+                            <button class="delete-btn" onclick="deleteToken('${t.id}')">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                             </button>
                         </div>
@@ -319,110 +319,93 @@ title: Token Library | Battlemaps
             container.appendChild(section);
         }
 
-        if(!hasContent) {
-            container.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">No tokens found matching your search.</div>`;
-        }
+        if(!hasContent) container.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">No tokens found.</div>`;
     }
 
-    // --- Search & Filter Listeners ---
-    
-    searchInput.addEventListener('input', (e) => {
-        searchTerm = e.target.value;
-        applyFilters();
-    });
-
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            activeFilter = e.target.dataset.filter;
-            applyFilters();
-        });
-    });
-
-    // --- Actions (Copy, Delete, Edit) ---
-
-    window.copyToClipboard = (text, btnElement) => {
-        if (!text) return;
-        let textToCopy = text;
-        if (text.length > 15) textToCopy = `https://token.otfbm.io/token/${text}`;
-
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            const originalHTML = btnElement.innerHTML;
-            btnElement.classList.add('copied');
-            btnElement.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-            setTimeout(() => { btnElement.classList.remove('copied'); btnElement.innerHTML = originalHTML; }, 1500);
-        });
-    };
-
-    window.deleteToken = async (tokenId, imageId) => {
-        if (!confirm("Delete this token?")) return;
-        try {
-            await supabase.from('tokens').delete().eq('id', tokenId);
-            if (imageId) await supabase.from('freehost_images').delete().eq('id', imageId);
-            fetchTokens(); 
-        } catch (err) { alert(err.message); }
-    };
-
-    window.saveManualCode = async (tokenId) => {
-        const input = document.getElementById(`input-${tokenId}`);
-        const newCode = input.value.trim();
-        if (!newCode) return;
-
-        try {
-            const { error } = await supabase.from('tokens').update({ token_code: newCode }).eq('id', tokenId);
-            if (error) throw error;
-            fetchTokens(); 
-        } catch (err) { alert("Save failed: " + err.message); }
-    };
-
-    window.addEventListener('image-upload-complete', (e) => {
-        currentUploadData = e.detail;
-        document.getElementById('t-preview-img').src = currentUploadData.url; 
-        document.getElementById('t-name').value = ""; 
-        document.getElementById('save-status').innerText = ""; 
+    // --- 3. UI Helpers (Modal & Tabs) ---
+    window.openTokenModal = () => {
         document.getElementById('details-overlay').style.display = 'flex';
+        // Reset fields
+        document.getElementById('t-name').value = "";
+        document.getElementById('t-url-input').value = "";
+        document.getElementById('t-preview-img').src = "https://placehold.co/120x120?text=Preview";
+        document.getElementById('save-status').innerText = "";
+        currentUploadUrl = null;
+    };
+
+    window.switchTab = (mode) => {
+        const uploadSec = document.getElementById('upload-section');
+        const urlSec = document.getElementById('url-section');
+        const btnUpload = document.getElementById('tab-upload');
+        const btnUrl = document.getElementById('tab-url');
+
+        if (mode === 'upload') {
+            uploadSec.style.display = 'block';
+            urlSec.style.display = 'none';
+            btnUpload.classList.add('active');
+            btnUrl.classList.remove('active');
+        } else {
+            uploadSec.style.display = 'none';
+            urlSec.style.display = 'block';
+            btnUpload.classList.remove('active');
+            btnUrl.classList.add('active');
+        }
+    };
+
+    // Listen for manual URL input to update preview
+    document.getElementById('t-url-input').addEventListener('input', (e) => {
+        const url = e.target.value.trim();
+        if(url) {
+            document.getElementById('t-preview-img').src = url;
+            currentUploadUrl = url;
+        }
     });
 
-    // --- NEW SAVE LOGIC (Background Edge Function) ---
+    // Listen for FreeImage upload completion
+    window.addEventListener('image-upload-complete', (e) => {
+        // e.detail contains { url, thumb, etc } from freeimage-upload.js
+        currentUploadUrl = e.detail.url; 
+        document.getElementById('t-preview-img').src = currentUploadUrl;
+        document.getElementById('save-status').innerText = "Image uploaded successfully!";
+        document.getElementById('save-status').style.color = "#4cd964";
+    });
+
+    // --- 4. Save Logic (Unified) ---
     document.getElementById('save-token-db').addEventListener('click', async () => {
         const name = document.getElementById('t-name').value;
         const type = document.getElementById('t-type').value;
         const status = document.getElementById('save-status');
-        
+
         if (!name) { alert("Please enter a name."); return; }
-        status.innerText = "Saving to library...";
-        
+        if (!currentUploadUrl) { alert("Please upload an image or paste a URL."); return; }
+
+        status.innerText = "Saving...";
+        status.style.color = "#fff";
+
         try {
             const { data: { user } } = await supabase.auth.getUser();
 
-            // 1. Insert into DB with "Generating..."
+            // Insert directly into tokens (no more freehost_images dependency)
             const { data: insertedData, error } = await supabase.from('tokens').insert([{
-                image_id: currentUploadData.id,
                 user_id: user.id,
                 name: name,
                 type: type,
-                token_code: 'Generating...' 
+                image_url: currentUploadUrl, // Storing the URL directly
+                token_code: 'Generating...'
             }]).select().single();
 
             if (error) throw error;
 
-            // 2. Close Modal & Refresh Grid
             document.getElementById('details-overlay').style.display = 'none';
-            await fetchTokens(); // Ensure user sees the card
+            await fetchTokens(); 
 
-            // 3. Trigger Edge Function (Background)
+            // Trigger Edge Function
             supabase.functions.invoke('update-token-code', {
                 body: { 
                     record_id: insertedData.id, 
-                    image_url: currentUploadData.url 
+                    image_url: currentUploadUrl 
                 }
-            }).then(({ data, error }) => {
-                if (error) console.error("Edge Function Error:", error);
-                
-                // 4. Refresh grid again to show result (Code OR Manual Input)
-                fetchTokens();
-            });
+            }).then(() => fetchTokens());
 
         } catch (err) {
             status.style.color = '#ff6b6b';
@@ -430,6 +413,43 @@ title: Token Library | Battlemaps
         }
     });
 
+    // --- 5. Utilities (Copy, Delete, Manual Save) ---
+    window.copyToClipboard = (text, btnElement) => {
+        if (!text) return;
+        let textToCopy = text.length > 15 ? `https://token.otfbm.io/token/${text}` : text;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            const original = btnElement.innerHTML;
+            btnElement.classList.add('copied');
+            btnElement.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+            setTimeout(() => { btnElement.classList.remove('copied'); btnElement.innerHTML = original; }, 1500);
+        });
+    };
+
+    window.deleteToken = async (id) => {
+        if (!confirm("Delete this token?")) return;
+        await supabase.from('tokens').delete().eq('id', id);
+        fetchTokens();
+    };
+
+    window.saveManualCode = async (id) => {
+        const val = document.getElementById(`input-${id}`).value.trim();
+        if (val) {
+            await supabase.from('tokens').update({ token_code: val }).eq('id', id);
+            fetchTokens();
+        }
+    };
+    
+    // Listeners
+    searchInput.addEventListener('input', (e) => { searchTerm = e.target.value; applyFilters(); });
+    document.querySelectorAll('.filter-container .filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            if(e.target.id.includes('tab')) return; // Ignore tabs
+            document.querySelectorAll('.filter-container .filter-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            activeFilter = e.target.dataset.filter;
+            applyFilters();
+        });
+    });
     window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') document.getElementById('details-overlay').style.display = 'none';
     });
