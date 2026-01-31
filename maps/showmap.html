@@ -1,0 +1,37 @@
+---
+layout: default
+title: Map Viewer
+permalink: /maps/showmap
+---
+
+<div class="container-fluid" style="padding: 0; height: 85vh; background: #000;">
+    <iframe 
+        id="map-frame" 
+        src="" 
+        style="width: 100%; height: 100%; border: none; display: block;"
+        allowfullscreen>
+    </iframe>
+</div>
+
+<script>
+    function updateIframe() {
+        const frame = document.getElementById('map-frame');
+        
+        // Get "Ansalon" from "view#Ansalon"
+        const mapName = window.location.hash.substring(1); 
+
+        if (mapName) {
+            // Point the iframe to the raw viewer.html page
+            // We use site.baseurl pathing logic implicitly by using relative path or full path
+            frame.src = "/codex/maps/viewer.html?map=" + encodeURIComponent(mapName);
+        } else {
+            // Default blank state
+            document.getElementById('map-frame').style.display = 'none';
+            document.querySelector('.container-fluid').innerHTML += 
+                '<h3 style="color:white; text-align:center; padding-top:20%;">Please select a map (e.g. #Ansalon)</h3>';
+        }
+    }
+
+    window.addEventListener('hashchange', updateIframe);
+    window.addEventListener('load', updateIframe);
+</script>

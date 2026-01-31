@@ -1,3 +1,7 @@
+---
+layout: null
+permalink: /maps/viewer.html
+---
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,17 +12,18 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
-        /* Map fills the window */
+        /* Reset margins so the map fills the iframe perfectly */
         body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: #222; }
+        
+        /* The container for the map */
         #viewer-widget { width: 100%; height: 100%; display: none; }
 
-        /* Loading / Error Overlay */
+        /* Loading Spinner Overlay */
         #loading-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #1a1a1a;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: #eee; font-family: sans-serif;
-            z-index: 1000;
+            color: #eee; font-family: sans-serif; z-index: 1000;
         }
         .spinner {
             width: 40px; height: 40px; border: 4px solid #444;
@@ -32,7 +37,7 @@
 
     <div id="loading-container">
         <div class="spinner"></div>
-        <p style="margin-top:15px;" id="loading-text">Loading Map...</p>
+        <p style="margin-top:15px;">Loading Map...</p>
     </div>
 
     <div id="viewer-widget" data-map-component data-editable="false"></div>
@@ -42,65 +47,39 @@
     <script type="module">
         import { initMapComponents } from '../assets/js/map-widget.js';
         
-        // 1. Initialize immediately
+        // Initialize logic immediately
         initMapComponents();
 
         const widgetContainer = document.getElementById('viewer-widget');
-        const loadingContainer = document.getElementById('loading-container');
-        const loadingText = document.getElementById('loading-text');
+        const loading = document.getElementById('loading-container');
 
-        let loadInitiated = false; // PREVENT DOUBLE RUNS
-
-        // 2. Listen for success
+        // 1. Listen for 'maploaded' from map-widget.js to hide spinner
         widgetContainer.addEventListener('maploaded', (e) => {
-            console.log("Map Loaded Event Received:", e.detail);
-            loadingContainer.style.display = 'none';
+            loading.style.display = 'none';
             widgetContainer.style.display = 'block';
             
-            // Fix Leaflet resize glitch
+            // Resize fix ensures map tiles render correctly
             const widget = window.mapComponents['viewer-widget'];
             if(widget && widget.map) { 
                 setTimeout(() => widget.map.invalidateSize(), 100); 
             }
         });
 
-        // 3. Main Load Function
-        function attemptLoad() {
-            if (loadInitiated) return; // Stop if already running
-
+        // 2. Load map based on URL param ?map=Name
+        function loadMap() {
             const widget = window.mapComponents ? window.mapComponents['viewer-widget'] : null;
-            
-            // If widget isn't ready, wait and try again (without setting flag)
-            if (!widget) { 
-                setTimeout(attemptLoad, 50); 
-                return; 
-            }
+            if (!widget) { setTimeout(loadMap, 50); return; }
 
-            // Widget found! Lock the process.
-            loadInitiated = true;
-
-            // Check URL Params (?map=Name) OR Hash (#Name)
             const params = new URLSearchParams(window.location.search);
-            const mapName = params.get('map') || window.location.hash.substring(1);
-
-            console.log("Attempting to load map:", mapName);
+            const mapName = params.get('map'); // e.g. Ansalon
 
             if (mapName) {
-                // Determine if ID (number) or Name (string)
-                if (!isNaN(mapName) && !isNaN(parseFloat(mapName))) {
-                     widget.loadMapById(parseInt(mapName));
-                } else {
-                     widget.loadMapByName(mapName);
-                }
-            } else {
-                // Only show error if we TRULY have no ID
-                loadingContainer.style.display = 'flex';
-                loadingText.innerHTML = "<span style='color:#ff6b6b'>Error: No map ID provided in URL.<br>(e.g. ?map=Ansalon)</span>";
+                if (!isNaN(mapName)) widget.loadMapById(parseInt(mapName));
+                else widget.loadMapByName(mapName);
             }
         }
         
-        // Start logic on load
-        window.addEventListener('DOMContentLoaded', attemptLoad);
+        window.addEventListener('DOMContentLoaded', loadMap);
     </script>
 </body>
 </html>
