@@ -18,14 +18,14 @@ title: Map Viewer
     <script>
         function updateFrame() {
             const frame = document.getElementById('map-frame');
-            // Extract map name from URL hash (e.g., #ansalon)
+            // Get map name from Hash (#Ansalon)
             const mapName = window.location.hash.substring(1);
 
             if (mapName) {
-                // Pass the name to viewer.html via query parameter
+                // Pass name to viewer.html via query parameter
                 frame.src = `../viewer.html?map=${encodeURIComponent(mapName)}`;
             } else {
-                document.body.innerHTML = "<h2 style='color:white;text-align:center;padding-top:20%;font-family:sans-serif;'>No map specified (e.g. view#ansalon)</h2>";
+                document.body.innerHTML = "<h2 style='color:white;text-align:center;padding-top:20%;font-family:sans-serif;'>No map specified (e.g. view#Ansalon)</h2>";
             }
         }
         window.addEventListener('hashchange', updateFrame);

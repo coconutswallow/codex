@@ -148,10 +148,15 @@ class MapComponent {
         const { data, error } = await supabase
             .from('location_maps')
             .select('*')
-            .eq('name', name)
+            .ilike('name', name) // Use ilike for case-insensitive search
             .single();
-        
-        if (error) throw error;
+
+        if (error) {
+            console.error("Map not found:", name);
+            // Dispatch empty event to hide loading spinner on error
+            this.container.dispatchEvent(new CustomEvent('maploaded', { detail: { name: "Not Found" } }));
+            throw error;
+        }
         this.renderMap(data);
     }
 
