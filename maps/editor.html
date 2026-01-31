@@ -31,10 +31,15 @@ title: Map Editor
         }
         
         .info-text { font-size: 0.9em; color: #666; margin-top: 10px; text-align: center;}
+        
+        /* Added helper for auth state */
+        .auth-warning { text-align: center; padding: 50px; color: #666; }
     </style>
 </head>
 <body>
-    <div class="container">
+    {% include auth-header.html %}
+
+    <div class="container" id="main-container" style="display:none;">
         <h1>Map Editor</h1>
         
         <div class="controls">
@@ -60,20 +65,41 @@ title: Map Editor
         </p>
     </div>
 
+    <div id="login-prompt" class="auth-warning">
+        <h2>Restricted Access</h2>
+        <p>You must be logged in to use the Map Editor.</p>
+    </div>
+
     <script type="module">
-        // FIX: Import initMapComponents to actually start the map engine
         import { fetchMapList, initMapComponents } from '/codex/assets/js/map-widget.js';
+        // Import Supabase to check current user
+        import { supabase } from '/codex/assets/js/supabaseClient.js';
 
         const mapSelect = document.getElementById('map-select');
         const saveBtn = document.getElementById('save-view-btn');
+        const mainContainer = document.getElementById('main-container');
+        const loginPrompt = document.getElementById('login-prompt');
         let editorWidget = null;
 
         async function init() {
             try {
-                // 1. Initialize the map components (scans DOM for data-map-component)
+                // 1. Check Authentication (must be logged in)
+                const { data: { user } } = await supabase.auth.getUser();
+
+                if (!user) {
+                    // Not logged in: keep editor hidden, show prompt
+                    console.log("User not logged in");
+                    return; 
+                }
+
+                // Logged in: Show editor, hide prompt
+                mainContainer.style.display = 'block';
+                loginPrompt.style.display = 'none';
+
+                // 2. Initialize the map components
                 initMapComponents();
 
-                // 2. Fetch maps list
+                // 3. Fetch maps list
                 const maps = await fetchMapList();
 
                 if (!maps || maps.length === 0) {
@@ -81,17 +107,31 @@ title: Map Editor
                     return;
                 }
 
-                // 3. Populate Dropdown
+                // 4. Populate Dropdown (All maps available to authenticated users)
                 mapSelect.innerHTML = maps.map(m => 
                     `<option value="${m.id}">${m.name}</option>`
                 ).join('');
 
-                // 4. Get the widget instance and load first map
-                // Small timeout allows the initMapComponents class to attach to window
+                // 5. Handle URL Params (e.g. coming from "Edit" button in view.html)
+                const urlParams = new URLSearchParams(window.location.search);
+                const targetId = urlParams.get('id');
+                
+                // Determine which map to load (Target ID or First Available)
+                let mapToLoad = maps[0].id;
+                
+                if (targetId) {
+                    const targetMap = maps.find(m => m.id === targetId);
+                    if (targetMap) {
+                        mapToLoad = targetMap.id;
+                        mapSelect.value = targetMap.id;
+                    }
+                }
+
+                // 6. Load the map
                 setTimeout(() => {
                     editorWidget = window.mapComponents['editor-widget'];
                     if (editorWidget) {
-                        editorWidget.loadMapById(maps[0].id);
+                        editorWidget.loadMapById(mapToLoad);
                     }
                 }, 100);
 
@@ -111,13 +151,11 @@ title: Map Editor
 
         // Handle Save View
         saveBtn.addEventListener('click', async () => {
-            // Re-grab widget just in case
             editorWidget = window.mapComponents['editor-widget'];
-            
             if (editorWidget) {
                 try {
-                    // FIX: matched function name to map-widget.js (saveCurrentView)
                     await editorWidget.saveCurrentView();
+                    alert("View saved successfully!");
                 } catch (err) {
                     alert('Error saving view: ' + err.message);
                 }
