@@ -175,6 +175,11 @@ class MapComponent {
     renderMap(mapData) {
         this.currentMapData = mapData;
         this.container.innerHTML = '';
+
+        if (this.map) {
+            this.map.remove(); // Completely cleans up Leaflet instance and event listeners
+            this.map = null;   // Reset the reference
+        }
         
         // Set container height from database or default
         // Skip if using responsive CSS classes
