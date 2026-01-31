@@ -235,6 +235,7 @@ class MapComponent {
         if (this.isEditable) {
             this.setupEditorControls();
         }
+        this.container.dispatchEvent(new CustomEvent('maploaded', { detail: mapData }));
     }
 
     /**

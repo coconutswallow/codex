@@ -1,40 +1,146 @@
-<script type="module">
-    // Import the initialization function
-    import { initMapComponents } from '../assets/js/map-widget.js';
-
-    const mapTitle = document.getElementById('map-title');
-    const mapDesc = document.getElementById('map-description');
-    const loading = document.getElementById('loading-container');
-    const widgetContainer = document.getElementById('viewer-widget');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Viewer</title>
     
-    // Start the map engine
-    initMapComponents();
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin=""/>
 
-    let viewerWidget = null;
-
-    widgetContainer.addEventListener('maploaded', (e) => {
-        const mapData = e.detail;
-        mapTitle.textContent = mapData.name || 'Map Viewer';
-        mapDesc.textContent = mapData.description || '';
-        loading.style.display = 'none';
-        widgetContainer.style.display = 'block';
-    });
-
-    function loadFromUrl() {
-        viewerWidget = window.mapComponents['viewer-widget'];
-        if (!viewerWidget) {
-            setTimeout(loadFromUrl, 50);
-            return;
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            background-color: #1a1a1a; /* Dark background */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #eee;
+            overflow: hidden; /* Prevent scrollbars on the iframe itself */
         }
 
-        const params = new URLSearchParams(window.location.search);
-        const identifier = params.get('map');
-
-        if (identifier) {
-            loading.style.display = 'block';
-            viewerWidget.loadMapByName(identifier);
+        /* Full screen container for the map */
+        #viewer-widget {
+            width: 100%;
+            height: 100vh;
+            background: #222;
+            z-index: 1;
         }
-    }
 
-    window.addEventListener('load', loadFromUrl);
-</script>
+        /* Loading Overlay */
+        #loading-container {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Optional: Floating Title over the map */
+        .map-overlay-title {
+            position: absolute;
+            top: 20px;
+            left: 50px; /* Offset for zoom controls */
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 4px;
+            pointer-events: none; /* Let clicks pass through */
+            z-index: 1000;
+            display: none; /* Hidden until loaded */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading-container">
+        <div class="spinner"></div>
+        <p style="margin-top: 15px;">Loading Map...</p>
+    </div>
+
+    <div id="map-title-overlay" class="map-overlay-title">
+        <h2 id="map-name" style="margin: 0; font-size: 1.2rem;"></h2>
+    </div>
+
+    <div id="viewer-widget" 
+         data-map-component 
+         data-editable="false">
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+            crossorigin=""></script>
+
+    <script type="module">
+        import { initMapComponents } from '../assets/js/map-widget.js';
+
+        // Initialize the widget system
+        initMapComponents();
+
+        const loading = document.getElementById('loading-container');
+        const titleOverlay = document.getElementById('map-title-overlay');
+        const mapNameDisplay = document.getElementById('map-name');
+        const widgetContainer = document.getElementById('viewer-widget');
+
+        // Listen for the 'maploaded' event to hide loading screen
+        widgetContainer.addEventListener('maploaded', (e) => {
+            const mapData = e.detail;
+            
+            // Update Title
+            if (mapData && mapData.name) {
+                mapNameDisplay.textContent = mapData.name;
+                titleOverlay.style.display = 'block';
+            }
+
+            // Hide Loader
+            loading.style.display = 'none';
+        });
+
+        // Main function to read URL and load map
+        function loadFromUrl() {
+            // Check if widget is registered
+            const viewerWidget = window.mapComponents['viewer-widget'];
+            if (!viewerWidget) {
+                setTimeout(loadFromUrl, 50); // Retry if module is still loading
+                return;
+            }
+
+            // Parse URL params (?map=Name) or Hash (#Name)
+            const params = new URLSearchParams(window.location.search);
+            const identifier = params.get('map') || window.location.hash.substring(1);
+
+            if (identifier) {
+                // If the identifier is a number, load by ID; otherwise by Name
+                if (!isNaN(identifier) && identifier.trim() !== "") {
+                    viewerWidget.loadMapById(parseInt(identifier));
+                } else {
+                    viewerWidget.loadMapByName(identifier);
+                }
+            } else {
+                loading.innerHTML = '<p style="color: #ff6b6b;">No map specified.<br>Use ?map=Name</p>';
+            }
+        }
+
+        // Start when the page is ready
+        window.addEventListener('DOMContentLoaded', loadFromUrl);
+    </script>
+</body>
+</html>
