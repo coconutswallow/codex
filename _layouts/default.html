@@ -101,12 +101,17 @@
                 closeMenu.addEventListener('click', toggleMenu);
                 overlay.addEventListener('click', toggleMenu);
             }
-            /* --- DROPDOWN SUBMENU TOGGLE --- */
-            document.querySelectorAll('.nav-dropdown .dropdown-toggle').forEach(function (toggle) {
-                toggle.addEventListener('click', function () {
-                    this.closest('.nav-dropdown').classList.toggle('open');
+            /* --- DROPDOWN SUBMENU TOGGLE (delegated) --- */
+            var sidebarNav = document.querySelector('.sidebar-links');
+            if (sidebarNav) {
+                sidebarNav.addEventListener('click', function (e) {
+                    var toggle = e.target.closest('.dropdown-toggle');
+                    if (toggle) {
+                        e.preventDefault();
+                        toggle.closest('.nav-dropdown').classList.toggle('open');
+                    }
                 });
-            });
+            }
         })();
     </script>
 </body>
