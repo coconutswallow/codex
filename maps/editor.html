@@ -92,14 +92,36 @@ title: Map Editor
                     return; 
                 }
 
-                // Logged in: Show editor, hide prompt
+                // 2. Check Authorization (Must be "Admin")
+                const { data: profile } = await supabase
+                    .from("discord_users")
+                    .select("roles")
+                    .eq("user_id", user.id)
+                    .single();
+
+                let isAdmin = false;
+                if (profile && profile.roles && Array.isArray(profile.roles)) {
+                    if (profile.roles.includes("Admin")) {
+                        isAdmin = true;
+                    }
+                }
+
+                if (!isAdmin) {
+                    // Logged in but not Admin
+                    console.log("User is not Admin");
+                    loginPrompt.querySelector('h2').innerText = "Admin Access Required";
+                    loginPrompt.querySelector('p').innerText = "You do not have permission to access the Map Editor.";
+                    return;
+                }
+
+                // Logged in & Admin: Show editor, hide prompt
                 mainContainer.style.display = 'block';
                 loginPrompt.style.display = 'none';
 
-                // 2. Initialize the map components
+                // 3. Initialize the map components
                 initMapComponents();
 
-                // 3. Fetch maps list
+                // 4. Fetch maps list
                 const maps = await fetchMapList();
 
                 if (!maps || maps.length === 0) {
@@ -107,12 +129,12 @@ title: Map Editor
                     return;
                 }
 
-                // 4. Populate Dropdown (All maps available to authenticated users)
+                // 5. Populate Dropdown (All maps available to authenticated users)
                 mapSelect.innerHTML = maps.map(m => 
                     `<option value="${m.id}">${m.name}</option>`
                 ).join('');
 
-                // 5. Handle URL Params (e.g. coming from "Edit" button in view.html)
+                // 6. Handle URL Params (e.g. coming from "Edit" button in view.html)
                 const urlParams = new URLSearchParams(window.location.search);
                 const targetId = urlParams.get('id');
                 
@@ -127,7 +149,7 @@ title: Map Editor
                     }
                 }
 
-                // 6. Load the map
+                // 7. Load the map
                 setTimeout(() => {
                     editorWidget = window.mapComponents['editor-widget'];
                     if (editorWidget) {
