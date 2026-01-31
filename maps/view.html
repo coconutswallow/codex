@@ -32,7 +32,7 @@
 
             if (mapName) {
                 // Use a relative path to your viewer.html
-                frame.src = `../viewer.html?map=${encodeURIComponent(mapName)}`;
+                frame.src = `./viewer.html?map=${encodeURIComponent(mapName)}`;
             }
         }
         window.addEventListener('hashchange', updateFrame);
