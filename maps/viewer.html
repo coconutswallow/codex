@@ -1,87 +1,41 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Viewer</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="../assets/css/map.css" />
-</head>
-<body>
-    <div class="container">
-        <h1 id="map-title">Map Viewer</h1>
-        <div class="map-info" id="map-description"></div>
+<script type="module">
+    // FIX: You must import the init function to actually start the widget logic
+    import { initMapComponents } from '../assets/js/map-widget.js';
 
-        <div id="loading-container" class="loading">Loading map...</div>
-        
-        <div id="viewer-widget" 
-             data-map-component
-             data-editable="false"
-             style="display: none;">
-        </div>
-    </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    const mapTitle = document.getElementById('map-title');
+    const mapDesc = document.getElementById('map-description');
+    const loading = document.getElementById('loading-container');
+    const widgetContainer = document.getElementById('viewer-widget');
     
-    <script type="module">
-        import '../assets/js/map-widget.js';
-        import { initMapComponents } from '../assets/js/map-widget.js';
+    // FIX: Run the initialization
+    initMapComponents();
 
-        const mapTitle = document.getElementById('map-title');
-        const mapDesc = document.getElementById('map-description');
-        const loading = document.getElementById('loading-container');
-        const widgetContainer = document.getElementById('viewer-widget');
+    let viewerWidget = null;
 
-        initMapComponents();
-        
-        let viewerWidget = null;
+    widgetContainer.addEventListener('maploaded', (e) => {
+        const mapData = e.detail;
+        mapTitle.textContent = mapData.name || 'Map Viewer';
+        mapDesc.textContent = mapData.description || '';
+        loading.style.display = 'none';
+        widgetContainer.style.display = 'block';
+    });
 
-        // 1. Listen for the 'maploaded' event from the widget
-        // This tells us the map name/description is ready
-        widgetContainer.addEventListener('maploaded', (e) => {
-            const mapData = e.detail;
-            
-            mapTitle.textContent = mapData.name || 'Map Viewer';
-            mapDesc.textContent = mapData.description || '';
-            document.title = (mapData.name || 'Map') + ' - Viewer';
-            
-            loading.style.display = 'none';
-            widgetContainer.style.display = 'block';
-        });
-
-        // 2. Parse URL and load map
-        function loadFromUrl() {
-            viewerWidget = window.mapComponents['viewer-widget'];
-            if (!viewerWidget) {
-                // Retry if widget not yet ready
-                setTimeout(loadFromUrl, 50);
-                return;
-            }
-
-            // Check for #mapname or ?map=mapname
-            const hash = window.location.hash.substring(1);
-            const params = new URLSearchParams(window.location.search);
-            const identifier = hash || params.get('map');
-
-            if (identifier) {
-                loading.style.display = 'block';
-                widgetContainer.style.display = 'none';
-
-                if (!isNaN(identifier)) {
-                    viewerWidget.loadMapById(parseInt(identifier));
-                } else {
-                    viewerWidget.loadMapByName(identifier);
-                }
-            } else {
-                loading.textContent = 'No map specified. Please use URL format: #mapname';
-            }
+    function loadFromUrl() {
+        // Now window.mapComponents will be populated
+        viewerWidget = window.mapComponents['viewer-widget'];
+        if (!viewerWidget) {
+            setTimeout(loadFromUrl, 50);
+            return;
         }
 
-        // Handle navigation changes
-        window.addEventListener('hashchange', loadFromUrl);
-        
-        // Start
-        window.addEventListener('load', loadFromUrl);
-    </script>
-</body>
-</html>
+        const params = new URLSearchParams(window.location.search);
+        const identifier = params.get('map');
+
+        if (identifier) {
+            loading.style.display = 'block';
+            viewerWidget.loadMapByName(identifier);
+        }
+    }
+
+    window.addEventListener('load', loadFromUrl);
+</script>

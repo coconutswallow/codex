@@ -6,7 +6,6 @@ title: Map Viewer
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Map Gallery</title>
     <style>
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #1a1a1a; }
@@ -14,30 +13,23 @@ title: Map Viewer
     </style>
 </head>
 <body>
-
-    <iframe id="map-frame" src="" allowfullscreen></iframe>
+    <iframe id="map-frame" src=""></iframe>
 
     <script>
-        function updateFrameSource() {
+        function updateFrame() {
             const frame = document.getElementById('map-frame');
-            
-            // Get name from Hash (#ansalon) or Query (?map=ansalon)
-            const hash = window.location.hash.substring(1);
-            const params = new URLSearchParams(window.location.search);
-            const mapName = hash || params.get('map');
+            // Extract map name from URL hash (e.g., #ansalon)
+            const mapName = window.location.hash.substring(1);
 
             if (mapName) {
-                // Points to your existing viewer.html file
+                // Pass the name to viewer.html via query parameter
                 frame.src = `../viewer.html?map=${encodeURIComponent(mapName)}`;
             } else {
-                // Fallback if no map is specified
-                document.body.innerHTML = "<h2 style='color:white; text-align:center; margin-top:20%; font-family:sans-serif;'>Please specify a map (e.g., view#Hawthorne-Location)</h2>";
+                document.body.innerHTML = "<h2 style='color:white;text-align:center;padding-top:20%;font-family:sans-serif;'>No map specified (e.g. view#ansalon)</h2>";
             }
         }
-
-        // Listen for changes without refreshing the page
-        window.addEventListener('hashchange', updateFrameSource);
-        window.addEventListener('load', updateFrameSource);
+        window.addEventListener('hashchange', updateFrame);
+        window.addEventListener('load', updateFrame);
     </script>
 </body>
 </html>
