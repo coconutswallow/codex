@@ -28,7 +28,7 @@ title: Map Viewer
 
             if (mapName) {
                 // Points to your existing viewer.html file
-                frame.src = `./viewer.html?map=${encodeURIComponent(mapName)}`;
+                frame.src = `../viewer.html?map=${encodeURIComponent(mapName)}`;
             } else {
                 // Fallback if no map is specified
                 document.body.innerHTML = "<h2 style='color:white; text-align:center; margin-top:20%; font-family:sans-serif;'>Please specify a map (e.g., view#Hawthorne-Location)</h2>";
