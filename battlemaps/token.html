@@ -200,10 +200,10 @@ title: Token Library | Battlemaps
         <div class="form-group">
             <label>Size</label>
             <select id="t-size">
-                <option value="Medium" selected>Medium (1x1)</option>
-                <option value="Small">Small (1x1)</option>
-                <option value="Large">Large (2x2)</option>
-                <option value="Huge">Huge (3x3)</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Small">Small</option>
+                <option value="Large">Large</option>
+                <option value="Huge">Huge</option>
                 <option value="Gargantuan">Gargantuan (4x4)</option>
             </select>
         </div>
@@ -386,6 +386,7 @@ title: Token Library | Battlemaps
         const name = document.getElementById('t-name').value;
         const type = document.getElementById('t-type').value;
         const status = document.getElementById('save-status');
+        const size = document.getElementById('t-size').value;
 
         if (!name) { alert("Please enter a name."); return; }
         if (!currentUploadUrl) { alert("Please upload an image or paste a URL."); return; }
