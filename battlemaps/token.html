@@ -197,6 +197,16 @@ title: Token Library | Battlemaps
                 <option value="Monsters">Monsters</option>
             </select>
         </div>
+        <div class="form-group">
+            <label>Size</label>
+            <select id="t-size">
+                <option value="Medium" selected>Medium (1x1)</option>
+                <option value="Small">Small (1x1)</option>
+                <option value="Large">Large (2x2)</option>
+                <option value="Huge">Huge (3x3)</option>
+                <option value="Gargantuan">Gargantuan (4x4)</option>
+            </select>
+        </div>
 
         <button id="save-token-db" class="save-btn" style="width:100%">Save Token</button>
         <p id="save-status" style="text-align:center; margin-top:10px; font-weight:bold; font-size:0.9em;"></p>
@@ -328,6 +338,7 @@ title: Token Library | Battlemaps
         // Reset fields
         document.getElementById('t-name').value = "";
         document.getElementById('t-url-input').value = "";
+        document.getElementById('t-size').value = "Medium";
         document.getElementById('t-preview-img').src = "https://placehold.co/120x120?text=Preview";
         document.getElementById('save-status').innerText = "";
         currentUploadUrl = null;
@@ -390,6 +401,7 @@ title: Token Library | Battlemaps
                 user_id: user.id,
                 name: name,
                 type: type,
+                size: size,
                 image_url: currentUploadUrl, // Storing the URL directly
                 token_code: 'Generating...'
             }]).select().single();
