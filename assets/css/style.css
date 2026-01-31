@@ -307,6 +307,41 @@ a:hover { text-decoration: underline; color: var(--palette-brand-main); }
   color: var(--palette-brand-main);
 }
 
+/* Dropdown parent row */
+.nav-dropdown {
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-dropdown > .dropdown-toggle {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Sub-nav: hidden by default, shown when .open is on the parent */
+.nav-dropdown .sub-nav {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  padding-left: 15px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+.nav-dropdown.open .sub-nav {
+  max-height: 300px; /* tall enough to fit all sub-links */
+}
+
+.nav-dropdown .sub-link {
+  font-size: 0.9em;
+  opacity: 0.8;
+  padding: 8px 10px;
+  display: block;
+}
+
 /* Dark Overlay (Backdrop) */
 #menu-overlay {
   position: fixed;
@@ -1363,17 +1398,3 @@ a:hover { text-decoration: underline; color: var(--palette-brand-main); }
 .asset-row:hover .asset-arrow {
   color: var(--palette-brand-accent);
 }
-
-/* Indent sub-links */
-.sub-nav {
-    padding-left: 15px;
-    background: rgba(0, 0, 0, 0.05); /* Slight tint for contrast */
-}
-
-.sub-link {
-    font-size: 0.9em;
-    opacity: 0.8;
-}
-
-/* Optional: Hide sub-nav until parent is clicked/hovered */
-/* For a simple mobile sidebar, usually just keeping them visible but indented is easiest */

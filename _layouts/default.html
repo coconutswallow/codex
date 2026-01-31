@@ -101,6 +101,12 @@
                 closeMenu.addEventListener('click', toggleMenu);
                 overlay.addEventListener('click', toggleMenu);
             }
+            /* --- DROPDOWN SUBMENU TOGGLE --- */
+            document.querySelectorAll('.nav-dropdown .dropdown-toggle').forEach(function (toggle) {
+                toggle.addEventListener('click', function () {
+                    this.closest('.nav-dropdown').classList.toggle('open');
+                });
+            });
         })();
     </script>
 </body>
