@@ -25,11 +25,14 @@
     
     <script type="module">
         import '../assets/js/map-widget.js';
+        import { initMapComponents } from '../assets/js/map-widget.js';
 
         const mapTitle = document.getElementById('map-title');
         const mapDesc = document.getElementById('map-description');
         const loading = document.getElementById('loading-container');
         const widgetContainer = document.getElementById('viewer-widget');
+
+        initMapComponents();
         
         let viewerWidget = null;
 

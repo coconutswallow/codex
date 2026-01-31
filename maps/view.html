@@ -1,0 +1,43 @@
+---
+layout: default
+title: Map Viewer
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Gallery</title>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #1a1a1a; }
+        iframe { border: none; width: 100%; height: 100%; display: block; }
+    </style>
+</head>
+<body>
+
+    <iframe id="map-frame" src="" allowfullscreen></iframe>
+
+    <script>
+        function updateFrameSource() {
+            const frame = document.getElementById('map-frame');
+            
+            // Get name from Hash (#ansalon) or Query (?map=ansalon)
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(window.location.search);
+            const mapName = hash || params.get('map');
+
+            if (mapName) {
+                // Points to your existing viewer.html file
+                frame.src = `./viewer.html?map=${encodeURIComponent(mapName)}`;
+            } else {
+                // Fallback if no map is specified
+                document.body.innerHTML = "<h2 style='color:white; text-align:center; margin-top:20%; font-family:sans-serif;'>Please specify a map (e.g., view#Hawthorne-Location)</h2>";
+            }
+        }
+
+        // Listen for changes without refreshing the page
+        window.addEventListener('hashchange', updateFrameSource);
+        window.addEventListener('load', updateFrameSource);
+    </script>
+</body>
+</html>
