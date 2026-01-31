@@ -174,13 +174,16 @@ class MapComponent {
      */
     renderMap(mapData) {
         this.currentMapData = mapData;
-        this.container.innerHTML = '';
-
+        
+        // Clean up existing map instance if present
         if (this.map) {
-            this.map.remove(); // Completely cleans up Leaflet instance and event listeners
-            this.map = null;   // Reset the reference
+            this.map.remove(); // Properly destroy Leaflet map
+            this.map = null;
+            this.markers.clear(); // Clear marker references
         }
         
+        this.container.innerHTML = '';
+       
         // Set container height from database or default
         // Skip if using responsive CSS classes
         if (!this.container.style.height && !this.container.classList.contains('responsive-map-frame')) {
