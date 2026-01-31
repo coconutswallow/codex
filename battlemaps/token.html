@@ -226,12 +226,13 @@ title: Token Library | Battlemaps
         }
     };
 
-    // --- 1. Refactored Fetch Logic (No Joins) ---
     async function fetchTokens() {
-        // Now selecting image_url directly from tokens table
+        // Fetch tokens, filtering out NULL or Empty image_urls
         const { data, error } = await supabase
             .from('tokens')
             .select('id, name, type, token_code, image_url, created_at')
+            .not('image_url', 'is', null)  // 1. Exclude NULLs
+            .neq('image_url', '')          // 2. Exclude empty strings
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -242,10 +243,9 @@ title: Token Library | Battlemaps
 
         document.getElementById('loading-status').style.display = 'none';
         
+        // Map data (No longer need to process freehost_images array)
         allTokensData = data.map(token => {
-            // Use the direct column, fallback to placeholder
-            const displayImg = token.image_url || 'https://placehold.co/100x100?text=No+Img';
-            return { ...token, safeImg: displayImg };
+            return { ...token, safeImg: token.image_url };
         });
 
         applyFilters();
