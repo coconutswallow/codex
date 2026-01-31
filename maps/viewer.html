@@ -47,13 +47,26 @@ permalink: /maps/viewer.html
     <script type="module">
         import { initMapComponents } from '/codex/assets/js/map-widget.js';
         
-        // Initialize logic immediately
-        initMapComponents();
-
         const widgetContainer = document.getElementById('viewer-widget');
         const loading = document.getElementById('loading-container');
 
-        // 1. Listen for 'maploaded' from map-widget.js to hide spinner
+        // 1. Get map name from URL parameter FIRST
+        const params = new URLSearchParams(window.location.search);
+        const mapName = params.get('map'); // e.g. Ansalon
+
+        // 2. Set the data attribute BEFORE initializing
+        if (mapName) {
+            if (!isNaN(mapName)) {
+                widgetContainer.setAttribute('data-map-id', mapName);
+            } else {
+                widgetContainer.setAttribute('data-map-name', mapName);
+            }
+        }
+
+        // 3. NOW initialize the component (it will auto-load based on data attributes)
+        initMapComponents();
+
+        // 4. Listen for 'maploaded' from map-widget.js to hide spinner
         widgetContainer.addEventListener('maploaded', (e) => {
             loading.style.display = 'none';
             widgetContainer.style.display = 'block';
@@ -64,22 +77,6 @@ permalink: /maps/viewer.html
                 setTimeout(() => widget.map.invalidateSize(), 100); 
             }
         });
-
-        // 2. Load map based on URL param ?map=Name
-        function loadMap() {
-            const widget = window.mapComponents ? window.mapComponents['viewer-widget'] : null;
-            if (!widget) { setTimeout(loadMap, 50); return; }
-
-            const params = new URLSearchParams(window.location.search);
-            const mapName = params.get('map'); // e.g. Ansalon
-
-            if (mapName) {
-                if (!isNaN(mapName)) widget.loadMapById(parseInt(mapName));
-                else widget.loadMapByName(mapName);
-            }
-        }
-        
-        window.addEventListener('DOMContentLoaded', loadMap);
     </script>
 </body>
 </html>
