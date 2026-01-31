@@ -7,76 +7,45 @@ permalink: /maps/viewer.html
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map Embed</title>
+    <title>Map Viewer</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
+    
     <style>
-        /* Reset margins so the map fills the iframe perfectly */
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: #222; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: #1a1a1a; }
         
-        /* The container for the map */
-        #viewer-widget { width: 100%; height: 100%; display: none; }
-
-        /* Loading Spinner Overlay */
-        #loading-container {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #1a1a1a;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: #eee; font-family: sans-serif; z-index: 1000;
+        #map-container { 
+            width: 100%; 
+            height: 100vh !important;
         }
-        .spinner {
-            width: 40px; height: 40px; border: 4px solid #444;
-            border-top: 4px solid #3498db; border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .location-display h3 { margin: 0 0 5px 0; color: #58180D; font-family: sans-serif; }
+        .location-display p { margin: 0; font-family: sans-serif; font-size: 14px; }
+        .location-display a { color: #58180D; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="loading-container">
-        <div class="spinner"></div>
-        <p style="margin-top:15px;">Loading Map...</p>
-    </div>
-
-    <div id="viewer-widget" data-map-component data-editable="false"></div>
+    <div id="map-container" 
+         data-map-component 
+         data-map-name=""></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <script type="module">
-        import { initMapComponents } from '/codex/assets/js/map-widget.js';
+        import { initMapComponents } from '../assets/js/map-widget.js';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const mapName = urlParams.get('map');
+        const mapId = urlParams.get('id');
+
+        const container = document.getElementById('map-container');
         
-        const widgetContainer = document.getElementById('viewer-widget');
-        const loading = document.getElementById('loading-container');
+        if (mapName) container.dataset.mapName = mapName;
+        if (mapId) container.dataset.mapId = mapId;
 
-        // 1. Get map name from URL parameter FIRST
-        const params = new URLSearchParams(window.location.search);
-        const mapName = params.get('map'); // e.g. Ansalon
-
-        // 2. Set the data attribute BEFORE initializing
-        if (mapName) {
-            if (!isNaN(mapName)) {
-                widgetContainer.setAttribute('data-map-id', mapName);
-            } else {
-                widgetContainer.setAttribute('data-map-name', mapName);
-            }
-        }
-
-        // 3. NOW initialize the component (it will auto-load based on data attributes)
         initMapComponents();
-
-        // 4. Listen for 'maploaded' from map-widget.js to hide spinner
-        widgetContainer.addEventListener('maploaded', (e) => {
-            loading.style.display = 'none';
-            widgetContainer.style.display = 'block';
-            
-            // Resize fix ensures map tiles render correctly
-            const widget = window.mapComponents['viewer-widget'];
-            if(widget && widget.map) { 
-                setTimeout(() => widget.map.invalidateSize(), 100); 
-            }
-        });
     </script>
+
 </body>
 </html>

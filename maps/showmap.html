@@ -7,7 +7,7 @@ permalink: /maps/showmap
 <div class="container-fluid" style="padding: 0; height: 85vh; background: #000;">
     <iframe 
         id="map-frame" 
-        src="" 
+        src=""
         style="width: 100%; height: 100%; border: none; display: block;"
         allowfullscreen>
     </iframe>
@@ -17,21 +17,23 @@ permalink: /maps/showmap
     function updateIframe() {
         const frame = document.getElementById('map-frame');
         
-        // Get "Ansalon" from "view#Ansalon"
+        // Get map name from hash (e.g., #Ansalon from URL /maps/showmap#Ansalon)
         const mapName = window.location.hash.substring(1); 
 
         if (mapName) {
-            // Point the iframe to the raw viewer.html page
-            // We use site.baseurl pathing logic implicitly by using relative path or full path
+            // Point iframe directly to viewer.html with map parameter
             frame.src = "/codex/maps/viewer.html?map=" + encodeURIComponent(mapName);
         } else {
-            // Default blank state
-            document.getElementById('map-frame').style.display = 'none';
-            document.querySelector('.container-fluid').innerHTML += 
-                '<h3 style="color:white; text-align:center; padding-top:20%;">Please select a map (e.g. #Ansalon)</h3>';
+            // No map specified - show instruction
+            frame.style.display = 'none';
+            document.querySelector('.container-fluid').innerHTML = 
+                '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: white; font-family: sans-serif;">' +
+                '<h3>Please select a map (e.g. /maps/showmap#Ansalon)</h3>' +
+                '</div>';
         }
     }
 
+    // Update iframe when hash changes or page loads
     window.addEventListener('hashchange', updateIframe);
     window.addEventListener('load', updateIframe);
 </script>
