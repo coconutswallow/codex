@@ -1,123 +1,88 @@
 ---
-layout: default
-title: Map Viewer
+permalink: /maps/viewer.html
 ---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Embed</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-<style>
-    /* Force the widget to have a height, preventing desktop collapse */
-    #viewer-widget {
-        width: 100%;
-        height: 80vh;      /* 80% of the screen height */
-        min-height: 600px; /* Minimum height for smaller desktop screens */
-        background: #222;  /* Dark background so you can see if it loads */
-        border-radius: 8px;
-        position: relative;
-        z-index: 1;
-        display: none;     /* Hidden until fully loaded */
-    }
+    <style>
+        /* 1. Reset everything so the map fills the iframe exactly */
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: #222; }
+        
+        /* 2. The Map Container */
+        #viewer-widget { width: 100%; height: 100%; display: none; }
 
-    /* Spinner styles */
-    #loading-container {
-        text-align: center;
-        padding: 50px;
-    }
-</style>
+        /* 3. The Loading Spinner */
+        #loading-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #1a1a1a;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #eee; font-family: sans-serif;
+            z-index: 1000;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid #444;
+            border-top: 4px solid #3498db; border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
-      crossorigin=""/>
-
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div style="margin-bottom: 1rem;">
-                <h1 id="map-title" style="display:inline-block;">Map Viewer</h1>
-                <p id="map-description" class="text-muted" style="margin-bottom: 0;"></p>
-            </div>
-
-            <div id="loading-container">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="mt-2">Loading Map Data...</p>
-            </div>
-
-            <div id="viewer-widget" 
-                 data-map-component 
-                 data-editable="false">
-            </div>
-            
-            <div style="margin-top: 15px;">
-                <a href="/maps/" class="btn btn-secondary">&larr; Back to Maps</a>
-            </div>
-        </div>
+    <div id="loading-container">
+        <div class="spinner"></div>
+        <p style="margin-top:15px;">Loading Map...</p>
     </div>
-</div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
-        crossorigin=""></script>
+    <div id="viewer-widget" data-map-component data-editable="false"></div>
 
-<script type="module">
-    import { initMapComponents } from '/codex/assets/js/map-widget.js';
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    // Initialize the widget logic
-    initMapComponents();
-
-    const loading = document.getElementById('loading-container');
-    const mapTitle = document.getElementById('map-title');
-    const mapDesc = document.getElementById('map-description');
-    const widgetContainer = document.getElementById('viewer-widget');
-
-    // LISTENER: Wait for map-widget.js to say it's ready
-    widgetContainer.addEventListener('maploaded', (e) => {
-        const mapData = e.detail;
+    <script type="module">
+        import { initMapComponents } from '../assets/js/map-widget.js';
         
-        // Update text
-        if (mapData && mapData.name) {
-            mapTitle.textContent = mapData.name;
-            if(mapData.description) mapDesc.textContent = mapData.description;
-        }
+        // Start the engine
+        initMapComponents();
 
-        // Hide loader and show map
-        loading.style.display = 'none';
-        widgetContainer.style.display = 'block';
+        const widgetContainer = document.getElementById('viewer-widget');
+        const loading = document.getElementById('loading-container');
 
-        // CRITICAL FIX: Leaflet needs to know its container size changed
-        // We wait 100ms for the display:block to take effect, then resize
-        setTimeout(() => {
+        // 1. Listen for the map to finish loading
+        widgetContainer.addEventListener('maploaded', (e) => {
+            loading.style.display = 'none';
+            widgetContainer.style.display = 'block';
+            
+            // Resize fix
             const widget = window.mapComponents['viewer-widget'];
-            if (widget && widget.map) {
-                widget.map.invalidateSize();
+            if(widget && widget.map) { 
+                setTimeout(() => widget.map.invalidateSize(), 100); 
             }
-        }, 100);
-    });
+        });
 
-    function loadFromUrl() {
-        // Find the registered widget
-        const viewerWidget = window.mapComponents['viewer-widget'];
-        
-        if (!viewerWidget) {
-            setTimeout(loadFromUrl, 50); // Keep checking
-            return;
-        }
+        // 2. Load map based on URL param ?map=Name
+        function loadMap() {
+            const widget = window.mapComponents['viewer-widget'];
+            if (!widget) { setTimeout(loadMap, 50); return; }
 
-        // Get identifier from URL (?map=Name or #Name)
-        const params = new URLSearchParams(window.location.search);
-        const identifier = params.get('map') || window.location.hash.substring(1);
+            const params = new URLSearchParams(window.location.search);
+            const mapName = params.get('map');
 
-        if (identifier) {
-            // Load the map
-            if (!isNaN(identifier) && identifier.trim() !== "") {
-                viewerWidget.loadMapById(parseInt(identifier));
+            if (mapName) {
+                // Determine if ID (number) or Name (string)
+                if (!isNaN(mapName)) widget.loadMapById(parseInt(mapName));
+                else widget.loadMapByName(mapName);
             } else {
-                viewerWidget.loadMapByName(identifier);
+                loading.innerHTML = "<p style='color:red'>No map name provided.</p>";
             }
-        } else {
-            loading.innerHTML = '<p class="text-danger">No map specified.<br>Use ?map=Name</p>';
         }
-    }
-
-    // Start on load
-    window.addEventListener('DOMContentLoaded', loadFromUrl);
-</script>
+        
+        window.addEventListener('DOMContentLoaded', loadMap);
+    </script>
+</body>
+</html>

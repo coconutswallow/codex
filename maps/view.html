@@ -1,42 +1,50 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Map Gallery</title>
-    <style>
-        /* Force the body and html to take up the full height of the browser */
-        body, html { 
-            margin: 0; 
-            padding: 0; 
-            height: 100%; 
-            width: 100%;
-            overflow: hidden; 
-            background: #1a1a1a; 
-        }
-        /* Ensure the iframe fills the entire wrapper */
-        #map-frame { 
-            border: none; 
-            width: 100%; 
-            height: 100vh; /* Viewport Height */
-            display: block; 
-        }
-    </style>
-</head>
-<body>
-    <iframe id="map-frame" src=""></iframe>
+---
+layout: default
+title: Map Viewer
+permalink: /maps/view
+---
 
-    <script>
-        function updateFrame() {
-            const frame = document.getElementById('map-frame');
-            const mapName = window.location.hash.substring(1);
+<div class="container-fluid" style="padding: 0;">
+    <div class="row">
+        <div class="col-12">
+            
+            <div class="map-wrapper" style="width: 100%; height: 85vh; background: #000;">
+                <iframe 
+                    id="map-frame" 
+                    src="" 
+                    frameborder="0" 
+                    style="width: 100%; height: 100%; border: none; display: block;"
+                    allowfullscreen>
+                </iframe>
+            </div>
 
-            if (mapName) {
-                // Use a relative path to your viewer.html
-                frame.src = `./viewer?map=${encodeURIComponent(mapName)}`;
-            }
+            <div style="padding: 10px;">
+                <a href="/maps/" class="btn btn-sm btn-outline-secondary">&larr; Back to Map List</a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function loadIframe() {
+        const frame = document.getElementById('map-frame');
+        // Get the map name from the hash (e.g. view#Ansalon)
+        // OR from a query param (e.g. view?map=Ansalon)
+        const mapName = window.location.hash.substring(1) || new URLSearchParams(window.location.search).get('map');
+
+        if (mapName) {
+            // Point the iframe to the Embed file
+            // Note: We use the permalink path defined in viewer.html
+            frame.src = "/codex/maps/viewer.html?map=" + encodeURIComponent(mapName);
+        } else {
+            // Fallback if no map selected
+            document.querySelector('.map-wrapper').innerHTML = 
+                '<div style="color:white; text-align:center; padding-top:20%;"><h3>Please select a map</h3></div>';
         }
-        window.addEventListener('hashchange', updateFrame);
-        window.addEventListener('load', updateFrame);
-    </script>
-</body>
-</html>
+    }
+
+    // Update whenever the URL hash changes
+    window.addEventListener('hashchange', loadIframe);
+    window.addEventListener('load', loadIframe);
+</script>
