@@ -243,11 +243,12 @@ title: Session Assets | Library
     };
 
     async function fetchAssets() {
+        // CHANGED: 'thumbnail_url' -> 'thumb_url'
         const { data, error } = await supabase
             .from('session_images')
             .select(`
                 id, name, search_keys, image_id, created_at,
-                freehost_images ( image_url, thumbnail_url )
+                freehost_images ( image_url, thumb_url ) 
             `)
             .order('created_at', { ascending: false });
 
@@ -262,13 +263,13 @@ title: Session Assets | Library
         // Flatten Data Structure
         allAssets = data.map(item => {
             const imgData = item.freehost_images;
-            // Handle array or single object return depending on FK relation setup
             const imgObj = Array.isArray(imgData) ? imgData[0] : imgData;
             
             return { 
                 ...item, 
                 fullUrl: imgObj?.image_url || '',
-                thumbUrl: imgObj?.thumbnail_url || imgObj?.image_url || 'https://placehold.co/200?text=No+Img'
+                // UPDATED HERE AS WELL TO MATCH
+                thumbUrl: imgObj?.thumb_url || imgObj?.image_url || 'https://placehold.co/200?text=No+Img'
             };
         });
 
