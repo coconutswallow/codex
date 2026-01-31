@@ -286,14 +286,17 @@ title: Bulk Submit Battle Maps
   }
   currentUser = user;
 
+  // UPDATED: Check for Admin or Contributor roles instead of simple boolean
   const { data: profile } = await supabase
     .from("discord_users")
-    .select("approved_map_submitter")
+    .select("roles")
     .eq("user_id", currentUser.id)
     .single();
 
-  if (profile && profile.approved_map_submitter === true) {
-    isApprovedSubmitter = true;
+  if (profile && profile.roles && Array.isArray(profile.roles)) {
+    if (profile.roles.includes("Admin") || profile.roles.includes("Contributor")) {
+      isApprovedSubmitter = true;
+    }
   }
 
   /* -------------------------
