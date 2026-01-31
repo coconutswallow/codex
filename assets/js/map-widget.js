@@ -509,3 +509,16 @@ export function initMapComponents() {
         }
     });
 }
+
+export async function fetchMapList() {
+    const { data, error } = await supabase
+        .from('location_maps')
+        .select('id, name')
+        .order('name');
+    
+    if (error) {
+        console.error('Error fetching maps:', error);
+        return [];
+    }
+    return data;
+}
