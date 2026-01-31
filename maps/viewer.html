@@ -1,7 +1,3 @@
----
-layout: null
-permalink: /maps/viewer.html
----
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,43 +5,337 @@ permalink: /maps/viewer.html
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Map Viewer</title>
     
+    <!--
+        map-viewer.html
+        
+        OVERVIEW:
+        Standalone full-screen map viewer designed to be embedded in iframes.
+        Displays a single map without any surrounding UI chrome - perfect for
+        embedding in other pages or applications.
+        
+        USE CASES:
+        - Embedding maps in external websites
+        - Full-screen map display in modal/overlay
+        - Kiosk mode display
+        - Presentation/demo mode
+        - Mobile-optimized standalone view
+        
+        FEATURES:
+        - Full viewport coverage (100vh)
+        - No scrollbars or chrome elements
+        - URL parameter-based map selection
+        - Works standalone or in iframe
+        - Read-only mode (no editing)
+        - Dark background for loading state
+        
+        URL PARAMETERS:
+        - ?map=MAP_NAME - Load map by name
+        - ?id=MAP_ID - Load map by database ID
+        
+        EXAMPLES:
+        - map-viewer.html?map=Hawthorne-Location
+        - map-viewer.html?id=123
+        - <iframe src="map-viewer.html?map=Downtown-Office"></iframe>
+        
+        ARCHITECTURE:
+        This is a minimal standalone page that:
+        1. Parses URL parameters
+        2. Sets data attributes on container
+        3. Initializes MapComponent in view-only mode
+        4. Lets the widget handle everything else
+        
+        IMPORTANT:
+        Path to map-widget.js must be correct relative to this file's location.
+        Current path assumes: map-viewer.html is in root, widget is in assets/js/
+    -->
+    
+    <!-- Leaflet CSS - Core map styling -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: #1a1a1a; }
+        /* ====================================================================
+           FULL-SCREEN LAYOUT
+           ==================================================================== */
         
-        #map-container { 
+        /**
+         * Remove all default spacing and make viewport use full height
+         * 
+         * KEY POINTS:
+         * - margin: 0; padding: 0; - Remove browser defaults
+         * - height: 100%; - HTML and body take full viewport
+         * - width: 100%; - Ensure full width on all devices
+         * - overflow: hidden; - Prevent scrollbars (map handles its own)
+         * - background: #1a1a1a; - Dark background during load
+         */
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
             width: 100%; 
-            height: 100vh !important;
+            overflow: hidden; 
+            background: #1a1a1a; /* Dark gray prevents white flash */
         }
         
-        .location-display h3 { margin: 0 0 5px 0; color: #58180D; font-family: sans-serif; }
-        .location-display p { margin: 0; font-family: sans-serif; font-size: 14px; }
-        .location-display a { color: #58180D; font-weight: bold; }
+        /**
+         * Map container fills entire viewport
+         * 
+         * IMPORTANT:
+         * !important on height forces override of any widget defaults
+         * This ensures true full-screen display
+         */
+        #map-container { 
+            width: 100%; 
+            height: 100vh !important; /* vh = viewport height units */
+        }
+        
+        /* ====================================================================
+           LOCATION POPUP STYLING
+           ==================================================================== */
+        
+        /**
+         * Custom styles for location popup content
+         * 
+         * These override default Leaflet popup styles to match
+         * the design system. Can be customized per implementation.
+         */
+        .location-display h3 { 
+            margin: 0 0 5px 0; 
+            color: #58180D; /* Branding color */
+            font-family: sans-serif; 
+        }
+        
+        .location-display p { 
+            margin: 0; 
+            font-family: sans-serif; 
+            font-size: 14px; 
+        }
+        
+        .location-display a { 
+            color: #58180D; /* Match header color */
+            font-weight: bold; 
+        }
     </style>
 </head>
 <body>
 
+    <!--
+        MAP CONTAINER ELEMENT
+        
+        DATA ATTRIBUTES:
+        - data-map-component: Required - Marks for initialization
+        - data-map-name: Populated from URL ?map= parameter
+        - data-map-id: Populated from URL ?id= parameter
+        
+        Note: data-map-name starts empty and is set by JavaScript
+    -->
     <div id="map-container" 
          data-map-component 
-         data-map-name=""></div>
+         data-map-name="">
+    </div>
 
+    <!-- ====================================================================
+         EXTERNAL DEPENDENCIES
+         ==================================================================== -->
+    
+    <!-- Leaflet JavaScript - Core mapping library -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+    <!-- ====================================================================
+         INITIALIZATION SCRIPT
+         ==================================================================== -->
+    
     <script type="module">
+        /**
+         * Import map widget initialization function
+         * 
+         * PATH NOTE:
+         * '../assets/js/map-widget.js' assumes this file is in root
+         * Adjust path if file structure is different
+         */
         import { initMapComponents } from '../assets/js/map-widget.js';
 
+        // ================================================================
+        // URL PARAMETER PARSING
+        // ================================================================
+        
+        /**
+         * URLSearchParams - Built-in browser API for query string parsing
+         * 
+         * Given URL: map-viewer.html?map=MyMap&id=123
+         * Creates object that can retrieve parameters:
+         * - urlParams.get('map') → 'MyMap'
+         * - urlParams.get('id') → '123'
+         * 
+         * See: https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams
+         */
         const urlParams = new URLSearchParams(window.location.search);
-        const mapName = urlParams.get('map');
-        const mapId = urlParams.get('id');
+        
+        /**
+         * Extract map selection parameters
+         * 
+         * PRIORITY:
+         * If both 'map' and 'id' are provided, the widget will use 'id'
+         * (See map-widget.js init() method for loading priority)
+         */
+        const mapName = urlParams.get('map'); // e.g., 'Hawthorne-Location'
+        const mapId = urlParams.get('id');     // e.g., '123'
 
+        // ================================================================
+        // CONFIGURE MAP CONTAINER
+        // ================================================================
+        
+        /**
+         * Get reference to container element
+         */
         const container = document.getElementById('map-container');
         
+        /**
+         * Set data attributes based on URL parameters
+         * 
+         * WHY CONDITIONAL:
+         * Only set attributes if parameters are provided
+         * Avoids setting empty/null values
+         * 
+         * RESULT:
+         * Container has either:
+         * - data-map-name="SomeName"
+         * - data-map-id="123"
+         * - Both (id takes priority in widget)
+         */
         if (mapName) container.dataset.mapName = mapName;
         if (mapId) container.dataset.mapId = mapId;
 
+        // ================================================================
+        // INITIALIZE MAP WIDGET
+        // ================================================================
+        
+        /**
+         * Start the map component initialization
+         * 
+         * PROCESS:
+         * 1. initMapComponents() scans for [data-map-component]
+         * 2. Finds our container with ID/name set
+         * 3. Creates MapComponent instance
+         * 4. MapComponent loads map data and renders
+         * 
+         * NO EDITING:
+         * data-editable is not set (defaults to "false")
+         * User cannot add/delete pins or change default view
+         */
         initMapComponents();
     </script>
 
 </body>
 </html>
+
+<!--
+    INTEGRATION GUIDE
+    =================
+    
+    1. EMBEDDING IN IFRAME:
+       <iframe src="map-viewer.html?map=YourMapName" 
+               width="100%" 
+               height="600" 
+               frameborder="0">
+       </iframe>
+    
+    2. RESPONSIVE IFRAME:
+       .map-iframe-container {
+           position: relative;
+           width: 100%;
+           padding-bottom: 56.25%; /* 16:9 aspect ratio */
+       }
+       .map-iframe-container iframe {
+           position: absolute;
+           top: 0;
+           left: 0;
+           width: 100%;
+           height: 100%;
+       }
+    
+    3. MODAL/OVERLAY:
+       <div class="modal">
+           <iframe src="map-viewer.html?id=123" width="100%" height="100%"></iframe>
+       </div>
+    
+    4. DIRECT NAVIGATION:
+       <a href="map-viewer.html?map=Office" target="_blank">View Map</a>
+    
+    5. MOBILE OPTIMIZATION:
+       Already optimized with:
+       - viewport meta tag
+       - 100vh height for mobile browsers
+       - overflow: hidden to prevent scroll issues
+       - Touch-friendly Leaflet controls
+    
+    CUSTOMIZATION OPTIONS
+    ======================
+    
+    1. Change Background Color:
+       Modify background: #1a1a1a; in body/html styles
+    
+    2. Adjust Popup Styling:
+       Modify .location-display styles
+       Or link to external CSS file
+    
+    3. Add Header/Footer:
+       Add elements before/after #map-container
+       Adjust map height calculation accordingly
+    
+    4. Enable Editing:
+       Add data-editable="true" to container
+       (Not recommended for public embeds)
+    
+    5. Custom Loading State:
+       Add content inside #map-container div
+       Will be replaced when map loads
+    
+    TROUBLESHOOTING
+    ===============
+    
+    Problem: Map doesn't load
+    - Check browser console for errors
+    - Verify map-widget.js path is correct
+    - Ensure Leaflet CDN is accessible
+    - Check URL parameters are spelled correctly
+    - Verify map name/ID exists in database
+    
+    Problem: Map is blank/white
+    - Check map_file_url in database is valid
+    - Verify CORS allows loading the image
+    - Check browser network tab for 404 errors
+    
+    Problem: Scrollbars appear
+    - Ensure overflow: hidden on body
+    - Check for conflicting CSS
+    - Verify height: 100vh !important on container
+    
+    Problem: Doesn't work in iframe
+    - Check iframe src path is correct
+    - Verify no X-Frame-Options header blocking embed
+    - Ensure parent page allows iframe loading
+    - Check for mixed content warnings (HTTP vs HTTPS)
+
+    SECURITY CONSIDERATIONS
+    =======================
+    
+    1. This page has no authentication
+       - Anyone with the URL can view the map
+       - Don't use for sensitive/private maps
+       - Consider adding auth if needed
+    
+    2. URL parameters are trusted
+       - No sanitization on map name/id
+       - Widget handles database escaping
+       - Don't allow user-generated parameters
+    
+    3. CORS and CSP
+       - Map images must allow cross-origin loading
+       - Leaflet CDN must be allowed in CSP
+       - Consider self-hosting Leaflet for production
+    
+    4. Iframe embedding
+       - Parent sites can embed this page
+       - To restrict: Add X-Frame-Options header
+       - To allow specific sites: Use CSP frame-ancestors
+-->
