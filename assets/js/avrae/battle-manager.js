@@ -72,41 +72,39 @@ function init() {
 
 /**
  * Expose functions to window for HTML onclick handlers
+ * This must happen immediately (not on load) so onclick handlers work
  */
-function exposeToWindow() {
-    // UI helpers
-    window.uiFlash = uiFlash;
-    window.toggleMenu = toggleMenu;
-    window.openTab = openTab;
-    window.selectAll = selectAll;
-    window.clearChecked = (type) => clearChecked(type, updateFowOutputs);
+// UI helpers
+window.uiFlash = uiFlash;
+window.toggleMenu = toggleMenu;
+window.openTab = openTab;
+window.selectAll = selectAll;
+window.clearChecked = (type) => clearChecked(type, updateFowOutputs);
 
-    // Canvas
-    window.loadImage = loadImage;
-    window.drawMap = drawMap;
-    window.resetFog = resetFog;
+// Canvas
+window.loadImage = loadImage;
+window.drawMap = drawMap;
+window.resetFog = resetFog;
 
-    // Commands
-    window.batchCmd = batchCmd;
-    window.generateTokenCommands = generateTokenCommands;
-    window.generateNpcAddCmds = generateNpcAddCmds;
-    window.generateNpcTokenCmds = generateNpcTokenCmds;
+// Commands
+window.batchCmd = batchCmd;
+window.generateTokenCommands = generateTokenCommands;
+window.generateNpcAddCmds = generateNpcAddCmds;
+window.generateNpcTokenCmds = generateNpcTokenCmds;
 
-    // Modals
-    window.openTokenModal = openTokenModal;
-    window.openNpcModal = openNpcModal;
+// Modals
+window.openTokenModal = openTokenModal;
+window.openNpcModal = openNpcModal;
 
-    // Supabase
-    window.refreshTokensFromSupabase = refreshTokensFromSupabase;
-    window.saveSessionToSupabase = saveSessionToSupabase;
-    window.loadSessionPrompt = loadSessionPrompt;
-}
+// Supabase
+window.refreshTokensFromSupabase = refreshTokensFromSupabase;
+window.saveSessionToSupabase = saveSessionToSupabase;
+window.loadSessionPrompt = loadSessionPrompt;
 
 /**
  * Application bootstrap
  */
 window.addEventListener("load", async () => {
-    exposeToWindow();
     init();
     await refreshTokensFromSupabase();
 });

@@ -3,8 +3,18 @@
  * Generate Avrae commands for various operations
  */
 
-import { $, showInConsole } from './ui-helpers.js';
+import { $ } from './ui-helpers.js';
 import { state } from './state-manager.js';
+
+/**
+ * Show output in console (for commands)
+ */
+function showInConsole(text) {
+    console.log("=== COMMAND OUTPUT ===");
+    console.log(text);
+    console.log("======================");
+    alert("Commands logged to console (F12)");
+}
 
 /**
  * Parse x,y location string

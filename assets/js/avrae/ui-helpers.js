@@ -1,8 +1,6 @@
 /**
  * /assets/js/avrae/ui-helpers.js
  * DOM helpers and UI utilities
- * Menu/tab management
- * UI feedback functions
  */
 
 // DOM shorthand
@@ -90,16 +88,6 @@ export function clearChecked(type, updateCallback) {
     });
 
     if (updateCallback) updateCallback();
-}
-
-/**
- * Show output in console (for commands)
- */
-export function showInConsole(text) {
-    console.log("=== COMMAND OUTPUT ===");
-    console.log(text);
-    console.log("======================");
-    alert("Commands logged to console (F12)");
 }
 
 /**
