@@ -428,6 +428,21 @@
   category: "10 Maps and Movement"
   image: ""
 
+- title: "Circle Overlay, Persistent"
+  syntax: "!map -over circle <size>, <color>, <center> -t <target>"
+  example: "!map -over circle 20, yellow, C5 -t goblin1"
+  tags: "map overlay circle aoe persistent effect"
+  category: "10 Maps and Movement"
+  image: ""
+
+- title: "Remove Persistent Effect"
+  syntax: "!map -over none -t <target>"
+  example: "!map -over none -t goblin1"
+  tags: "map overlay circle persistent effect"
+  category: "10 Maps and Movement"
+  image: ""
+
+
 # =============================================
 # DM Combat Setup
 # =============================================
