@@ -1,0 +1,8 @@
+# AI Context Files
+context/
+
+# Agent Configs
+.agent/
+
+# vscode settings
+.vscode/

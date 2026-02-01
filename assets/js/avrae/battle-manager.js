@@ -102,9 +102,34 @@ window.saveSessionToSupabase = saveSessionToSupabase;
 window.loadSessionPrompt = loadSessionPrompt;
 
 /**
+ * Handle page-wide authentication state
+ * This is called by auth-header.html when the user state changes
+ */
+window.handlePageAuth = async (user) => {
+    const mainContent = document.querySelector('.main-content');
+    const authGate = document.getElementById('auth-gate');
+
+    if (user) {
+        // User is logged in - show the app
+        if (mainContent) mainContent.style.display = 'flex';
+        if (authGate) authGate.style.display = 'none';
+
+        // Initial data load if we haven't already
+        if (!window.battleManagerInitialized) {
+            window.battleManagerInitialized = true;
+            await refreshTokensFromSupabase();
+        }
+    } else {
+        // User is logged out - show the gate
+        if (mainContent) mainContent.style.display = 'none';
+        if (authGate) authGate.style.display = 'flex';
+        window.battleManagerInitialized = false;
+    }
+};
+
+/**
  * Application bootstrap
  */
-window.addEventListener("load", async () => {
+window.addEventListener("load", () => {
     init();
-    await refreshTokensFromSupabase();
 });
