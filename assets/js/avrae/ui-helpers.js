@@ -111,3 +111,25 @@ export function setupMenuClickHandler() {
         }
     });
 }
+
+/**
+ * Switch between manual and search map modes
+ */
+export function setMapTab(type) {
+    const manualContainer = $("map-manual-container");
+    const searchContainer = $("map-search-container");
+    const btnManual = $("btn-manual-map");
+    const btnSearch = $("btn-search-map");
+
+    if (type === 'manual') {
+        if (manualContainer) manualContainer.style.display = 'block';
+        if (searchContainer) searchContainer.style.display = 'none';
+        if (btnManual) btnManual.classList.add('active');
+        if (btnSearch) btnSearch.classList.remove('active');
+    } else {
+        if (manualContainer) manualContainer.style.display = 'none';
+        if (searchContainer) searchContainer.style.display = 'block';
+        if (btnManual) btnManual.classList.remove('active');
+        if (btnSearch) btnSearch.classList.add('active');
+    }
+}

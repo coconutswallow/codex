@@ -396,3 +396,83 @@ canvas {
     border-radius: 3px;
     cursor: pointer;
 }
+
+/* Map Search & Toggle Styles */
+.toggle-group {
+    display: flex;
+    background: #2f3136;
+    padding: 4px;
+    border-radius: 4px;
+    margin-bottom: 12px;
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 6px;
+    font-size: 0.75em;
+    background: transparent;
+    color: var(--blur);
+    border: none;
+    cursor: pointer;
+    border-radius: 3px;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.toggle-btn.active {
+    background: var(--accent);
+    color: white;
+}
+
+.map-search-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.search-results {
+    max-height: 300px;
+    overflow-y: auto;
+    background: #1e1f22;
+    border-radius: 4px;
+    border: 1px solid #444;
+}
+
+.map-result {
+    display: flex;
+    gap: 12px;
+    padding: 10px;
+    border-bottom: 1px solid #333;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.map-result:hover {
+    background: #2b2d31;
+}
+
+.map-result-thumb {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    background: #000;
+}
+
+.map-result-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.map-result-name {
+    font-size: 0.9em;
+    font-weight: bold;
+    color: white;
+}
+
+.map-result-meta {
+    font-size: 0.75em;
+    color: var(--blur);
+}

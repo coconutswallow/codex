@@ -6,3 +6,9 @@ context/
 
 # vscode settings
 .vscode/
+
+# Jekyll
+_site/
+.sass-cache/
+.jekyll-metadata
+.jekyll-cache/

@@ -14,14 +14,76 @@ import {
     openTab,
     selectAll,
     clearChecked,
-    setupMenuClickHandler
+    setupMenuClickHandler,
+    setMapTab
 } from './ui-helpers.js';
 
 import { initLists } from './row-builder.js';
 import { centerOn, drawMap, loadImage, initCanvasInteractions, resetFog } from './canvas-manager.js';
 import { updateFowOutputs, batchCmd, generateTokenCommands, generateNpcAddCmds, generateNpcTokenCmds, parseXY } from './command-generator.js';
 import { openTokenModal, openNpcModal } from './modal-manager.js';
-import { refreshTokensFromSupabase, saveSessionToSupabase, loadSessionPrompt } from './supabase-service.js';
+import { refreshTokensFromSupabase, saveSessionToSupabase, loadSessionPrompt, searchBattlemaps } from './supabase-service.js';
+
+/**
+ * Search and display battlemaps
+ */
+let searchTimeout = null;
+async function searchMaps(query) {
+    const resultsDiv = $("mapSearchResults");
+    if (!resultsDiv) return;
+
+    if (!query || query.trim().length < 2) {
+        resultsDiv.innerHTML = '<div style="padding:20px; text-align:center; color:var(--blur); font-size:0.8em;">Type to search battlemaps...</div>';
+        return;
+    }
+
+    if (searchTimeout) clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(async () => {
+        resultsDiv.innerHTML = '<div style="padding:20px; text-align:center; color:var(--blur); font-size:0.8em;">Searching...</div>';
+
+        const maps = await searchBattlemaps(query);
+
+        if (!maps || maps.length === 0) {
+            resultsDiv.innerHTML = '<div style="padding:20px; text-align:center; color:var(--blur); font-size:0.8em;">No maps found.</div>';
+            return;
+        }
+
+        resultsDiv.innerHTML = maps.map(m => `
+            <div class="map-result" onclick="selectMap(${JSON.stringify(m).replace(/"/g, '&quot;')})">
+                <img src="${m.thumbnail_url || '/assets/images/placeholder-map.webp'}" class="map-result-thumb">
+                <div class="map-result-info">
+                    <div class="map-result-name">${m.name}</div>
+                    <div class="map-result-meta">${m.grid_width}x${m.grid_height} • ${m.source_url ? new URL(m.source_url).hostname : 'Database'}</div>
+                </div>
+            </div>
+        `).join('');
+    }, 300);
+}
+
+/**
+ * Select a map from search results
+ */
+function selectMap(m) {
+    const urlInput = $("mapImgUrl");
+    const widthInput = $("mapW");
+    const heightInput = $("mapH");
+    const pxcInput = $("mapPixelsPerCell");
+
+    if (urlInput) urlInput.value = m.source_url || "";
+    if (widthInput) widthInput.value = m.grid_width || 40;
+    if (heightInput) heightInput.value = m.grid_height || 40;
+    if (pxcInput) pxcInput.value = m.cell_size_px || 30;
+
+    // Reset transformations
+    const transUrl = $("mapTransformedUrl");
+    if (transUrl) transUrl.value = "";
+
+    // Switch back to manual tab to show the URL and trigger load
+    setMapTab('manual');
+    loadImage();
+    drawMap();
+    updateFowOutputs();
+}
 
 /**
  * Handle location jump from row button
@@ -80,6 +142,9 @@ window.toggleMenu = toggleMenu;
 window.openTab = openTab;
 window.selectAll = selectAll;
 window.clearChecked = (type) => clearChecked(type, updateFowOutputs);
+window.setMapTab = setMapTab;
+window.searchMaps = searchMaps;
+window.selectMap = selectMap;
 
 // Canvas
 window.loadImage = loadImage;

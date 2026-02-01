@@ -43,7 +43,7 @@ extra_css: ["/assets/css/avrae-manager.css"]
                 <div class="tab active" onclick="openTab(event, 'tab-players')">Players</div>
                 <div class="tab" onclick="openTab(event, 'tab-npcs')">NPCs</div>
                 <div class="tab" onclick="openTab(event, 'tab-monsters')">Monsters</div>
-                <div class="tab" onclick="openTab(event, 'tab-config')">Config</div>
+                <div class="tab" onclick="openTab(event, 'tab-config')">Map Config</div>
             </div>
 
             <div id="tab-players" class="tab-content active">
@@ -83,8 +83,29 @@ extra_css: ["/assets/css/avrae-manager.css"]
             </div>
 
             <div id="tab-config" class="tab-content">
-                <label>Map Image URL</label>
-                <input type="text" id="mapImgUrl" placeholder="Paste link..." onchange="loadImage()">
+                <div class="toggle-group">
+                    <button class="toggle-btn active" id="btn-manual-map" onclick="setMapTab('manual')">Manual
+                        URL</button>
+                    <button class="toggle-btn" id="btn-search-map" onclick="setMapTab('search')">Search
+                        Database</button>
+                </div>
+
+                <div id="map-manual-container">
+                    <label>Map Image URL</label>
+                    <input type="text" id="mapImgUrl" placeholder="Paste link..." onchange="loadImage()">
+                </div>
+
+                <div id="map-search-container" style="display:none;">
+                    <label>Search Battlemaps</label>
+                    <input type="text" id="mapSearchKey" placeholder="Search keywords..."
+                        oninput="searchMaps(this.value)">
+                    <div id="mapSearchResults" class="search-results" style="margin-top:8px;">
+                        <div style="padding:20px; text-align:center; color:var(--blur); font-size:0.8em;">
+                            Type to search battlemaps...
+                        </div>
+                    </div>
+                </div>
+
                 <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-top:10px;">
                     <div><label>Width</label><input type="number" id="mapW" value="40" oninput="drawMap()"></div>
                     <div><label>Height</label><input type="number" id="mapH" value="40" oninput="drawMap()"></div>

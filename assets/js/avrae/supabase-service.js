@@ -321,3 +321,29 @@ export async function loadSessionPrompt() {
         alert("Failed to load session.");
     }
 }
+
+/**
+ * Search battlemaps in database
+ * @param {string} query - Search term
+ * @returns {Promise<Array>} List of battlemaps
+ */
+export async function searchBattlemaps(query) {
+    try {
+        if (!query || query.trim().length < 2) return [];
+
+        const { data, error } = await supabase
+            .from("battlemaps")
+            .select("id,name,grid_width,grid_height,cell_size_px,thumbnail_url,source_url")
+            .or(`name.ilike.%${query}%,keywords.ilike.%${query}%`)
+            .eq("is_approved", true)
+            .limit(10);
+
+        if (error) throw error;
+        return data || [];
+
+    } catch (e) {
+        console.error(`[${MODULE}] searchBattlemaps failed`, e);
+        await logError(MODULE, `searchBattlemaps failed: ${e.message}`);
+        return [];
+    }
+}
