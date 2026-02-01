@@ -86,7 +86,7 @@ extra_css: ["/assets/css/avrae-manager.css"]
                 <div class="toggle-group">
                     <button class="toggle-btn active" id="btn-manual-map" onclick="setMapTab('manual')">Manual
                         URL</button>
-                    <button class="toggle-btn" id="btn-search-map" onclick="setMapTab('search')">Search
+                    <button class="toggle-btn" id="btn-search-map" onclick="setMapTab('search')">Search Maps
                         Database</button>
                 </div>
 
@@ -106,30 +106,38 @@ extra_css: ["/assets/css/avrae-manager.css"]
                     </div>
                 </div>
 
-                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-top:10px;">
-                    <div><label>Width</label><input type="number" id="mapW" value="40" oninput="drawMap()"></div>
-                    <div><label>Height</label><input type="number" id="mapH" value="40" oninput="drawMap()"></div>
-                    <div><label>Vis</label><input type="number" id="visRange" value="6" oninput="drawMap()"></div>
-                </div>
-
-                <details style="margin-top: 15px;">
-                    <summary style="cursor:pointer; color:var(--accent);">Image Transformation</summary>
-                    <div style="padding:10px; border:1px solid var(--border); border-radius:4px; margin-top:5px;">
-                        <label>Transformed URL</label>
-                        <input type="text" id="mapTransformedUrl" placeholder="Optional...">
-
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px;">
-                            <div><label>Trans. Width</label><input type="number" id="mapTransformedW" placeholder="0">
-                            </div>
-                            <div><label>Trans. Height</label><input type="number" id="mapTransformedH" placeholder="0">
-                            </div>
-                            <div><label>Px Per Cell</label><input type="number" id="mapPixelsPerCell" value="30"></div>
-                            <div><label>Empty</label></div>
-                            <div><label>Offset X</label><input type="number" id="mapOffsetX" value="0"></div>
-                            <div><label>Offset Y</label><input type="number" id="mapOffsetY" value="0"></div>
-                        </div>
+                <!-- Settings Container (Hidden during search) -->
+                <div id="map-settings-container">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px;">
+                        <div><label>Width</label><input type="number" id="mapW" value="40" readonly
+                                style="background:transparent; border:none; padding-left:0;"></div>
+                        <div><label>Height</label><input type="number" id="mapH" value="40" readonly
+                                style="background:transparent; border:none; padding-left:0;"></div>
                     </div>
-                </details>
+                    <input type="hidden" id="visRange" value="6">
+
+                    <details style="margin-top: 15px;">
+                        <summary style="cursor:pointer; color:var(--accent);">Image Transformation</summary>
+                        <div style="padding:10px; border:1px solid var(--border); border-radius:4px; margin-top:5px;">
+                            <label>Transformed URL</label>
+                            <input type="text" id="mapTransformedUrl" placeholder="Optional...">
+
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px;">
+                                <div><label>Trans. Width</label><input type="number" id="mapTransformedW"
+                                        placeholder="0">
+                                </div>
+                                <div><label>Trans. Height</label><input type="number" id="mapTransformedH"
+                                        placeholder="0">
+                                </div>
+                                <div><label>Px Per Cell</label><input type="number" id="mapPixelsPerCell" value="30">
+                                </div>
+                                <div><label>Empty</label></div>
+                                <div><label>Offset X</label><input type="number" id="mapOffsetX" value="0"></div>
+                                <div><label>Offset Y</label><input type="number" id="mapOffsetY" value="0"></div>
+                            </div>
+                        </div>
+                    </details>
+                </div>
             </div>
         </div>
 

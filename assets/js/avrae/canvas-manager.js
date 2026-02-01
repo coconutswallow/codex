@@ -90,7 +90,12 @@ export function loadImage() {
     }
 
     const img = new Image();
-    img.crossOrigin = "anonymous";
+
+    // Only use anonymous crossOrigin for external http(s) URLs
+    // This prevents CORS issues for same-origin local assets
+    if (url.startsWith('http') && !url.includes(window.location.hostname)) {
+        img.crossOrigin = "anonymous";
+    }
 
     img.onload = () => {
         state.setMapImage(img);
@@ -100,11 +105,13 @@ export function loadImage() {
     img.onerror = () => {
         state.setMapImage(null);
         drawMap();
-        alert("Could not load map image (check URL / CORS).");
+        console.error("[canvas-manager] Failed to load image:", url);
+        alert(`Could not load map image.\n\nURL: ${url}\n\nPlease check if the file exists and is accessible.`);
     };
 
     img.src = url;
 }
+
 
 /**
  * Draw the map canvas

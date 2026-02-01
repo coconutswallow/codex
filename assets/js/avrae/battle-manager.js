@@ -48,41 +48,79 @@ async function searchMaps(query) {
             return;
         }
 
-        resultsDiv.innerHTML = maps.map(m => `
-            <div class="map-result" onclick="selectMap(${JSON.stringify(m).replace(/"/g, '&quot;')})">
-                <img src="${m.thumbnail_url || '/assets/images/placeholder-map.webp'}" class="map-result-thumb">
-                <div class="map-result-info">
-                    <div class="map-result-name">${m.name}</div>
-                    <div class="map-result-meta">${m.grid_width}x${m.grid_height} • ${m.source_url ? new URL(m.source_url).hostname : 'Database'}</div>
+        resultsDiv.innerHTML = maps.map(m => {
+            let hostname = "Database";
+            try {
+                if (m.source_url) {
+                    // Handle relative URLs or strings that aren't full URLs
+                    const urlStr = m.source_url.startsWith('http') ? m.source_url : 'https://' + m.source_url;
+                    hostname = new URL(urlStr).hostname;
+                }
+            } catch (e) {
+                hostname = "Source";
+            }
+
+            // Escape the object for the onclick handler more safely
+            const mapData = JSON.stringify(m).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+            return `
+                <div class="map-result" onclick="selectMap('${mapData}')">
+                    <img src="${m.thumbnail_url || m.image_url || '/assets/images/placeholder-map.webp'}" class="map-result-thumb">
+                    <div class="map-result-info">
+                        <div class="map-result-name">${m.name}</div>
+                        <div class="map-result-meta">${m.grid_width}x${m.grid_height} • ${hostname}</div>
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     }, 300);
 }
 
 /**
  * Select a map from search results
  */
-function selectMap(m) {
-    const urlInput = $("mapImgUrl");
-    const widthInput = $("mapW");
-    const heightInput = $("mapH");
-    const pxcInput = $("mapPixelsPerCell");
+function selectMap(mapDataStr) {
+    try {
+        const m = JSON.parse(mapDataStr.replace(/&quot;/g, '"'));
+        console.info("[battle-manager] Selecting map:", m);
 
-    if (urlInput) urlInput.value = m.image_url || "";
-    if (widthInput) widthInput.value = m.grid_width || 40;
-    if (heightInput) heightInput.value = m.grid_height || 40;
-    if (pxcInput) pxcInput.value = m.cell_size_px || 30;
+        const urlInput = $("mapImgUrl");
+        const widthInput = $("mapW");
+        const heightInput = $("mapH");
+        const pxcInput = $("mapPixelsPerCell");
 
-    // Reset transformations
-    const transUrl = $("mapTransformedUrl");
-    if (transUrl) transUrl.value = "";
+        // The correct field for the direct image is image_url
+        let targetUrl = m.image_url || m.source_url || "";
 
-    // Switch back to manual tab to show the URL and trigger load
-    setMapTab('manual');
-    loadImage();
-    drawMap();
-    updateFowOutputs();
+        // Handle local paths that might be missing the baseurl (/codex)
+        if (targetUrl.startsWith('/') && !targetUrl.startsWith('/codex')) {
+            targetUrl = '/codex' + targetUrl;
+        }
+
+        if (urlInput) urlInput.value = targetUrl;
+
+        if (widthInput) widthInput.value = m.grid_width || 40;
+        if (heightInput) heightInput.value = m.grid_height || 40;
+        if (pxcInput) pxcInput.value = m.cell_size_px || 30;
+
+        // Reset transformations
+        const transUrl = $("mapTransformedUrl");
+        if (transUrl) transUrl.value = "";
+
+        // Switch back to manual tab to show the URL and trigger load
+        setMapTab('manual');
+
+        // Wait a tiny bit for the tab switch to render (though not strictly necessary)
+        setTimeout(() => {
+            loadImage();
+            drawMap();
+            updateFowOutputs();
+        }, 10);
+
+    } catch (e) {
+        console.error("[battle-manager] Failed to select map:", e);
+        alert("Error selecting map from database.");
+    }
 }
 
 /**
