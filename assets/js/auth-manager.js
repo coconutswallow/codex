@@ -1,7 +1,8 @@
 import { supabase } from './supabaseClient.js';
+import { logError } from './error-logger.js';
 
 // 24 Hours in milliseconds
-const MAX_SESSION_AGE = 24 * 60 * 60 * 1000; 
+const MAX_SESSION_AGE = 24 * 60 * 60 * 1000;
 
 /**
  * Manages Supabase authentication state.
@@ -20,11 +21,21 @@ class AuthManager {
      * Receives the `user` object or `null`.
      */
     init(onUserReady) {
-        this.client.auth.getSession().then(({ data }) => {
+        this.client.auth.getSession().then(({ data, error }) => {
+            if (error) {
+                logError('auth-manager', `getSession failed: ${error.message}`);
+                onUserReady(null);
+                return;
+            }
             this.handleSession(data.session, onUserReady);
         });
 
-        this.client.auth.onAuthStateChange((event, session) => {
+        this.client.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_OUT') {
+                this.user = null;
+                if (onUserReady) onUserReady(null);
+                return;
+            }
             this.handleSession(session, onUserReady);
         });
     }
@@ -57,7 +68,7 @@ class AuthManager {
                 this.user = session.user;
                 if (callback) callback(this.user);
             } catch (error) {
-                console.error("Auth: Sync failed.", error);
+                await logError('auth-manager', `Sync failed: ${error.message || error}`);
                 await this.logout();
             }
         }
@@ -76,7 +87,15 @@ class AuthManager {
                 .eq('user_id', userId)
                 .single();
 
-            if (error || !data || !data.last_seen) return false;
+            if (error) {
+                // PGRST116 is "no rows returned", which is expected for new users
+                if (error.code !== 'PGRST116') {
+                    logError('auth-manager', `Freshness check query failed: ${error.message}`);
+                }
+                return false;
+            }
+
+            if (!data || !data.last_seen) return false;
 
             const lastSeenDate = new Date(data.last_seen);
             const now = new Date();
@@ -84,6 +103,7 @@ class AuthManager {
 
             return ageInMs < MAX_SESSION_AGE;
         } catch (e) {
+            logError('auth-manager', `Critical failure in freshness check: ${e.message}`);
             return false; // Fail safe: assume stale
         }
     }
@@ -103,7 +123,7 @@ class AuthManager {
         const { error } = await this.client.rpc('link_discord_account', {
             arg_discord_id: session.user.user_metadata.provider_id,
             arg_display_name: session.user.user_metadata.full_name,
-            arg_roles: [] 
+            arg_roles: []
         });
 
         if (error) throw error;
@@ -114,22 +134,34 @@ class AuthManager {
      * Redirects the user back to the current page origin.
      */
     async login() {
-        const cleanUrl = window.location.origin + window.location.pathname;
-        await this.client.auth.signInWithOAuth({
-            provider: 'discord',
-            options: { 
-                redirectTo: cleanUrl,
-                // Removed 'guilds' and 'guilds.members.read' scopes
-            }
-        });
+        try {
+            const cleanUrl = window.location.origin + window.location.pathname;
+            const { error } = await this.client.auth.signInWithOAuth({
+                provider: 'discord',
+                options: {
+                    redirectTo: cleanUrl,
+                }
+            });
+            if (error) throw error;
+        } catch (error) {
+            logError('auth-manager', `Login flow failed: ${error.message}`);
+            alert('Failed to initiate login. Please try again.');
+        }
     }
 
     /**
      * Signs the user out of Supabase and reloads the page.
      */
     async logout() {
-        await this.client.auth.signOut();
-        window.location.reload();
+        try {
+            const { error } = await this.client.auth.signOut();
+            if (error) throw error;
+            window.location.reload();
+        } catch (error) {
+            logError('auth-manager', `Logout failed: ${error.message}`);
+            // Force reload anyway to clear state if possible
+            window.location.reload();
+        }
     }
 }
 
