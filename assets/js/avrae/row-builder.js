@@ -64,6 +64,24 @@ export function makeRow({ type, index, onLocationJump }) {
     // Extra field (Vis/AC/HP)
     const extraWrap = createExtraField(type, index);
 
+    // Hidden Token field for players/monsters
+    let tokenHidden;
+    if (type === "player" || type === "monster") {
+        tokenHidden = document.createElement("input");
+        tokenHidden.type = "hidden";
+        tokenHidden.id = `${type}_token_${index}`;
+        row.appendChild(tokenHidden);
+    }
+
+    // Hidden HP field for NPCs (AC is already visible)
+    if (type === "npc") {
+        const hpHidden = document.createElement("input");
+        hpHidden.type = "hidden";
+        hpHidden.id = `npc_hp_${index}`;
+        hpHidden.value = "11";
+        row.appendChild(hpHidden);
+    }
+
     // Jump button
     const btnWrap = createJumpButton(type, index, onLocationJump);
 

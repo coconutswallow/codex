@@ -23,6 +23,7 @@ export function openTokenModal() {
         const refName = $(`player_name_${idx}`)?.value?.trim() || "";
         const fullName = $(`player_full_${idx}`)?.value?.trim() || "";
         const loc = $(`player_loc_${idx}`)?.value?.trim() || "";
+        const tokenVal = $(`player_token_${idx}`)?.value || "";
 
         const tr = document.createElement("tr");
 
@@ -31,17 +32,26 @@ export function openTokenModal() {
         tdRef.textContent = refName;
         tr.appendChild(tdRef);
 
-        // Full name
-        tr.appendChild(createModalInput("bm_modal_full", "text", fullName, "Full name"));
+        // Full name -> Syncs to player_full_{idx}
+        tr.appendChild(createModalInput("bm_modal_full", "text", fullName, "Full name", (val) => {
+            const el = $(`player_full_${idx}`);
+            if (el) el.value = val;
+        }));
 
-        // Location
-        tr.appendChild(createModalInput("bm_modal_loc", "text", loc, "x,y"));
+        // Location -> Syncs to player_loc_{idx}
+        tr.appendChild(createModalInput("bm_modal_loc", "text", loc, "x,y", (val) => {
+            const el = $(`player_loc_${idx}`);
+            if (el) el.value = val;
+        }));
 
         // Size
         tr.appendChild(createModalInput("bm_modal_size", "text", "M", "M/L/H"));
 
-        // Token URL
-        tr.appendChild(createModalInput("bm_modal_token", "text", "", "Token URL or code"));
+        // Token URL -> Syncs to player_token_{idx}
+        tr.appendChild(createModalInput("bm_modal_token", "text", tokenVal, "Token URL or code", (val) => {
+            const el = $(`player_token_${idx}`);
+            if (el) el.value = val;
+        }));
 
         body.appendChild(tr);
     }
@@ -58,6 +68,8 @@ export function openNpcModal() {
     body.innerHTML = "";
 
     // Start with 5 blank rows
+    // Note: NPCs in the modal are usually for NEW NPCs to be added via !i add
+    // So they don't necessarily sync back to existing rows.
     for (let i = 0; i < 5; i++) {
         const tr = document.createElement("tr");
 
@@ -76,7 +88,7 @@ export function openNpcModal() {
 /**
  * Helper: Create modal input cell
  */
-function createModalInput(className, type, value, placeholder) {
+function createModalInput(className, type, value, placeholder, onChangeCallback) {
     const td = document.createElement("td");
     const input = document.createElement("input");
 
@@ -84,6 +96,10 @@ function createModalInput(className, type, value, placeholder) {
     input.type = type;
     if (value !== undefined) input.value = value;
     if (placeholder) input.placeholder = placeholder;
+
+    if (onChangeCallback) {
+        input.oninput = (e) => onChangeCallback(e.target.value);
+    }
 
     td.appendChild(input);
     return td;
