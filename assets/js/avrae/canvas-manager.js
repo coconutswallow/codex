@@ -148,9 +148,9 @@ export function drawMap() {
     if (img) {
         ctx.globalAlpha = 1.0;
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        console.debug("[canvas-manager] Map image drawn:", img.src);
+        console.info("[canvas-manager] Map image drawn:", img.src, "Size:", canvas.width, "x", canvas.height);
     } else {
-        console.debug("[canvas-manager] No map image to draw.");
+        console.warn("[canvas-manager] No map image found in state during drawMap.");
     }
 
     // 3. Draw Fog of War (tile by tile)

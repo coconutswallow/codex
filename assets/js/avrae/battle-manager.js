@@ -108,16 +108,25 @@ function selectMap(mapDataStr) {
 
         if (urlInput) urlInput.value = targetUrl;
 
+        const ppx = m.cell_size_px || 30;
+
+        // Decide if dimensions are in pixels or cells
+        // Heuristic: if > 500, it's probably pixels
+        let w = m.grid_width || 40;
+        let h = m.grid_height || 40;
+
+        if (w > 500) w = Math.floor(w / ppx);
+        if (h > 500) h = Math.floor(h / ppx);
+
         if (widthInput) {
-            widthInput.value = m.grid_width || 40;
-            // Force value update for read-only fields
-            widthInput.setAttribute('value', widthInput.value);
+            widthInput.value = w;
+            widthInput.setAttribute('value', w);
         }
         if (heightInput) {
-            heightInput.value = m.grid_height || 40;
-            heightInput.setAttribute('value', heightInput.value);
+            heightInput.value = h;
+            heightInput.setAttribute('value', h);
         }
-        if (pxcInput) pxcInput.value = m.cell_size_px || 30;
+        if (pxcInput) pxcInput.value = ppx;
 
         // Reset transformations
         const transUrl = $("mapTransformedUrl");
