@@ -91,22 +91,33 @@ export function loadImage() {
 
     const img = new Image();
 
-    // Only use anonymous crossOrigin for external http(s) URLs
-    // This prevents CORS issues for same-origin local assets
-    if (url.startsWith('http') && !url.includes(window.location.hostname)) {
+    // Use anonymous crossOrigin for external http(s) URLs
+    // This is required for drawing to a canvas if the host allows it.
+    if (url.startsWith('http')) {
         img.crossOrigin = "anonymous";
     }
 
+    console.info("[canvas-manager] Attempting to load image:", url);
+
     img.onload = () => {
+        console.info("[canvas-manager] Image loaded successfully:", url);
         state.setMapImage(img);
         drawMap();
     };
 
     img.onerror = () => {
+        // If it failed and we haven't tried the proxy yet, retry with wsrv.nl proxy
+        // This solves CORS issues for hosts like iili.io or discord.
+        if (!img.src.includes("wsrv.nl") && url.startsWith("http")) {
+            console.warn("[canvas-manager] CORS/Load failure, retrying with proxy:", url);
+            img.src = `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
+            return;
+        }
+
         state.setMapImage(null);
         drawMap();
-        console.error("[canvas-manager] Failed to load image:", url);
-        alert(`Could not load map image.\n\nURL: ${url}\n\nPlease check if the file exists and is accessible.`);
+        console.error("[canvas-manager] Failed to load image after proxy attempt:", url);
+        alert(`Could not load map image.\n\nURL: ${url}\n\nThis may be a CORS issue or the image no longer exists.`);
     };
 
     img.src = url;
@@ -128,33 +139,36 @@ export function drawMap() {
     canvas.width = w * cell;
     canvas.height = h * cell;
 
-    // Black background
+    // 1. Black background
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw map image if loaded
+    // 2. Draw map image if loaded
     const img = state.getMapImage();
     if (img) {
         ctx.globalAlpha = 1.0;
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        console.debug("[canvas-manager] Map image drawn:", img.src);
+    } else {
+        console.debug("[canvas-manager] No map image to draw.");
     }
 
-    // Fog overlay
-    ctx.globalAlpha = 0.75;
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Clear revealed tiles
+    // 3. Draw Fog of War (tile by tile)
+    // Instead of one big block + clearRect (which clears the image),
+    // we draw fog everywhere that ISN'T revealed.
+    ctx.fillStyle = "rgba(0, 0, 0, 0.8)"; // 80% black for unrevealed areas
     ctx.globalAlpha = 1.0;
-    const revealed = state.getRevealedTiles();
-    revealed.forEach((key) => {
-        const [x, y] = key.split(",").map((n) => parseInt(n, 10));
-        if (!Number.isFinite(x) || !Number.isFinite(y)) return;
-        ctx.clearRect(x * cell, y * cell, cell, cell);
-    });
 
-    // Grid lines
-    ctx.globalAlpha = 0.18;
+    for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+            if (!state.isRevealed(x, y)) {
+                ctx.fillRect(x * cell, y * cell, cell, cell);
+            }
+        }
+    }
+
+    // 4. Grid lines
+    ctx.globalAlpha = 0.2;
     ctx.strokeStyle = "#fff";
     ctx.lineWidth = 1;
 
@@ -172,7 +186,18 @@ export function drawMap() {
         ctx.stroke();
     }
 
-    // Draw player markers
+    // 5. Draw labels (A-Z, 1-N)
+    ctx.globalAlpha = 0.8;
+    ctx.fillStyle = "#fff";
+    ctx.font = "10px sans-serif";
+    for (let x = 0; x < w; x++) {
+        ctx.fillText(String.fromCharCode(65 + (x % 26)), x * cell + 2, 10);
+    }
+    for (let y = 0; y < h; y++) {
+        ctx.fillText(y + 1, 2, y * cell + 10);
+    }
+
+    // 6. Draw player markers
     drawPlayerMarkers(ctx, cell);
 
     ctx.globalAlpha = 1.0;

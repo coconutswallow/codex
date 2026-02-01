@@ -89,18 +89,34 @@ function selectMap(mapDataStr) {
         const heightInput = $("mapH");
         const pxcInput = $("mapPixelsPerCell");
 
-        // The correct field for the direct image is image_url
+        // Determine correct URL for image loading
         let targetUrl = m.image_url || m.source_url || "";
 
-        // Handle local paths that might be missing the baseurl (/codex)
-        if (targetUrl.startsWith('/') && !targetUrl.startsWith('/codex')) {
-            targetUrl = '/codex' + targetUrl;
+        // Site asset handling for GitHub Pages (/codex baseurl)
+        if (targetUrl && !targetUrl.startsWith('http') && !targetUrl.startsWith('//')) {
+            // Standardize: ensure we have a path like /assets/...
+            let path = targetUrl;
+            if (path.startsWith('/codex')) path = path.substring(6);
+            if (!path.startsWith('/')) path = '/' + path;
+
+            // Re-apply baseurl consistently
+            targetUrl = '/codex' + path;
         }
+
+        console.info("[battle-manager] Selected Data:", m);
+        console.info("[battle-manager] Final URL:", targetUrl);
 
         if (urlInput) urlInput.value = targetUrl;
 
-        if (widthInput) widthInput.value = m.grid_width || 40;
-        if (heightInput) heightInput.value = m.grid_height || 40;
+        if (widthInput) {
+            widthInput.value = m.grid_width || 40;
+            // Force value update for read-only fields
+            widthInput.setAttribute('value', widthInput.value);
+        }
+        if (heightInput) {
+            heightInput.value = m.grid_height || 40;
+            heightInput.setAttribute('value', heightInput.value);
+        }
         if (pxcInput) pxcInput.value = m.cell_size_px || 30;
 
         // Reset transformations
@@ -110,12 +126,10 @@ function selectMap(mapDataStr) {
         // Switch back to manual tab to show the URL and trigger load
         setMapTab('manual');
 
-        // Wait a tiny bit for the tab switch to render (though not strictly necessary)
-        setTimeout(() => {
-            loadImage();
-            drawMap();
-            updateFowOutputs();
-        }, 10);
+        // Trigger image load and redraw
+        loadImage();
+        drawMap();
+        updateFowOutputs();
 
     } catch (e) {
         console.error("[battle-manager] Failed to select map:", e);
