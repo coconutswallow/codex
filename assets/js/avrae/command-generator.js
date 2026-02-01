@@ -6,6 +6,9 @@
 import { $ } from './ui-helpers.js';
 import { state } from './state-manager.js';
 
+// getResizelyUrl removed - imported from utils/resizely-helper.js
+
+
 /**
  * Show output in console (for commands)
  */

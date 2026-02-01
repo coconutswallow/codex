@@ -23,6 +23,7 @@ import { centerOn, drawMap, loadImage, initCanvasInteractions, resetFog } from '
 import { updateFowOutputs, batchCmd, generateTokenCommands, generateNpcAddCmds, generateNpcTokenCmds, parseXY } from './command-generator.js';
 import { openTokenModal, openNpcModal } from './modal-manager.js';
 import { refreshTokensFromSupabase, saveSessionToSupabase, loadSessionPrompt, searchBattlemaps } from './supabase-service.js';
+import { getResizelyUrl } from '../utils/resizely-helper.js';
 
 /**
  * Search and display battlemaps
@@ -108,32 +109,63 @@ function selectMap(mapDataStr) {
 
         if (urlInput) urlInput.value = targetUrl;
 
-        const ppx = m.cell_size_px || 30;
+        // === SMART SCALING LOGIC ===
+        // 1. GRID DIMENSIONS (Cells)
+        // These inputs define the logical grid (e.g., 40x40 squares)
+        // If the DB values are excessively large (>500), assume they are pixels and convert to cells
+        const MAX_GRID_DIM = 200; // Unlikely to have a map > 200 cells wide
 
-        // Decide if dimensions are in pixels or cells
-        // Heuristic: if > 500, it's probably pixels
-        let w = m.grid_width || 40;
-        let h = m.grid_height || 40;
+        let gridW = m.grid_width || 40;
+        let gridH = m.grid_height || 40;
+        const dbPxc = m.cell_size_px || 30;
 
-        if (w > 500) w = Math.floor(w / ppx);
-        if (h > 500) h = Math.floor(h / ppx);
+        // If values look like pixels (e.g. 2000), convert to cells
+        if (gridW > MAX_GRID_DIM) gridW = Math.floor(gridW / dbPxc);
+        if (gridH > MAX_GRID_DIM) gridH = Math.floor(gridH / dbPxc);
 
-        if (widthInput) {
-            widthInput.value = w;
-            widthInput.setAttribute('value', w);
+        if (widthInput) widthInput.value = gridW;
+        if (heightInput) heightInput.value = gridH;
+
+        // 2. IMAGE DIMENSIONS (Pixels)
+        // We want the image to have a resolution that supports ~50px per cell
+        const TARGET_PXC = 50;
+
+        if (pxcInput) pxcInput.value = TARGET_PXC;
+
+        // Reset transformation inputs first
+        if ($("mapTransformedUrl")) $("mapTransformedUrl").value = "";
+        if ($("mapTransformedW")) $("mapTransformedW").value = "";
+        if ($("mapTransformedH")) $("mapTransformedH").value = "";
+        if ($("mapOffsetX")) $("mapOffsetX").value = 0;
+        if ($("mapOffsetY")) $("mapOffsetY").value = 0;
+
+        // 3. IMAGE SCALING
+        // If the source is external, we resize it to match our target PPI (50)
+        // Target image width = GridWidth * 50
+        if (targetUrl.startsWith('http')) {
+            console.info("[battle-manager] Applying auto-scaling for external map...");
+
+            const targetImgWidth = Math.round(gridW * TARGET_PXC);
+            const targetImgHeight = Math.round(gridH * TARGET_PXC);
+
+            // Generate Resizely URL
+            const resizedUrl = getResizelyUrl(targetUrl, targetImgWidth);
+
+            if (resizedUrl) {
+                console.info("[battle-manager] Generated Resizely URL:", resizedUrl);
+
+                // Populate transformation fields for transparency
+                if ($("mapTransformedUrl")) $("mapTransformedUrl").value = resizedUrl;
+                if ($("mapTransformedW")) $("mapTransformedW").value = targetImgWidth;
+                if ($("mapTransformedH")) $("mapTransformedH").value = targetImgHeight;
+
+                // Use the resized URL for loading
+                targetUrl = resizedUrl;
+
+                // Show the resized URL in the main input
+                if (urlInput) urlInput.value = targetUrl;
+            }
         }
-        if (heightInput) {
-            heightInput.value = h;
-            heightInput.setAttribute('value', h);
-        }
-        if (pxcInput) pxcInput.value = ppx;
-
-        // Reset transformations
-        const transUrl = $("mapTransformedUrl");
-        if (transUrl) transUrl.value = "";
-
-        // Switch back to manual tab to show the URL and trigger load
-        setMapTab('manual');
 
         // Trigger image load and redraw
         loadImage();
