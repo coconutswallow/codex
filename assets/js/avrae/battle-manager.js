@@ -69,7 +69,7 @@ function selectMap(m) {
     const heightInput = $("mapH");
     const pxcInput = $("mapPixelsPerCell");
 
-    if (urlInput) urlInput.value = m.source_url || "";
+    if (urlInput) urlInput.value = m.image_url || "";
     if (widthInput) widthInput.value = m.grid_width || 40;
     if (heightInput) heightInput.value = m.grid_height || 40;
     if (pxcInput) pxcInput.value = m.cell_size_px || 30;
