@@ -1,4 +1,5 @@
-:root {
+/* Scope variables to avrae-manager app to prevent conflicts with site navigation */
+.avrae-manager-app {
     --bg: #2c2f33;
     --panel: #23272a;
     --text: #ffffff;
@@ -15,9 +16,8 @@
     --color-border: #444;
     --color-primary: #5865f2;
     --color-text: #ffffff;
-}
 
-body {
+    /* Apply styles directly to the app container */
     font-family: 'Segoe UI', sans-serif;
     background: var(--bg);
     color: var(--text);

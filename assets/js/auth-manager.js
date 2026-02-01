@@ -120,15 +120,15 @@ class AuthManager {
         // Replaced RPC structure with direct DB upsert
         // We do not modify 'roles' here.
         const updates = {
+            discord_id: session.user.user_metadata.provider_id || session.user.identities?.[0]?.id,
+            display_name: session.user.user_metadata.name || session.user.user_metadata.full_name,
             user_id: session.user.id,
-            discord_username: session.user.user_metadata.name, // 'name' is often the username
-            username: session.user.user_metadata.full_name, // 'full_name' is the display name
             last_seen: new Date().toISOString()
         };
 
         const { error } = await this.client
             .from('discord_users')
-            .upsert(updates, { onConflict: 'user_id' });
+            .upsert(updates, { onConflict: 'discord_id' });
 
         if (error) {
             console.error("Auth: Direct sync failed.", error);
