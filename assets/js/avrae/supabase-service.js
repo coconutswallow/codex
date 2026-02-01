@@ -3,7 +3,7 @@
  * Supabase database operations
  */
 
-import { supabase } from "../assets/js/supabaseClient.js";
+import { supabase } from "/codex/assets/js/supabaseClient.js";
 import { state } from './state-manager.js';
 import { updateFileStatus } from './ui-helpers.js';
 
