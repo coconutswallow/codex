@@ -117,16 +117,23 @@ class AuthManager {
         // We no longer need the provider_token for guild fetching.
         // We simply use the metadata attached to the session.
 
-        // The RPC function typically handles updating 'last_seen' to NOW()
-        // Ensure your Postgres function 'link_discord_account' accepts these arguments.
-        // We pass an empty array for roles as we are no longer retrieving them.
-        const { error } = await this.client.rpc('link_discord_account', {
-            arg_discord_id: session.user.user_metadata.provider_id,
-            arg_display_name: session.user.user_metadata.full_name,
-            arg_roles: []
-        });
+        // Replaced RPC structure with direct DB upsert
+        // We do not modify 'roles' here.
+        const updates = {
+            user_id: session.user.id,
+            discord_username: session.user.user_metadata.name, // 'name' is often the username
+            username: session.user.user_metadata.full_name, // 'full_name' is the display name
+            last_seen: new Date().toISOString()
+        };
 
-        if (error) throw error;
+        const { error } = await this.client
+            .from('discord_users')
+            .upsert(updates, { onConflict: 'user_id' });
+
+        if (error) {
+            console.error("Auth: Direct sync failed.", error);
+            throw error;
+        }
     }
 
     /**
