@@ -113,7 +113,9 @@ export function generateMapSetupCmd() {
     const ppc = $("mapPPC")?.value || "30";
 
     return `!multiline
+!i begin
 !i add 50 DM -p
+
 !map -bg "${url}" -mapsize ${w}x${h} -options dc${ppc} -t DM`;
 }
 

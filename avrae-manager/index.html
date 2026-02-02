@@ -173,15 +173,18 @@ extra_css: ["/assets/css/avrae-manager.css"]
                         </div>
                     </div>
 
+                    <button class="action-btn"
+                        style="width: 100%; padding: 12px; background: var(--success); margin-top: 10px;"
+                        onclick="applyMapConfig()">Apply & Render Map</button>
+
                     <div class="config-section">
                         <label class="section-label">4. Avrae Setup Command</label>
                         <div class="output-box" id="setup-cmd-out" onclick="uiFlash(this)"
                             style="font-size: 0.7em; min-height: 40px;">!multiline...</div>
+                        <p style="font-size: 0.7em; color: var(--blur); margin-top: 5px;">Copy the commands above. Note
+                            commands in paragraphs can be executed together, each one separated by space needs to be
+                            executed individually.</p>
                     </div>
-
-                    <button class="action-btn"
-                        style="width: 100%; padding: 12px; background: var(--success); margin-top: 10px;"
-                        onclick="applyMapConfig()">Apply & Render Map</button>
 
                     <div id="active-map-summary"
                         style="margin-top: 10px; padding: 12px; background: #1e1f22; border-radius: 4px; text-align: left; display: none;">
