@@ -61,9 +61,8 @@ export async function handleMapUrlChange(forceDefault = false) {
         const currentW = parseInt($('mapW').value) || 0;
         if (originalWidth > 0 && originalHeight > 0 && (forceDefault || currentW === 0)) {
             const defaultW = 30;
-            const aspectRatio = originalHeight / originalWidth;
-            const calcH = Math.round(defaultW * aspectRatio);
-            const calcPPC = Math.round(originalWidth / defaultW);
+            const calcPPC = Math.floor(originalWidth / defaultW);
+            const calcH = Math.floor(originalHeight / calcPPC);
 
             $('mapW').value = defaultW;
             $('mapH').value = calcH;
@@ -115,10 +114,10 @@ export function updateGridFromPPC() {
     if (ppc <= 0) return;
 
     if (originalWidth > 0) {
-        $('mapW').value = Math.round(originalWidth / ppc);
+        $('mapW').value = Math.floor(originalWidth / ppc);
     }
     if (originalHeight > 0) {
-        $('mapH').value = Math.round(originalHeight / ppc);
+        $('mapH').value = Math.floor(originalHeight / ppc);
     }
     updateMapCalculations();
 }
