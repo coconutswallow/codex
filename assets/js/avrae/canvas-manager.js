@@ -145,10 +145,13 @@ export function drawMap() {
 
     // 2. Draw map image if loaded
     const img = state.getMapImage();
+    const offX = parseInt($("mapOffsetX")?.value || "0", 10);
+    const offY = parseInt($("mapOffsetY")?.value || "0", 10);
+
     if (img) {
         ctx.globalAlpha = 1.0;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        console.info("[canvas-manager] Map image drawn:", img.src, "Size:", canvas.width, "x", canvas.height);
+        ctx.drawImage(img, offX, offY, canvas.width, canvas.height);
+        console.info("[canvas-manager] Map image drawn with offset:", offX, offY, "Size:", canvas.width, "x", canvas.height);
     } else {
         console.warn("[canvas-manager] No map image found in state during drawMap.");
     }

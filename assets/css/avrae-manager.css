@@ -476,3 +476,20 @@ canvas {
     font-size: 0.75em;
     color: var(--blur);
 }
+
+/* Config Section Styles (Sidebar) */
+.config-section {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.section-label {
+    font-size: 0.8em;
+    font-weight: bold;
+    color: var(--accent);
+    margin-bottom: 10px;
+    display: block;
+    letter-spacing: 0.5px;
+}

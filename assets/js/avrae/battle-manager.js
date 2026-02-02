@@ -23,15 +23,12 @@ import { centerOn, drawMap, loadImage, initCanvasInteractions, resetFog } from '
 import { updateFowOutputs, batchCmd, generateTokenCommands, generateNpcAddCmds, generateNpcTokenCmds, parseXY } from './command-generator.js';
 import { openTokenModal, openNpcModal } from './modal-manager.js';
 import { refreshTokensFromSupabase, saveSessionToSupabase, loadSessionPrompt, searchBattlemaps } from './supabase-service.js';
-import { getResizelyUrl } from '../utils/resizely-helper.js';
 
 import {
-    openMapSetupModal,
-    closeMapSetupModal,
     toggleVisionField,
     handleMapUrlChange,
     updateMapCalculations,
-    generateResizedMap,
+    updateGridFromPPC,
     toggleMapSearch,
     searchMapsModal,
     updateMapSummary,
@@ -61,6 +58,9 @@ function setupEventListeners() {
         if (id.startsWith("player_") ||
             id === "mapW" ||
             id === "mapH" ||
+            id === "mapPPC" ||
+            id === "mapOffsetX" ||
+            id === "mapOffsetY" ||
             id === "visRange") {
             drawMap();
             updateFowOutputs();
@@ -98,13 +98,11 @@ window.selectAll = selectAll;
 window.clearChecked = (type) => clearChecked(type, updateFowOutputs);
 window.setMapTab = setMapTab;
 
-// Map Setup Modal
-window.openMapSetupModal = openMapSetupModal;
-window.closeMapSetupModal = closeMapSetupModal;
+// Map Setup
 window.toggleVisionField = toggleVisionField;
 window.handleMapUrlChange = handleMapUrlChange;
 window.updateMapCalculations = updateMapCalculations;
-window.generateResizedMap = generateResizedMap;
+window.updateGridFromPPC = updateGridFromPPC;
 window.toggleMapSearch = toggleMapSearch;
 window.searchMapsModal = searchMapsModal;
 window.updateMapSummary = updateMapSummary;

@@ -1,10 +1,9 @@
 /**
  * /assets/js/avrae/map-setup.js
- * Logic for the Map Configuration Modal
+ * Logic for Map Configuration
  */
 
 import { $ } from './ui-helpers.js';
-import { getResizelyUrl } from '../utils/resizely-helper.js';
 import { state } from './state-manager.js';
 import { searchBattlemaps } from './supabase-service.js';
 import { loadImage, drawMap } from './canvas-manager.js';
@@ -12,28 +11,6 @@ import { updateFowOutputs } from './command-generator.js';
 
 let originalWidth = 0;
 let originalHeight = 0;
-
-/**
- * Open the Map Setup Modal and populate with current state
- */
-export function openMapSetupModal() {
-    const modal = $('mapSetupModal');
-    if (!modal) return;
-
-    modal.style.display = 'flex';
-
-    // Toggle vision field visibility based on checkboxes
-    toggleVisionField();
-    updateMapCalculations();
-}
-
-/**
- * Close the Map Setup Modal
- */
-export function closeMapSetupModal() {
-    const modal = $('mapSetupModal');
-    if (modal) modal.style.display = 'none';
-}
 
 /**
  * Toggle the vision field based on FOW or Auto-View checkboxes
@@ -62,7 +39,7 @@ export async function handleMapUrlChange() {
     if (!url) {
         preview.style.display = 'none';
         placeholder.style.display = 'block';
-        dimText.innerText = 'Original size: 0 x 0 px';
+        dimText.innerText = 'Original: 0 x 0 px';
         originalWidth = 0;
         originalHeight = 0;
         updateMapCalculations();
@@ -77,7 +54,7 @@ export async function handleMapUrlChange() {
         preview.src = url;
         preview.style.display = 'block';
         placeholder.style.display = 'none';
-        dimText.innerText = `Original size: ${originalWidth} x ${originalHeight} px`;
+        dimText.innerText = `Original: ${originalWidth} x ${originalHeight} px`;
 
         updateMapCalculations();
     };
@@ -85,7 +62,7 @@ export async function handleMapUrlChange() {
         preview.style.display = 'none';
         placeholder.style.display = 'block';
         placeholder.innerText = 'Error loading image';
-        dimText.innerText = 'Original size: 0 x 0 px';
+        dimText.innerText = 'Original: 0 x 0 px';
         originalWidth = 0;
         originalHeight = 0;
         updateMapCalculations();
@@ -94,64 +71,45 @@ export async function handleMapUrlChange() {
 }
 
 /**
- * Calculate PPC and Recommended Dimensions
+ * Calculate PPC and sync with input
  */
 export function updateMapCalculations() {
     const gridW = parseInt($('mapW').value) || 1;
     const gridH = parseInt($('mapH').value) || 1;
-    const targetPPC = parseInt($('targetPPC').value) || 40;
 
     // Pixels Per Cell (current)
     const ppc = originalWidth > 0 ? Math.round(originalWidth / gridW) : 0;
-    const displayPPC = $('displayPPC');
+    const ppcInput = $('mapPPC');
     const alertPPC = $('ppcAlert');
 
-    if (displayPPC) {
-        displayPPC.innerText = `${ppc} px`;
-        displayPPC.style.color = (ppc > 100 || ppc < 20) ? 'var(--danger)' : 'var(--success)';
+    if (ppcInput) {
+        ppcInput.value = ppc;
+        ppcInput.style.color = (ppc > 100 || ppc < 20) ? 'var(--danger)' : 'var(--success)';
     }
 
     if (alertPPC) {
         alertPPC.style.display = (ppc > 100) ? 'block' : 'none';
     }
-
-    // Recommended Dims
-    const recW = gridW * targetPPC;
-    const recH = gridH * targetPPC;
-    const recDims = $('recommendedDims');
-    if (recDims) {
-        recDims.innerText = `${recW} x ${recH} px`;
-    }
 }
 
 /**
- * Generate Resizely URL
+ * Update Grid dimensions from target PPC
  */
-export function generateResizedMap() {
-    const url = $('mapImgUrl').value.trim();
-    const gridW = parseInt($('mapW').value) || 1;
-    const targetPPC = parseInt($('targetPPC').value) || 40;
+export function updateGridFromPPC() {
+    const ppc = parseFloat($('mapPPC').value) || 40;
+    if (ppc <= 0) return;
 
-    if (!url || !url.startsWith('http')) {
-        alert('Please enter a valid HTTP(S) URL first.');
-        return;
+    if (originalWidth > 0) {
+        $('mapW').value = Math.round(originalWidth / ppc);
     }
-
-    const targetWidth = gridW * targetPPC;
-    const resizedUrl = getResizelyUrl(url, targetWidth);
-
-    if (resizedUrl) {
-        // Populate it back to the map image URL as per instructions
-        $('mapImgUrl').value = resizedUrl;
-        $('mapTransformedUrl').value = resizedUrl;
-
-        // Automatically fetch new dimensions and update preview/calculations
-        handleMapUrlChange();
+    if (originalHeight > 0) {
+        $('mapH').value = Math.round(originalHeight / ppc);
     }
+    updateMapCalculations();
 }
 
 /**
- * Toggle Search Area in Modal
+ * Toggle Search Area
  */
 export function toggleMapSearch() {
     const area = $('modalMapSearchArea');
@@ -159,15 +117,15 @@ export function toggleMapSearch() {
 }
 
 /**
- * Search maps from modal
+ * Search maps
  */
 let searchTimeout = null;
 export async function searchMapsModal(query) {
     const resultsDiv = $("modalMapSearchResults");
     if (!resultsDiv) return;
 
-    if (!query || query.trim().length < 2) {
-        resultsDiv.innerHTML = '<div style="padding:10px; text-align:center; color:var(--blur); font-size:0.8em;">Type to search battlemaps...</div>';
+    if (!query || query.trim().length < 1) {
+        resultsDiv.innerHTML = '<div style="padding:10px; text-align:center; color:var(--blur); font-size:0.8em;">Type to search...</div>';
         return;
     }
 
@@ -198,12 +156,13 @@ export async function searchMapsModal(query) {
 }
 
 /**
- * Select map from results in modal
+ * Select map from results
  */
 window.selectMapModal = (mapDataStr) => {
     try {
         const m = JSON.parse(mapDataStr.replace(/&quot;/g, '"'));
-        $('mapImgUrl').value = m.image_url || m.source_url || "";
+        // Prioritize optimized_url as per requirements
+        $('mapImgUrl').value = m.optimized_url || m.image_url || m.source_url || "";
         $('mapW').value = m.grid_width || 40;
         $('mapH').value = m.grid_height || 40;
 
@@ -215,7 +174,7 @@ window.selectMapModal = (mapDataStr) => {
 };
 
 /**
- * Update the side tab summary info
+ * Update the summary info
  */
 export function updateMapSummary() {
     const url = $('mapImgUrl')?.value?.trim();
@@ -223,7 +182,12 @@ export function updateMapSummary() {
     const h = $('mapH')?.value;
     const summary = $('active-map-summary');
 
-    if (!summary || !url) return;
+    if (!summary) return;
+
+    if (!url) {
+        summary.style.display = 'none';
+        return;
+    }
 
     summary.style.display = 'block';
     $('summary-map-dims').innerText = `${w || 0} x ${h || 0} Cells`;
@@ -237,11 +201,10 @@ export function updateMapSummary() {
 }
 
 /**
- * Apply configuration and close modal
+ * Apply configuration and render
  */
 export function applyMapConfig() {
     updateMapSummary();
-    closeMapSetupModal();
 
     // Trigger render
     loadImage();
