@@ -95,6 +95,26 @@ export function updateFowOutputs() {
             view.innerText = "!map -view ...";
         }
     }
+
+    // Build Map Setup Command
+    const mapSetup = $("setup-cmd-out");
+    if (mapSetup) {
+        mapSetup.innerText = generateMapSetupCmd();
+    }
+}
+
+/**
+ * Generate the master map setup command
+ */
+export function generateMapSetupCmd() {
+    const url = $("mapImgUrl")?.value?.trim() || "URL_HERE";
+    const w = $("mapW")?.value || "20";
+    const h = $("mapH")?.value || "20";
+    const ppc = $("mapPPC")?.value || "30";
+
+    return `!multiline
+!i add 50 DM -p
+!map -bg "${url}" -mapsize ${w}x${h} -options dc${ppc} -t DM`;
 }
 
 /**

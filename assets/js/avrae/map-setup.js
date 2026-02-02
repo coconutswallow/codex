@@ -30,7 +30,7 @@ export function toggleVisionField() {
 /**
  * Handle Map URL change - fetch dimensions and show preview
  */
-export async function handleMapUrlChange() {
+export async function handleMapUrlChange(forceDefault = false) {
     const url = $('mapImgUrl').value.trim();
     const preview = $('mapPreviewImg');
     const placeholder = $('mapPreviewPlaceholder');
@@ -56,6 +56,20 @@ export async function handleMapUrlChange() {
         placeholder.style.display = 'none';
         dimText.innerText = `Original: ${originalWidth} x ${originalHeight} px`;
 
+        // Default logic: Set Width to 30, calculate Height and PPC
+        // Only if forceDefault is true OR if current values are empty/0
+        const currentW = parseInt($('mapW').value) || 0;
+        if (originalWidth > 0 && originalHeight > 0 && (forceDefault || currentW === 0)) {
+            const defaultW = 30;
+            const aspectRatio = originalHeight / originalWidth;
+            const calcH = Math.round(defaultW * aspectRatio);
+            const calcPPC = Math.round(originalWidth / defaultW);
+
+            $('mapW').value = defaultW;
+            $('mapH').value = calcH;
+            $('mapPPC').value = calcPPC;
+        }
+
         updateMapCalculations();
     };
     img.onerror = () => {
@@ -71,19 +85,20 @@ export async function handleMapUrlChange() {
 }
 
 /**
- * Calculate PPC and sync with input
+ * Calculate PPC based on Width (or vice-versa in cropping mode)
+ * In this new mode, changing dimensions (W/H) doesn't change PPC, 
+ * it just changes how many cells we draw (cropping).
+ * Changing PPC changes how many pixels are in one cell.
  */
 export function updateMapCalculations() {
     const gridW = parseInt($('mapW').value) || 1;
-    const gridH = parseInt($('mapH').value) || 1;
-
-    // Pixels Per Cell (current)
-    const ppc = originalWidth > 0 ? Math.round(originalWidth / gridW) : 0;
-    const ppcInput = $('mapPPC');
+    const ppc = parseFloat($('mapPPC').value) || 30;
     const alertPPC = $('ppcAlert');
 
+    // In cropping mode, PPC is the primary scalar.
+    // We just update the color of the PPC input based on value.
+    const ppcInput = $('mapPPC');
     if (ppcInput) {
-        ppcInput.value = ppc;
         ppcInput.style.color = (ppc > 100 || ppc < 20) ? 'var(--danger)' : 'var(--success)';
     }
 
@@ -161,12 +176,11 @@ export async function searchMapsModal(query) {
 window.selectMapModal = (mapDataStr) => {
     try {
         const m = JSON.parse(mapDataStr.replace(/&quot;/g, '"'));
-        // Prioritize optimized_url as per requirements
-        $('mapImgUrl').value = m.optimized_url || m.image_url || m.source_url || "";
-        $('mapW').value = m.grid_width || 40;
-        $('mapH').value = m.grid_height || 40;
+        const url = m.optimized_url || m.image_url || m.source_url || "";
+        $('mapImgUrl').value = url;
 
-        handleMapUrlChange();
+        // handleMapUrlChange will fetch dimensions and apply the 30w default
+        handleMapUrlChange(true);
         toggleMapSearch();
     } catch (e) {
         console.error("Select map error:", e);

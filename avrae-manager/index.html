@@ -86,11 +86,14 @@ extra_css: ["/assets/css/avrae-manager.css"]
                 <div style="padding: 15px; display: flex; flex-direction: column; gap: 15px;">
                     <div class="config-section">
                         <label class="section-label">1. Map Source</label>
-                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <p style="font-size: 0.75em; color: var(--blur); margin: -5px 0 10px 0;">Paste your map URL, or
+                            use the map search to select a map from the database</p>
+
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;">
                             <input type="text" id="mapImgUrl" placeholder="https://example.com/map.jpg"
                                 oninput="handleMapUrlChange()">
-                            <button class="action-btn" style="white-space: nowrap; font-size: 0.8em; padding: 0 10px;"
-                                onclick="toggleMapSearch()">Search</button>
+                            <button class="action-btn" style="width: 100%; font-size: 0.8em; padding: 8px;"
+                                onclick="toggleMapSearch()">Search Database</button>
                         </div>
 
                         <div id="modalMapSearchArea" style="display: none; margin-bottom: 10px;">
@@ -127,9 +130,7 @@ extra_css: ["/assets/css/avrae-manager.css"]
                         <div style="margin-top: 15px; padding: 10px; background: #2f3136; border-radius: 4px;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <label style="margin:0;">Pixels Per Cell:</label>
-                                <input type="number" id="mapPPC" value="0"
-                                    style="width: 60px; text-align: right; background: transparent; border: none; font-weight: bold; padding: 0; color: var(--success);"
-                                    oninput="updateGridFromPPC()">
+                                <input type="number" id="mapPPC" value="30" oninput="updateGridFromPPC()">
                             </div>
                             <div id="ppcAlert"
                                 style="margin-top: 8px; font-size: 0.75em; color: var(--danger); display: none; padding: 6px; background: rgba(237, 66, 69, 0.1); border-radius: 3px; border-left: 3px solid var(--danger);">
@@ -170,6 +171,12 @@ extra_css: ["/assets/css/avrae-manager.css"]
                                 <input type="number" id="visRange" value="6">
                             </div>
                         </div>
+                    </div>
+
+                    <div class="config-section">
+                        <label class="section-label">4. Avrae Setup Command</label>
+                        <div class="output-box" id="setup-cmd-out" onclick="uiFlash(this)"
+                            style="font-size: 0.7em; min-height: 40px;">!multiline...</div>
                     </div>
 
                     <button class="action-btn"

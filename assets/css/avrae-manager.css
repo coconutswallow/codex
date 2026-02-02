@@ -112,7 +112,7 @@
     align-items: flex-start;
     justify-content: flex-start;
     background: #1a1c1e;
-    overflow: auto;
+    overflow: scroll !important;
     padding: 10px;
 }
 
@@ -492,4 +492,21 @@ canvas {
     margin-bottom: 10px;
     display: block;
     letter-spacing: 0.5px;
+}
+
+#mapPPC {
+    background: var(--input-bg);
+    border: 1px solid #444;
+    color: var(--success);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-weight: bold;
+    text-align: right;
+    width: 60px;
+}
+
+#mapPPC:focus {
+    border-color: var(--accent);
+    outline: none;
 }

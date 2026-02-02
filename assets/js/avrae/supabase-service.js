@@ -340,7 +340,7 @@ export async function searchBattlemaps(query) {
 
         const { data, error } = await supabase
             .from("battlemaps")
-            .select("id,name,grid_width,grid_height,cell_size_px,thumbnail_url,source_url,image_url")
+            .select("id,name,grid_width,grid_height,cell_size_px,thumbnail_url,source_url,image_url,optimized_url")
             .or(`name.ilike.%${query}%,keywords.ilike.%${query}%`)
             .eq("is_approved", true)
             .limit(10);
