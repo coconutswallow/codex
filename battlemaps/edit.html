@@ -154,6 +154,7 @@ title: Submit / Edit Battle Map
   let currentUser = null;
   let existingImageUrl = null;
   let existingThumbUrl = null;
+  let existingOptimizedUrl = null;
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -267,10 +268,12 @@ title: Submit / Edit Battle Map
 
       existingImageUrl = data.image_url;
       existingThumbUrl = data.thumbnail_url;
+      existingOptimizedUrl = data.optimized_url;
 
       if (existingImageUrl) {
         document.getElementById('image-url').value = existingImageUrl;
         document.getElementById('thumb-url').value = existingThumbUrl || existingImageUrl;
+        document.getElementById('resized-url').value = existingOptimizedUrl || "";
         showPreview(existingThumbUrl || existingImageUrl, existingImageUrl);
         uploadStatus.textContent = "Using existing image";
       }
@@ -290,7 +293,8 @@ title: Submit / Edit Battle Map
 
     const finalImageUrl = document.getElementById('image-url').value || existingImageUrl;
     const finalThumbUrl = document.getElementById('thumb-url').value || existingThumbUrl;
-    const finalResizedUrl = document.getElementById('resized-url').value || null;
+    // Fallback: New Resized > Existing Optimized > Original (if small)
+    const finalResizedUrl = document.getElementById('resized-url').value || existingOptimizedUrl || finalImageUrl;
 
     const payload = {
       name: nameInput.value,
