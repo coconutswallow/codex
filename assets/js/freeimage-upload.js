@@ -1,10 +1,10 @@
-(function() {
+(function () {
   // --- CONFIGURATION ---
   const SUPABASE_PROJECT_URL = 'https://kcbvryvmcbfpsibxthhn.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtjYnZyeXZtY2JmcHNpYnh0aGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1OTk1MzIsImV4cCI6MjA3OTE3NTUzMn0.9h81WHRCJfhouquG9tPHliY_5ezAbzKeDoLtGSARo5M';
   const FUNCTION_URL = `https://kcbvryvmcbfpsibxthhn.supabase.co/functions/v1/upload-proxy`;
 
- // --- STYLES & MODAL SETUP ---
+  // --- STYLES & MODAL SETUP ---
   const styles = `
     .upload-overlay { 
       position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
@@ -65,7 +65,7 @@
     
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   `;
-  
+
   const styleSheet = document.createElement("style");
   styleSheet.innerText = styles;
   document.head.appendChild(styleSheet);
@@ -98,16 +98,16 @@
 
   // --- HELPER: RESET & CLOSE ---
   function closeAndReset() {
-      document.getElementById('u-overlay').style.display = 'none';
-      document.getElementById('u-file').value = ''; 
-      document.getElementById('u-status').innerText = ''; 
+    document.getElementById('u-overlay').style.display = 'none';
+    document.getElementById('u-file').value = '';
+    document.getElementById('u-status').innerText = '';
   }
 
   // --- EVENT LISTENERS ---
-  document.addEventListener('click', function(e) {
+  document.addEventListener('click', function (e) {
     if (e.target && e.target.classList.contains('trigger-upload')) {
-      document.getElementById('u-file').value = ''; 
-      document.getElementById('u-status').innerText = ''; 
+      document.getElementById('u-file').value = '';
+      document.getElementById('u-status').innerText = '';
       document.getElementById('u-overlay').style.display = 'flex';
     }
   });
@@ -117,8 +117,8 @@
   document.getElementById('u-submit').addEventListener('click', async () => {
     const fileInput = document.getElementById('u-file');
     const statusDiv = document.getElementById('u-status');
-    
-    if(fileInput.files.length === 0) {
+
+    if (fileInput.files.length === 0) {
       statusDiv.style.color = '#ff6b6b'; // Red error text
       statusDiv.innerText = "Please select a file first.";
       return;
@@ -135,7 +135,7 @@
 
     statusDiv.style.color = '#fff';
     statusDiv.innerHTML = 'Uploading... <div class="spinner"></div>';
-    
+
     const formData = new FormData();
     formData.append('file', file);
 
@@ -151,14 +151,15 @@
         statusDiv.style.color = '#4cd964'; // Green success text
         statusDiv.innerText = "Success!";
         setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('image-upload-complete', { 
-            detail: { 
-              id: result.id, 
+          window.dispatchEvent(new CustomEvent('image-upload-complete', {
+            detail: {
+              id: result.id,
               thumb: result.thumb,
-              url: result.url 
-            } 
+              url: result.url,
+              resizedUrl: result.resizedUrl
+            }
           }));
-          closeAndReset(); 
+          closeAndReset();
         }, 1000);
       } else {
         statusDiv.style.color = '#ff6b6b';
