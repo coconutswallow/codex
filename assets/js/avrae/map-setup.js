@@ -141,7 +141,12 @@ export function generateResizedMap() {
     const resizedUrl = getResizelyUrl(url, targetWidth);
 
     if (resizedUrl) {
+        // Populate it back to the map image URL as per instructions
+        $('mapImgUrl').value = resizedUrl;
         $('mapTransformedUrl').value = resizedUrl;
+
+        // Automatically fetch new dimensions and update preview/calculations
+        handleMapUrlChange();
     }
 }
 
