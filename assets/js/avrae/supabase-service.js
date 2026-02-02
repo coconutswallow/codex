@@ -67,7 +67,9 @@ function transformToStructured(inputs) {
         pixelsPerCell: parseInt(inputs.mapPixelsPerCell) || 30,
         offsetX: parseInt(inputs.mapOffsetX) || 0,
         offsetY: parseInt(inputs.mapOffsetY) || 0,
-        visibilityRange: parseInt(inputs.visRange) || 6
+        visibilityRange: parseInt(inputs.visRange) || 6,
+        fowEnabled: !!inputs.mapFow,
+        autoViewEnabled: !!inputs.mapAutoView
     };
 
     // Extract players (DEFAULT_PLAYER_ROWS = 8)
@@ -142,6 +144,8 @@ function transformToFlat(structured) {
         inputs.mapOffsetX = String(structured.map_config.offsetX || 0);
         inputs.mapOffsetY = String(structured.map_config.offsetY || 0);
         inputs.visRange = String(structured.map_config.visibilityRange || 6);
+        inputs.mapFow = !!structured.map_config.fowEnabled;
+        inputs.mapAutoView = !!structured.map_config.autoViewEnabled;
     }
 
     // Players
@@ -309,6 +313,9 @@ export async function loadSessionPrompt() {
         const { loadImage, drawMap } = await import('./canvas-manager.js');
         loadImage();
         drawMap();
+
+        const { updateMapSummary } = await import('./map-setup.js');
+        updateMapSummary();
 
         const { updateFowOutputs } = await import('./command-generator.js');
         updateFowOutputs();

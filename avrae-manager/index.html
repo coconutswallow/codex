@@ -83,59 +83,18 @@ extra_css: ["/assets/css/avrae-manager.css"]
             </div>
 
             <div id="tab-config" class="tab-content">
-                <div class="toggle-group">
-                    <button class="toggle-btn active" id="btn-manual-map" onclick="setMapTab('manual')">Manual
-                        URL</button>
-                    <button class="toggle-btn" id="btn-search-map" onclick="setMapTab('search')">Search Maps
-                        Database</button>
-                </div>
+                <div style="padding: 20px; text-align: center;">
+                    <p style="color: var(--blur); font-size: 0.9em; margin-bottom: 20px;">Configure your battle map,
+                        grid dimensions, and vision settings.</p>
+                    <button class="action-btn" style="width: 100%; padding: 12px;" onclick="openMapSetupModal()">Setup
+                        Map</button>
 
-                <div id="map-manual-container">
-                    <label>Map Image URL</label>
-                    <input type="text" id="mapImgUrl" placeholder="Paste link..." onchange="loadImage()">
-                </div>
-
-                <div id="map-search-container" style="display:none;">
-                    <label>Search Battlemaps</label>
-                    <input type="text" id="mapSearchKey" placeholder="Search keywords..."
-                        oninput="searchMaps(this.value)">
-                    <div id="mapSearchResults" class="search-results" style="margin-top:8px;">
-                        <div style="padding:20px; text-align:center; color:var(--blur); font-size:0.8em;">
-                            Type to search battlemaps...
-                        </div>
+                    <div id="active-map-summary"
+                        style="margin-top: 20px; padding: 15px; background: #1e1f22; border-radius: 4px; text-align: left; display: none;">
+                        <label>Active Map</label>
+                        <div id="summary-map-name" style="font-weight: bold; margin-bottom: 5px;">Unnamed Map</div>
+                        <div id="summary-map-dims" style="font-size: 0.8em; color: var(--blur);">0 x 0 Cells</div>
                     </div>
-                </div>
-
-                <!-- Settings Container (Hidden during search) -->
-                <!-- Settings Container (Hidden during search) -->
-                <div id="map-settings-container">
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px;">
-                        <div><label>Width</label><input type="number" id="mapW" value="40" oninput="drawMap()"></div>
-                        <div><label>Height</label><input type="number" id="mapH" value="40" oninput="drawMap()"></div>
-                    </div>
-                    <input type="hidden" id="visRange" value="6">
-
-                    <details style="margin-top: 15px;">
-                        <summary style="cursor:pointer; color:var(--accent);">Image Transformation</summary>
-                        <div style="padding:10px; border:1px solid var(--border); border-radius:4px; margin-top:5px;">
-                            <label>Transformed URL</label>
-                            <input type="text" id="mapTransformedUrl" placeholder="Optional...">
-
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px;">
-                                <div><label>Trans. Width</label><input type="number" id="mapTransformedW"
-                                        placeholder="0">
-                                </div>
-                                <div><label>Trans. Height</label><input type="number" id="mapTransformedH"
-                                        placeholder="0">
-                                </div>
-                                <div><label>Px Per Cell</label><input type="number" id="mapPixelsPerCell" value="30">
-                                </div>
-                                <div><label>Empty</label></div>
-                                <div><label>Offset X</label><input type="number" id="mapOffsetX" value="0"></div>
-                                <div><label>Offset Y</label><input type="number" id="mapOffsetY" value="0"></div>
-                            </div>
-                        </div>
-                    </details>
                 </div>
             </div>
         </div>
@@ -145,52 +104,189 @@ extra_css: ["/assets/css/avrae-manager.css"]
         </div>
     </div>
 
-    <div id="tokenModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">Setup Player Tokens</div>
-            <table class="modal-table">
-                <thead>
-                    <tr>
-                        <th style="width: 15%">Name (Ref)</th>
-                        <th style="width: 25%">Full Name (Cmd)</th>
-                        <th style="width: 15%">Location</th>
-                        <th style="width: 10%">Size</th>
-                        <th style="width: 35%">Token URL/Code</th>
-                    </tr>
-                </thead>
-                <tbody id="tokenTableBody"></tbody>
-            </table>
+    <!-- Map Setup Modal -->
+    <div id="mapSetupModal" class="modal">
+        <div class="modal-content" style="width: 900px;">
+            <div class="modal-header">Map Configuration</div>
+
+            <div style="display: flex; gap: 20px;">
+                <!-- Left Column: Basic Setup -->
+                <div style="flex: 1.2; display: flex; flex-direction: column; gap: 15px;">
+                    <div class="modal-section">
+                        <label style="font-size: 0.8em; margin-bottom: 8px; color: var(--accent);">1. Map Source</label>
+                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                            <input type="text" id="mapImgUrl" placeholder="https://example.com/map.jpg"
+                                oninput="handleMapUrlChange()">
+                            <button class="action-btn" style="white-space: nowrap; font-size: 0.8em;"
+                                onclick="toggleMapSearch()">Search DB</button>
+                        </div>
+
+                        <div id="modalMapSearchArea" style="display: none; margin-bottom: 10px;">
+                            <input type="text" id="modalMapSearchInput" placeholder="Search battlemaps..."
+                                oninput="searchMapsModal(this.value)">
+                            <div id="modalMapSearchResults" class="search-results"
+                                style="margin-top: 8px; max-height: 200px;"></div>
+                        </div>
+
+                        <div id="mapPreviewArea"
+                            style="height: 150px; background: #000; border-radius: 4px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #444;">
+                            <img id="mapPreviewImg" style="max-width: 100%; max-height: 100%; display: none;">
+                            <span id="mapPreviewPlaceholder" style="color: #444; font-size: 0.8em;">No preview
+                                available</span>
+                        </div>
+                        <div id="mapNaturalDims"
+                            style="font-size: 0.7em; color: var(--blur); margin-top: 4px; text-align: right;">Original
+                            size: 0 x 0 px</div>
+                    </div>
+
+                    <div class="modal-section">
+                        <label style="font-size: 0.8em; margin-bottom: 8px; color: var(--accent);">2. Grid
+                            Alignment</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <label>Grid Width (Cells)</label>
+                                <input type="number" id="mapW" value="40" oninput="updateMapCalculations()">
+                            </div>
+                            <div>
+                                <label>Grid Height (Cells)</label>
+                                <input type="number" id="mapH" value="40" oninput="updateMapCalculations()">
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 15px; padding: 10px; background: #2f3136; border-radius: 4px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.85em;">Pixels Per Cell:</span>
+                                <span id="displayPPC" style="font-weight: bold; color: var(--success);">0 px</span>
+                            </div>
+                            <div id="ppcAlert"
+                                style="margin-top: 8px; font-size: 0.75em; color: var(--danger); display: none; padding: 6px; background: rgba(237, 66, 69, 0.1); border-radius: 3px; border-left: 3px solid var(--danger);">
+                                ⚠️ Map resizing recommended! Ideal PPC is 40-50. High PPC may slow down loading.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Transformation & Other -->
+                <div style="flex: 1; display: flex; flex-direction: column; gap: 15px;">
+                    <div class="modal-section" style="padding: 15px; border: 1px dashed #444; border-radius: 4px;">
+                        <label style="font-size: 0.8em; margin-bottom: 8px; color: var(--accent);">3. Map
+                            Transformation</label>
+
+                        <div style="margin-bottom: 12px;">
+                            <label>Target Pixels Per Cell (20-60)</label>
+                            <input type="number" id="targetPPC" value="40" min="20" max="60"
+                                oninput="updateMapCalculations()">
+                        </div>
+
+                        <div style="margin-bottom: 12px;">
+                            <label>Recommended Dimensions</label>
+                            <div id="recommendedDims"
+                                style="font-weight: bold; font-family: monospace; color: var(--blur);">0 x 0 px</div>
+                        </div>
+
+                        <button id="btnGenerateResized" class="action-btn" style="width: 100%;"
+                            onclick="generateResizedMap()">Generate Resized Map URL</button>
+
+                        <div style="margin-top: 12px;">
+                            <label>Resized URL (Active)</label>
+                            <input type="text" id="mapTransformedUrl" placeholder="Generated URL..." readonly>
+                        </div>
+                    </div>
+
+                    <div class="modal-section">
+                        <label style="font-size: 0.8em; margin-bottom: 8px; color: var(--accent);">4. Other
+                            Settings</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                            <div>
+                                <label>Vertical Offset</label>
+                                <input type="number" id="mapOffsetY" value="0">
+                            </div>
+                            <div>
+                                <label>Horizontal Offset</label>
+                                <input type="number" id="mapOffsetX" value="0">
+                            </div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="mapFow" style="margin: 0;" onchange="toggleVisionField()">
+                                <label style="margin: 0; text-transform: none; font-size: 0.85em; color: white;">Enable
+                                    Fog of War</label>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="checkbox" id="mapAutoView" style="margin: 0;"
+                                    onchange="toggleVisionField()">
+                                <label style="margin: 0; text-transform: none; font-size: 0.85em; color: white;">Enable
+                                    Auto-View</label>
+                            </div>
+                            <div id="visionFieldGroup" style="display: none; margin-top: 5px;">
+                                <label>Vision Radius (Cells)</label>
+                                <input type="number" id="visRange" value="6">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="modal-footer">
-                <button class="action-btn" onclick="generateTokenCommands()">Output Commands</button>
-                <button class="close-btn"
-                    onclick="document.getElementById('tokenModal').style.display='none'">Close</button>
+                <button class="close-btn" onclick="closeMapSetupModal()">Cancel</button>
+                <button class="action-btn" style="background: var(--success);" onclick="applyMapConfig()">Save & Render
+                    Map</button>
             </div>
         </div>
     </div>
+</div>
 
-    <div id="npcModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">Add NPCs</div>
-            <table class="modal-table">
-                <thead>
-                    <tr>
-                        <th style="width: 15%">Short</th>
-                        <th style="width: 35%">Name</th>
-                        <th style="width: 15%">AC</th>
-                        <th style="width: 15%">HP</th>
-                        <th style="width: 20%">Location</th>
-                    </tr>
-                </thead>
-                <tbody id="npcTableBody"></tbody>
-            </table>
-            <div class="modal-footer">
-                <button class="action-btn" onclick="generateNpcAddCmds()">Generate !i add</button>
-                <button class="close-btn"
-                    onclick="document.getElementById('npcModal').style.display='none'">Close</button>
-            </div>
+<div class="map-area">
+    <canvas id="mapCanvas"></canvas>
+</div>
+</div>
+
+<div id="tokenModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">Setup Player Tokens</div>
+        <table class="modal-table">
+            <thead>
+                <tr>
+                    <th style="width: 15%">Name (Ref)</th>
+                    <th style="width: 25%">Full Name (Cmd)</th>
+                    <th style="width: 15%">Location</th>
+                    <th style="width: 10%">Size</th>
+                    <th style="width: 35%">Token URL/Code</th>
+                </tr>
+            </thead>
+            <tbody id="tokenTableBody"></tbody>
+        </table>
+        <div class="modal-footer">
+            <button class="action-btn" onclick="generateTokenCommands()">Output Commands</button>
+            <button class="close-btn"
+                onclick="document.getElementById('tokenModal').style.display='none'">Close</button>
         </div>
     </div>
+</div>
 
-    <!-- IMPORTANT: Your logic now lives in /assets/js/avrae/battle-manager.js -->
-    <script type="module" src="../assets/js/avrae/battle-manager.js"></script>
+<div id="npcModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">Add NPCs</div>
+        <table class="modal-table">
+            <thead>
+                <tr>
+                    <th style="width: 15%">Short</th>
+                    <th style="width: 35%">Name</th>
+                    <th style="width: 15%">AC</th>
+                    <th style="width: 15%">HP</th>
+                    <th style="width: 20%">Location</th>
+                </tr>
+            </thead>
+            <tbody id="npcTableBody"></tbody>
+        </table>
+        <div class="modal-footer">
+            <button class="action-btn" onclick="generateNpcAddCmds()">Generate !i add</button>
+            <button class="close-btn" onclick="document.getElementById('npcModal').style.display='none'">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- IMPORTANT: Your logic now lives in /assets/js/avrae/battle-manager.js -->
+<script type="module" src="../assets/js/avrae/battle-manager.js"></script>
 </div>
