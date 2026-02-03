@@ -43,7 +43,7 @@ export function openTokenModal() {
         tr.appendChild(createModalInput("bm_modal_full", "text", fullName, "Full name", null, true));
 
         // Location -> Syncs to player_loc_{idx}
-        tr.appendChild(createModalInput("bm_modal_loc", "text", loc, "x,y", (val) => {
+        tr.appendChild(createModalInput("bm_modal_loc", "text", loc, "e.g., B12", (val) => {
             const el = $(`player_loc_${idx}`);
             if (el) el.value = val;
         }));
@@ -107,7 +107,7 @@ export function openNpcModal() {
         tr.appendChild(createModalInput("bm_npc_name", "text", "", "e.g., City Guard"));
         tr.appendChild(createModalInput("bm_npc_ac", "number", "12", ""));
         tr.appendChild(createModalInput("bm_npc_hp", "number", "11", ""));
-        tr.appendChild(createModalInput("bm_npc_loc", "text", "", "x,y"));
+        tr.appendChild(createModalInput("bm_npc_loc", "text", "", "e.g., B12"));
 
         body.appendChild(tr);
     }

@@ -56,7 +56,7 @@ export function makeRow({ type, index, onLocationJump }) {
         type,
         index,
         field: "loc",
-        label: "Location (x,y)",
+        label: "Location",
         placeholder: "e.g. C15",
         inputType: "text"
     });

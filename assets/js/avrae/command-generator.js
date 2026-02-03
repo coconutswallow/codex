@@ -6,8 +6,6 @@
 import { $ } from './ui-helpers.js';
 import { state } from './state-manager.js';
 
-// getResizelyUrl removed - imported from utils/resizely-helper.js
-
 
 /**
  * Helper: Convert column letter to number (A=1)
@@ -51,32 +49,18 @@ function showInConsole(text) {
 }
 
 /**
- * Parse location string (supports x,y or A1 style)
+ * Parse location string (A1 style)
  */
 export function parseXY(str) {
     if (!str) return null;
-    str = str.trim();
+    str = str.trim().toUpperCase();
 
-    // Try x,y
-    if (str.includes(",")) {
-        const parts = str.split(",").map((s) => s.trim());
-        if (parts.length === 2) {
-            const x = parseInt(parts[0], 10);
-            const y = parseInt(parts[1], 10);
-            if (!isNaN(x) && !isNaN(y)) return { x, y };
-        }
-    }
-
-    // Try A1 style
-    const match = str.match(/^([A-Z]+)(\d+)$/i);
+    // Only support A1 style (Excel style)
+    const match = str.match(/^([A-Z]+)(\d+)$/);
     if (match) {
-        let alpha = match[1].toUpperCase();
+        let x = colToNum(match[1]) - 1;
         let y = parseInt(match[2], 10) - 1;
-        let x = 0;
-        for (let i = 0; i < alpha.length; i++) {
-            x = x * 26 + (alpha.charCodeAt(i) - 64);
-        }
-        return { x: x - 1, y };
+        return { x, y };
     }
 
     return null;
@@ -129,7 +113,7 @@ export function updateFowOutputs() {
         if (newReveal.length > 0) {
             const tileSet = new Set(newReveal);
             const rects = optimize2D(tileSet);
-            const fowCmd = `!map -fow ${rects.map(r => `${numToCol(r.x1 + 1)}${r.y1 + 1}:${numToCol(r.x2 + 1)}${r.y2 + 1}`).join(',')}`;
+            const fowCmd = `!map -fow ${rects.map(r => `${toA1(r.x1, r.y1)}:${toA1(r.x2, r.y2)}`).join(',')}`;
 
             fow.innerText = fowCmd;
             fow.onclick = () => {

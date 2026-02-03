@@ -1,9 +1,8 @@
 /**
  * /assets/js/avrae/battle-manager.js
- * Main coordinator for Avrae Battle Manager (modular version)
+ * Main coordinator for Avrae Battle Manager
  * 
  * This file imports and coordinates all the individual modules.
- * Each module has a single, clear responsibility.
  */
 
 // Import modules
@@ -41,7 +40,7 @@ import {
 function handleLocationJump(locStr) {
     const pos = parseXY(locStr);
     if (!pos) {
-        alert("Enter location as x,y");
+        alert("Enter location as A1 style (e.g., B12)");
         return;
     }
     centerOn(pos.x, pos.y);

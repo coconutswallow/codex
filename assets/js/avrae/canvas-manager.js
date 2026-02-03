@@ -1,6 +1,6 @@
 /**
  * /assets/js/avrae/canvas-manager.js
- * Canvas rendering and map interaction
+ * Canvas (map) rendering and map interaction
  */
 
 import { $ } from './ui-helpers.js';
@@ -270,16 +270,20 @@ function getPlayerEntities() {
 function parseXY(str) {
     if (!str) return null;
     str = str.trim().toUpperCase();
-    const match = str.match(/^([A-Z]+)(\d+)$/);
-    if (!match) return null;
 
-    let alpha = match[1];
-    let y = parseInt(match[2], 10) - 1;
-    let x = 0;
-    for (let i = 0; i < alpha.length; i++) {
-        x = x * 26 + (alpha.charCodeAt(i) - 64);
+    // Only support A1 style (Excel style)
+    const match = str.match(/^([A-Z]+)(\d+)$/);
+    if (match) {
+        let alpha = match[1];
+        let y = parseInt(match[2], 10) - 1;
+        let x = 0;
+        for (let i = 0; i < alpha.length; i++) {
+            x = x * 26 + (alpha.charCodeAt(i) - 64);
+        }
+        return { x: x - 1, y };
     }
-    return { x: x - 1, y };
+
+    return null;
 }
 
 /**
