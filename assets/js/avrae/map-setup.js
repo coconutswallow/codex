@@ -17,10 +17,9 @@ let originalHeight = 0;
  */
 export function toggleVisionField() {
     const fow = $('mapFow').checked;
-    const autoView = $('mapAutoView').checked;
     const group = $('visionFieldGroup');
 
-    if (fow || autoView) {
+    if (fow) {
         group.style.display = 'block';
     } else {
         group.style.display = 'none';
@@ -220,7 +219,7 @@ export function applyMapConfig() {
     updateMapSummary();
 
     // Trigger render
+    updateFowOutputs();
     loadImage();
     drawMap();
-    updateFowOutputs();
 }

@@ -18,7 +18,7 @@ import {
     setMapTab
 } from './ui-helpers.js';
 
-import { initLists } from './row-builder.js';
+import { initLists, addPlayerRow, ensureRows } from './row-builder.js';
 import { centerOn, drawMap, loadImage, initCanvasInteractions, resetFog } from './canvas-manager.js';
 import { updateFowOutputs, batchCmd, generateTokenCommands, generateNpcAddCmds, generateNpcTokenCmds, parseXY } from './command-generator.js';
 import { openTokenModal, openNpcModal } from './modal-manager.js';
@@ -61,9 +61,10 @@ function setupEventListeners() {
             id === "mapPPC" ||
             id === "mapOffsetX" ||
             id === "mapOffsetY" ||
+            id === "mapImgUrl" ||
             id === "visRange") {
-            drawMap();
             updateFowOutputs();
+            drawMap();
         }
     });
 }
@@ -118,6 +119,7 @@ window.batchCmd = batchCmd;
 window.generateTokenCommands = generateTokenCommands;
 window.generateNpcAddCmds = generateNpcAddCmds;
 window.generateNpcTokenCmds = generateNpcTokenCmds;
+window.updateFowOutputs = updateFowOutputs;
 
 // Modals
 window.openTokenModal = openTokenModal;
@@ -127,6 +129,10 @@ window.openNpcModal = openNpcModal;
 window.refreshTokensFromSupabase = refreshTokensFromSupabase;
 window.saveSessionToSupabase = saveSessionToSupabase;
 window.loadSessionPrompt = loadSessionPrompt;
+
+// Row Actions
+window.addPlayerRow = () => addPlayerRow(handleLocationJump);
+window.ensureRows = (type, count) => ensureRows(type, count, handleLocationJump);
 
 /**
  * Handle page-wide authentication state

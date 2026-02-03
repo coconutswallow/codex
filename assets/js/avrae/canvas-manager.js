@@ -1,14 +1,10 @@
 /**
  * /assets/js/avrae/canvas-manager.js
  * Canvas rendering and map interaction
- * Map loading and rendering
- * Click handlers
- * Fog of war visualization
  */
 
 import { $ } from './ui-helpers.js';
 import { state } from './state-manager.js';
-import { updateFowOutputs } from './command-generator.js';
 
 const MIN_CELL_SIZE = 22; // Minimum cell size in pixels
 const GUTTER_W = 20;      // Width of the vertical coordinate gutter
@@ -24,9 +20,6 @@ function gridDims() {
 }
 
 /**
- * Get default visibility range from UI
- */
-/**
  * Get current cell size based on container width
  */
 function getCurrentCellSize() {
@@ -35,7 +28,7 @@ function getCurrentCellSize() {
     if (!canvas || !container || container.clientWidth === 0) return MIN_CELL_SIZE;
 
     const { w } = gridDims();
-    const padding = 20 + GUTTER_W; // 10px each side in CSS + Gutters
+    const padding = 20 + GUTTER_W;
     const availableWidth = container.clientWidth - padding;
 
     const scaleToFit = availableWidth / w;
@@ -51,33 +44,13 @@ function visDefault() {
 }
 
 /**
- * Reveal a circle of tiles
- */
-function revealCircle(cx, cy, radius) {
-    const { w, h } = gridDims();
-    const rr = radius * radius;
-
-    for (let y = cy - radius; y <= cy + radius; y++) {
-        for (let x = cx - radius; x <= cx + radius; x++) {
-            if (x < 0 || y < 0 || x >= w || y >= h) continue;
-
-            const dx = x - cx;
-            const dy = y - cy;
-
-            if (dx * dx + dy * dy <= rr) {
-                state.addRevealedTile(x, y);
-            }
-        }
-    }
-}
-
-/**
  * Reset fog of war
  */
 export function resetFog() {
     state.clearRevealed();
+    // Update outputs via battle-manager to avoid circular dependency
+    if (window.updateFowOutputs) window.updateFowOutputs();
     drawMap();
-    updateFowOutputs();
 
     const fs = $("fileStatus");
     if (fs) fs.innerText = "Session: Fog Reset";
@@ -112,251 +85,212 @@ export function loadImage() {
     }
 
     const img = new Image();
-
-    // Use anonymous crossOrigin for external http(s) URLs
-    // This is required for drawing to a canvas if the host allows it.
     if (url.startsWith('http')) {
         img.crossOrigin = "anonymous";
     }
 
-    console.info("[canvas-manager] Attempting to load image:", url);
-
     img.onload = () => {
-        console.info("[canvas-manager] Image loaded successfully:", url);
         state.setMapImage(img);
         drawMap();
     };
 
     img.onerror = () => {
-        // If it failed and we haven't tried the proxy yet, retry with wsrv.nl proxy
-        // This solves CORS issues for hosts like iili.io or discord.
         if (!img.src.includes("wsrv.nl") && url.startsWith("http")) {
-            console.warn("[canvas-manager] CORS/Load failure, retrying with proxy:", url);
             img.src = `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
             return;
         }
-
         state.setMapImage(null);
         drawMap();
-        console.error("[canvas-manager] Failed to load image after proxy attempt:", url);
-        alert(`Could not load map image.\n\nURL: ${url}\n\nThis may be a CORS issue or the image no longer exists.`);
+        console.error("[canvas-manager] Failed to load image:", url);
     };
 
     img.src = url;
 }
 
-
 /**
  * Draw the map canvas
  */
 export function drawMap() {
-    const canvas = $("mapCanvas");
-    if (!canvas) return;
+    try {
+        const canvas = $("mapCanvas");
+        if (!canvas) {
+            console.error("[canvas-manager] Canvas element not found");
+            return;
+        }
 
-    const ctx = canvas.getContext("2d");
-    const { w, h } = gridDims();
-    const cell = getCurrentCellSize();
+        const ctx = canvas.getContext("2d");
+        const { w, h } = gridDims();
+        const cell = getCurrentCellSize();
 
-    // Set canvas size (Grid + Gutters)
-    canvas.width = w * cell + GUTTER_W;
-    canvas.height = h * cell + GUTTER_H;
+        // Set canvas size (Grid + Gutters)
+        canvas.width = w * cell + GUTTER_W;
+        canvas.height = h * cell + GUTTER_H;
 
-    // 1. Black background
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // 1. Black background
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 2. Draw map image if loaded
-    const img = state.getMapImage();
-    const offX = parseInt($("mapOffsetX")?.value || "0", 10);
-    const offY = parseInt($("mapOffsetY")?.value || "0", 10);
-    const userPPC = parseFloat($("mapPPC")?.value || "30", 10);
+        // 2. Draw map image if loaded
+        const img = state.getMapImage();
+        const offX = parseInt($("mapOffsetX")?.value || "0", 10);
+        const offY = parseInt($("mapOffsetY")?.value || "0", 10);
+        const userPPC = parseFloat($("mapPPC")?.value || "30", 10);
 
-    if (img) {
-        ctx.globalAlpha = 1.0;
+        if (img) {
+            ctx.globalAlpha = 1.0;
+            const scale = cell / userPPC;
+            const dWidth = img.naturalWidth * scale;
+            const dHeight = img.naturalHeight * scale;
+            ctx.drawImage(img, offX + GUTTER_W, offY + GUTTER_H, dWidth, dHeight);
+        }
 
-        // Calculate drawing size so that 'userPPC' pixels in source = 'cell' pixels on canvas
-        const scale = cell / userPPC;
-        const dWidth = img.naturalWidth * scale;
-        const dHeight = img.naturalHeight * scale;
+        // 3. Grid lines (draw before FOW so FOW can cover them)
+        ctx.globalAlpha = 0.2;
+        ctx.strokeStyle = "#fff";
+        ctx.lineWidth = 1;
 
-        ctx.drawImage(img, offX + GUTTER_W, offY + GUTTER_H, dWidth, dHeight);
-        console.info("[canvas-manager] Map image drawn at scale:", scale, "Size:", dWidth, "x", dHeight);
-    } else {
-        console.warn("[canvas-manager] No map image found in state during drawMap.");
-    }
+        for (let x = 0; x <= w; x++) {
+            ctx.beginPath();
+            ctx.moveTo(x * cell + GUTTER_W + 0.5, GUTTER_H);
+            ctx.lineTo(x * cell + GUTTER_W + 0.5, h * cell + GUTTER_H);
+            ctx.stroke();
+        }
+        for (let y = 0; y <= h; y++) {
+            ctx.beginPath();
+            ctx.moveTo(GUTTER_W, y * cell + GUTTER_H + 0.5);
+            ctx.lineTo(w * cell + GUTTER_W, y * cell + GUTTER_H + 0.5);
+            ctx.stroke();
+        }
 
-    // 3. Draw Fog of War (tile by tile)
-    const isFowEnabled = $("mapFow")?.checked;
-    if (isFowEnabled) {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.8)"; // 80% black for unrevealed areas
-        ctx.globalAlpha = 1.0;
+        // 4. Draw Fog of War (after grid, before labels)
+        const isFowEnabled = $("mapFow")?.checked;
+        console.log("[canvas-manager] FOW enabled:", isFowEnabled);
 
-        for (let y = 0; y < h; y++) {
-            for (let x = 0; x < w; x++) {
-                if (!state.isRevealed(x, y)) {
-                    ctx.fillRect(x * cell + GUTTER_W, y * cell + GUTTER_H, cell, cell);
+        if (isFowEnabled) {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+            ctx.globalAlpha = 1.0;
+
+            let darkTileCount = 0;
+            for (let y = 0; y < h; y++) {
+                for (let x = 0; x < w; x++) {
+                    if (!state.isRevealed(x, y) && !state.isCurrentlyVisible(x, y)) {
+                        ctx.fillRect(x * cell + GUTTER_W, y * cell + GUTTER_H, cell, cell);
+                        darkTileCount++;
+                    }
                 }
             }
+            console.log("[canvas-manager] Drew", darkTileCount, "dark tiles out of", w * h, "total");
         }
+
+        // 5. Draw labels (after FOW so they're always visible)
+        ctx.globalAlpha = 1.0;
+        ctx.font = "bold 10px sans-serif";
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, GUTTER_H);
+        ctx.fillRect(0, 0, GUTTER_W, canvas.height);
+
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        for (let x = 0; x < w; x++) {
+            const label = getExcelColName(x);
+            ctx.fillText(label, x * cell + GUTTER_W + (cell / 2), GUTTER_H / 2);
+        }
+        for (let y = 0; y < h; y++) {
+            const label = (y + 1).toString();
+            ctx.fillText(label, GUTTER_W / 2, y * cell + GUTTER_H + (cell / 2));
+        }
+
+        // 6. Draw player markers (always on top)
+        drawPlayerMarkers(ctx, cell);
+        ctx.globalAlpha = 1.0;
+    } catch (error) {
+        console.error("[canvas-manager] Error in drawMap:", error);
     }
-
-    // 4. Grid lines
-    ctx.globalAlpha = 0.2;
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 1;
-
-    for (let x = 0; x <= w; x++) {
-        ctx.beginPath();
-        ctx.moveTo(x * cell + GUTTER_W + 0.5, GUTTER_H);
-        ctx.lineTo(x * cell + GUTTER_W + 0.5, h * cell + GUTTER_H);
-        ctx.stroke();
-    }
-
-    for (let y = 0; y <= h; y++) {
-        ctx.beginPath();
-        ctx.moveTo(GUTTER_W, y * cell + GUTTER_H + 0.5);
-        ctx.lineTo(w * cell + GUTTER_W, y * cell + GUTTER_H + 0.5);
-        ctx.stroke();
-    }
-
-    // 5. Draw labels (A-Z, 1-N)
-    ctx.globalAlpha = 1.0;
-    ctx.font = "bold 10px sans-serif";
-
-    // Draw horizontal axis background (top row)
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, canvas.width, GUTTER_H);
-
-    // Draw horizontal labels
-    ctx.fillStyle = "#fff";
-    for (let x = 0; x < w; x++) {
-        const label = getExcelColName(x);
-        const textWidth = ctx.measureText(label).width;
-        ctx.fillText(label, x * cell + GUTTER_W + (cell / 2) - (textWidth / 2), GUTTER_H - 4);
-    }
-
-    // Draw vertical axis background (left column)
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, GUTTER_W, canvas.height);
-
-    // Draw vertical labels
-    ctx.fillStyle = "#fff";
-    for (let y = 0; y < h; y++) {
-        const label = (y + 1).toString();
-        const textWidth = ctx.measureText(label).width;
-        ctx.fillText(label, (GUTTER_W / 2) - (textWidth / 2), y * cell + GUTTER_H + (cell / 2) + 4);
-    }
-
-    // 6. Draw player markers
-    drawPlayerMarkers(ctx, cell);
-
-    ctx.globalAlpha = 1.0;
 }
 
 /**
- * Draw player position markers and visibility circles
+ * Draw player markers
  */
 function drawPlayerMarkers(ctx, cell) {
     const players = getPlayerEntities();
+    if (players.length === 0) return;
 
+    ctx.save();
     ctx.globalAlpha = 0.9;
     ctx.fillStyle = "#5865f2";
 
     for (const p of players) {
-        if (!p.loc) continue;
+        const cx = (p.loc.x + 0.5) * cell + GUTTER_W;
+        const cy = (p.loc.y + 0.5) * cell + GUTTER_H;
 
-        const vis = Math.max(0, parseInt(p.vis || visDefault(), 10)) || visDefault();
-
-        // Draw position marker
         ctx.beginPath();
-        ctx.arc(
-            (p.loc.x + 0.5) * cell + GUTTER_W,
-            (p.loc.y + 0.5) * cell + GUTTER_H,
-            Math.max(4, cell * 0.18),
-            0,
-            Math.PI * 2
-        );
+        ctx.arc(cx, cy, Math.max(6, cell * 0.4), 0, Math.PI * 2);
         ctx.fill();
 
-        // Draw visibility circle (faint)
-        ctx.globalAlpha = 0.10;
-        ctx.beginPath();
-        ctx.arc(
-            (p.loc.x + 0.5) * cell + GUTTER_W,
-            (p.loc.y + 0.5) * cell + GUTTER_H,
-            vis * cell,
-            0,
-            Math.PI * 2
-        );
-        ctx.fill();
-        ctx.globalAlpha = 0.9;
+        if (p.name) {
+            ctx.fillStyle = "#fff";
+            ctx.font = `bold ${Math.max(9, cell * 0.4)}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(p.name, cx, cy);
+            ctx.fillStyle = "#5865f2";
+        }
     }
+    ctx.restore();
 }
 
 /**
- * Get player entities with locations
+ * Get player entities
  */
 function getPlayerEntities() {
     const players = [];
+    const playerRows = document.querySelectorAll(".player-row").length;
 
-    document.querySelectorAll('input[id^="player_sel_"]').forEach((chk) => {
-        if (!chk.checked) return;
-
-        const idx = chk.id.split("_").pop();
-        const nameEl = $(`player_name_${idx}`);
-        const locEl = $(`player_loc_${idx}`);
-        const visEl = $(`player_extra_${idx}`);
-
+    for (let i = 1; i <= playerRows; i++) {
+        const nameEl = $(`player_name_${i}`);
+        const locEl = $(`player_loc_${i}`);
         const name = nameEl?.value?.trim();
         const locStr = locEl?.value?.trim();
-        const vis = visEl?.value?.trim();
 
-        if (!name || !locStr) return;
+        if (!name || !locStr) continue;
 
         const loc = parseXY(locStr);
         if (loc) {
-            players.push({ name, loc, vis });
+            players.push({ name, loc });
         }
-    });
-
+    }
     return players;
 }
 
 /**
- * Parse x,y location string
+ * Parse location string (ONLY Excel style A1, B10, etc.)
  */
 function parseXY(str) {
     if (!str) return null;
-    const parts = str.split(",").map((s) => s.trim());
-    if (parts.length !== 2) return null;
+    str = str.trim().toUpperCase();
+    const match = str.match(/^([A-Z]+)(\d+)$/);
+    if (!match) return null;
 
-    const x = parseInt(parts[0], 10);
-    const y = parseInt(parts[1], 10);
-
-    if (isNaN(x) || isNaN(y)) return null;
-    return { x, y };
+    let alpha = match[1];
+    let y = parseInt(match[2], 10) - 1;
+    let x = 0;
+    for (let i = 0; i < alpha.length; i++) {
+        x = x * 26 + (alpha.charCodeAt(i) - 64);
+    }
+    return { x: x - 1, y };
 }
 
 /**
- * Initialize canvas click interactions
+ * Initialize interactions
  */
 export function initCanvasInteractions() {
-    const canvas = $("mapCanvas");
-    if (!canvas) return;
-
-    canvas.addEventListener("click", (e) => {
-        // Interaction logic (if any) can be added here
-        // Currently, FOW revealing on click is disabled per user request
-    });
-
-    // Handle resizing to keep "fill width" behavior
-    window.addEventListener('resize', () => {
-        drawMap();
-    });
+    window.addEventListener('resize', () => drawMap());
 }
 
 /**
- * Helper to get Excel-style column name (A, B, C... Z, AA, AB...)
+ * Helper to get Excel labels
  */
 function getExcelColName(n) {
     let name = "";

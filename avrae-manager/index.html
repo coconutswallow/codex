@@ -47,11 +47,26 @@ extra_css: ["/assets/css/avrae-manager.css"]
             </div>
 
             <div id="tab-players" class="tab-content active">
+                <details class="info-accordion">
+                    <summary>Player Setup Instructions</summary>
+                    <div class="info-content">
+                        <p><strong>1:</strong> Add your players below. The "shortname" is used for the token on the map
+                            preview (instead of token image), use 2 character abbreviations (e.g. "TR"). For the "name
+                            field", it must match the name in Avrae for the commands to work.</p>
+                        <p><strong>2:</strong> Update the locations. If fog of war is turned on, it will auto-calculate
+                            what is visible based on the visibility range set in the map setup tab. Use the ➜ arrow to
+                            quickly copy move commands for Avrae.</p>
+                        <p><strong>3:</strong> For the command to add the token code to Avrae, select the player(s) and
+                            click [Setup Token] If a token was uploaded in the tokens tool in this site, it will
+                            automatically look up that token code.</p>
+                    </div>
+                </details>
                 <div class="control-strip">
                     <input type="checkbox" class="select-all-box" title="Select All"
                         onclick="selectAll('player', this.checked)">
+                    <button onclick="addPlayerRow()">Add Another Player</button>
                     <button onclick="openTokenModal()">Setup Token</button>
-                    <button onclick="clearChecked('player')">Clear</button>
+                    <button onclick="clearChecked('player')">Clear Selection</button>
                 </div>
                 <div id="player-list"></div>
                 <label style="margin-top:10px;">FOW Update (New Only)</label>
@@ -160,12 +175,6 @@ extra_css: ["/assets/css/avrae-manager.css"]
                                 <label style="margin: 0; text-transform: none; font-size: 0.85em; color: white;">Enable
                                     Fog of War</label>
                             </div>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <input type="checkbox" id="mapAutoView" style="margin: 0;"
-                                    onchange="toggleVisionField()">
-                                <label style="margin: 0; text-transform: none; font-size: 0.85em; color: white;">Enable
-                                    Auto-View</label>
-                            </div>
                             <div id="visionFieldGroup" style="display: none; margin-top: 5px;">
                                 <label>Vision Radius (Cells)</label>
                                 <input type="number" id="visRange" value="6">
@@ -179,7 +188,8 @@ extra_css: ["/assets/css/avrae-manager.css"]
 
                     <div class="config-section">
                         <label class="section-label">4. Avrae Setup Command</label>
-                        <div class="output-box" id="setup-cmd-out" onclick="uiFlash(this)"
+                        <div class="output-box" id="setup-cmd-out"
+                            onclick="navigator.clipboard.writeText(this.innerText); uiFlash(this)"
                             style="font-size: 0.7em; min-height: 40px;">!multiline...</div>
                         <p style="font-size: 0.7em; color: var(--blur); margin-top: 5px;">Copy the commands above. Note
                             commands in paragraphs can be executed together, each one separated by space needs to be
@@ -206,20 +216,29 @@ extra_css: ["/assets/css/avrae-manager.css"]
     <div id="tokenModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">Setup Player Tokens</div>
+            <details class="info-accordion">
+                <summary>Token Configuration Help</summary>
+                <div class="info-content">
+                    <p>If you uploaded a character token via the Avrae Tokens Manager on this site, it will
+                        automatically find the token code for you (recommended). Otherwise, you may manually paste a
+                        token code.</p>
+                    <p>Click "Copy" on each row to get the full Avrae !map command to apply the character token to the
+                        map. Note you have to do this one character at a time (Avrae limitation)</p>
+                </div>
+            </details>
             <table class="modal-table">
                 <thead>
                     <tr>
-                        <th style="width: 15%">Name (Ref)</th>
                         <th style="width: 25%">Full Name (Cmd)</th>
                         <th style="width: 15%">Location</th>
                         <th style="width: 10%">Size</th>
                         <th style="width: 35%">Token URL/Code</th>
+                        <th style="width: 15%">Action</th>
                     </tr>
                 </thead>
                 <tbody id="tokenTableBody"></tbody>
             </table>
             <div class="modal-footer">
-                <button class="action-btn" onclick="generateTokenCommands()">Output Commands</button>
                 <button class="close-btn"
                     onclick="document.getElementById('tokenModal').style.display='none'">Close</button>
             </div>
@@ -245,6 +264,24 @@ extra_css: ["/assets/css/avrae-manager.css"]
                 <button class="action-btn" onclick="generateNpcAddCmds()">Generate !i add</button>
                 <button class="close-btn"
                     onclick="document.getElementById('npcModal').style.display='none'">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadSessionModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">Load Session</div>
+            <div style="padding: 15px;">
+                <p style="font-size: 0.85em; color: var(--blur); margin-bottom: 15px;">
+                    Select a session to load:
+                </p>
+                <div id="sessionList" style="max-height: 400px; overflow-y: auto;">
+                    <!-- Sessions will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="close-btn"
+                    onclick="document.getElementById('loadSessionModal').style.display='none'">Cancel</button>
             </div>
         </div>
     </div>

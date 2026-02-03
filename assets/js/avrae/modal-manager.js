@@ -18,25 +18,29 @@ export function openTokenModal() {
     const checked = Array.from(document.querySelectorAll('input[id^="player_sel_"]:checked'));
     if (!checked.length) return alert("No players selected.");
 
+    const tokenData = state.getTokenData();
+
     for (const chk of checked) {
         const idx = chk.id.split("_").pop();
-        const refName = $(`player_name_${idx}`)?.value?.trim() || "";
         const fullName = $(`player_full_${idx}`)?.value?.trim() || "";
         const loc = $(`player_loc_${idx}`)?.value?.trim() || "";
-        const tokenVal = $(`player_token_${idx}`)?.value || "";
+        let tokenVal = $(`player_token_${idx}`)?.value || "";
+
+        // Auto-search token if empty
+        if (!tokenVal && fullName) {
+            const found = tokenData[fullName.toLowerCase()];
+            if (found) {
+                tokenVal = found.token;
+                // Sync back to hidden field
+                const el = $(`player_token_${idx}`);
+                if (el) el.value = tokenVal;
+            }
+        }
 
         const tr = document.createElement("tr");
 
-        // Ref name (read-only display)
-        const tdRef = document.createElement("td");
-        tdRef.textContent = refName;
-        tr.appendChild(tdRef);
-
-        // Full name -> Syncs to player_full_{idx}
-        tr.appendChild(createModalInput("bm_modal_full", "text", fullName, "Full name", (val) => {
-            const el = $(`player_full_${idx}`);
-            if (el) el.value = val;
-        }));
+        // Full name -> Read-only
+        tr.appendChild(createModalInput("bm_modal_full", "text", fullName, "Full name", null, true));
 
         // Location -> Syncs to player_loc_{idx}
         tr.appendChild(createModalInput("bm_modal_loc", "text", loc, "x,y", (val) => {
@@ -48,10 +52,36 @@ export function openTokenModal() {
         tr.appendChild(createModalInput("bm_modal_size", "text", "M", "M/L/H"));
 
         // Token URL -> Syncs to player_token_{idx}
-        tr.appendChild(createModalInput("bm_modal_token", "text", tokenVal, "Token URL or code", (val) => {
+        const tdToken = createModalInput("bm_modal_token", "text", tokenVal, "Token URL or code", (val) => {
             const el = $(`player_token_${idx}`);
             if (el) el.value = val;
-        }));
+        });
+        // Make token input smaller via style
+        tdToken.querySelector("input").style.width = "120px";
+        tr.appendChild(tdToken);
+
+        // Action column: Copy button
+        const tdAction = document.createElement("td");
+        const copyBtn = document.createElement("button");
+        copyBtn.className = "action-btn";
+        copyBtn.style.padding = "4px 8px";
+        copyBtn.style.fontSize = "0.7em";
+        copyBtn.innerText = "Copy";
+        copyBtn.onclick = () => {
+            const fName = tr.querySelector(".bm_modal_full").value;
+            const tVal = tr.querySelector(".bm_modal_token").value;
+            const sVal = tr.querySelector(".bm_modal_size").value || "M";
+            const lVal = tr.querySelector(".bm_modal_loc").value;
+
+            if (!fName || !tVal) return alert("Missing Full Name or Token.");
+
+            const locPart = lVal ? ` -loc ${lVal}` : "";
+            const cmd = `!map -token add "${fName}" "${tVal}" -size ${sVal}${locPart}`;
+            navigator.clipboard.writeText(cmd);
+            import('./ui-helpers.js').then(({ uiFlash }) => uiFlash(copyBtn, true));
+        };
+        tdAction.appendChild(copyBtn);
+        tr.appendChild(tdAction);
 
         body.appendChild(tr);
     }
@@ -88,7 +118,7 @@ export function openNpcModal() {
 /**
  * Helper: Create modal input cell
  */
-function createModalInput(className, type, value, placeholder, onChangeCallback) {
+function createModalInput(className, type, value, placeholder, onChangeCallback, readOnly = false) {
     const td = document.createElement("td");
     const input = document.createElement("input");
 
@@ -96,6 +126,12 @@ function createModalInput(className, type, value, placeholder, onChangeCallback)
     input.type = type;
     if (value !== undefined) input.value = value;
     if (placeholder) input.placeholder = placeholder;
+    if (readOnly) {
+        input.readOnly = true;
+        input.style.background = "transparent";
+        input.style.border = "none";
+        input.style.color = "var(--blur)";
+    }
 
     if (onChangeCallback) {
         input.oninput = (e) => onChangeCallback(e.target.value);

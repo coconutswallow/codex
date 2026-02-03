@@ -17,8 +17,7 @@ export async function refreshTokensFromSupabase() {
     try {
         const { data, error } = await supabase
             .from("tokens")
-            .select("name,type,token_code,size,image_url")
-            .eq("type", "Monsters");
+            .select("name,type,token_code,size,image_url");
 
         if (error) throw error;
 
@@ -32,10 +31,13 @@ export async function refreshTokensFromSupabase() {
             tokenData[name.toLowerCase()] = {
                 token: r.token_code || r.image_url || "",
                 size: r.size || "M",
-                display: name
+                display: name,
+                type: r.type
             };
 
-            monsterNames.push(name);
+            if (r.type === "Monsters") {
+                monsterNames.push(name);
+            }
         });
 
         state.setTokenData(tokenData);
@@ -64,7 +66,7 @@ function transformToStructured(inputs) {
         height: parseInt(inputs.mapH) || 40,
         transformedWidth: parseInt(inputs.mapTransformedW) || 0,
         transformedHeight: parseInt(inputs.mapTransformedH) || 0,
-        pixelsPerCell: parseInt(inputs.mapPixelsPerCell) || 30,
+        pixelsPerCell: parseInt(inputs.mapPPC) || 30,
         offsetX: parseInt(inputs.mapOffsetX) || 0,
         offsetY: parseInt(inputs.mapOffsetY) || 0,
         visibilityRange: parseInt(inputs.visRange) || 6,
@@ -72,17 +74,17 @@ function transformToStructured(inputs) {
         autoViewEnabled: !!inputs.mapAutoView
     };
 
-    // Extract players (DEFAULT_PLAYER_ROWS = 8)
+    // Extract players (Dynamic count based on player-row presence in HTML)
     const players = [];
-    for (let i = 1; i <= 8; i++) {
-        const name = inputs[`player_name_${i}`] || "";
+    const playerRows = document.querySelectorAll(".player-row").length;
+    for (let i = 1; i <= playerRows; i++) {
+        const shortName = inputs[`player_name_${i}`] || "";
+        const fullName = inputs[`player_full_${i}`] || "";
         const location = inputs[`player_loc_${i}`] || "";
         const tokenCode = inputs[`player_token_${i}`] || "";
         const checked = inputs[`player_sel_${i}`] || false;
-        const visibility = inputs[`player_extra_${i}`];
-
-        if (name || location || tokenCode) {
-            players.push({ name, location, tokenCode, checked, visibility });
+        if (shortName || fullName || location || tokenCode) {
+            players.push({ shortName, fullName, location, tokenCode, checked });
         }
     }
 
@@ -140,24 +142,23 @@ function transformToFlat(structured) {
         inputs.mapH = String(structured.map_config.height || 40);
         inputs.mapTransformedW = String(structured.map_config.transformedWidth || 0);
         inputs.mapTransformedH = String(structured.map_config.transformedHeight || 0);
-        inputs.mapPixelsPerCell = String(structured.map_config.pixelsPerCell || 30);
+        inputs.mapPPC = String(structured.map_config.pixelsPerCell || 30);
         inputs.mapOffsetX = String(structured.map_config.offsetX || 0);
         inputs.mapOffsetY = String(structured.map_config.offsetY || 0);
         inputs.visRange = String(structured.map_config.visibilityRange || 6);
         inputs.mapFow = !!structured.map_config.fowEnabled;
-        inputs.mapAutoView = !!structured.map_config.autoViewEnabled;
     }
 
     // Players
     const players = structured.players || [];
-    for (let i = 1; i <= 8; i++) {
-        const p = players[i - 1] || {};
-        inputs[`player_name_${i}`] = p.name || "";
-        inputs[`player_loc_${i}`] = p.location || "";
-        inputs[`player_token_${i}`] = p.tokenCode || "";
-        inputs[`player_sel_${i}`] = p.checked || false;
-        if (p.visibility !== undefined) inputs[`player_extra_${i}`] = p.visibility;
-    }
+    players.forEach((p, i) => {
+        const idx = i + 1;
+        inputs[`player_name_${idx}`] = p.shortName || "";
+        inputs[`player_full_${idx}`] = p.fullName || "";
+        inputs[`player_loc_${idx}`] = p.location || "";
+        inputs[`player_token_${idx}`] = p.tokenCode || "";
+        inputs[`player_sel_${idx}`] = p.checked || false;
+    });
 
     // NPCs
     const npcs = structured.npcs || [];
@@ -276,23 +277,45 @@ export async function loadSessionPrompt() {
             return alert("No saved sessions found.");
         }
 
-        // Prompt user to select
-        const menu = data.map((s, i) => `${i + 1}) ${s.name}`).join("\n");
-        const pickRaw = prompt(`Pick a session:\n${menu}`, "1");
+        // Show modal with session list
+        const modal = document.getElementById('loadSessionModal');
+        const sessionList = document.getElementById('sessionList');
 
-        if (!pickRaw) return;
+        sessionList.innerHTML = data.map(session => {
+            const date = new Date(session.updated_at).toLocaleString();
+            return `
+                <div class="session-item" onclick="loadSession('${session.id}')" 
+                     style="padding: 12px; margin-bottom: 8px; background: #2f3136; border-radius: 4px; cursor: pointer; border-left: 3px solid var(--accent);">
+                    <div style="font-weight: bold; margin-bottom: 4px;">${session.name}</div>
+                    <div style="font-size: 0.75em; color: var(--blur);">Last updated: ${date}</div>
+                </div>
+            `;
+        }).join('');
 
-        const idx = Math.max(1, Math.min(data.length, parseInt(pickRaw, 10))) - 1;
-        const chosen = data[idx];
+        modal.style.display = 'flex';
+
+    } catch (e) {
+        console.error(`[${MODULE}] loadSessionPrompt failed`, e);
+        alert("Failed to load sessions list.");
+    }
+}
+
+/**
+ * Load a specific session by ID
+ */
+async function loadSession(sessionId) {
+    try {
+        // Close the modal
+        document.getElementById('loadSessionModal').style.display = 'none';
 
         // Load the session
-        const { data: row, error: e2 } = await supabase
+        const { data: row, error } = await supabase
             .from("avrae_sessions")
             .select("id,name,map_config,players,npcs,monsters,revealed_tiles")
-            .eq("id", chosen.id)
+            .eq("id", sessionId)
             .single();
 
-        if (e2) throw e2;
+        if (error) throw error;
 
         // Transform structured data back to flat format
         const flatInputs = transformToFlat({
@@ -301,6 +324,11 @@ export async function loadSessionPrompt() {
             npcs: row.npcs,
             monsters: row.monsters
         });
+
+        // Ensure we have enough player rows for the loaded session
+        if (row.players?.length && window.ensureRows) {
+            window.ensureRows('player', row.players.length);
+        }
 
         // Deserialize into state
         state.setSessionId(row.id);
@@ -323,11 +351,13 @@ export async function loadSessionPrompt() {
         updateFileStatus(`Session: Loaded (${row.name})`);
 
     } catch (e) {
-        console.error(`[${MODULE}] loadSessionPrompt failed`, e);
-        await logError(MODULE, `loadSessionPrompt failed: ${e.message}`);
+        console.error(`[${MODULE}] loadSession failed`, e);
         alert("Failed to load session.");
     }
 }
+
+// Expose loadSession to window for onclick handlers
+window.loadSession = loadSession;
 
 /**
  * Search battlemaps in database

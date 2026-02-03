@@ -173,7 +173,7 @@
 
 .grid-row {
     display: grid;
-    grid-template-columns: 25px 1.5fr 1fr 40px;
+    grid-template-columns: 25px 1fr 1.5fr 1fr 0.6fr 40px;
     gap: 8px;
     margin-bottom: 6px;
     padding: 8px;
@@ -186,10 +186,11 @@
 
 .npc-row,
 .monster-row {
-    grid-template-columns: 25px 0.8fr 1.5fr 1fr 40px;
+    grid-template-columns: 25px 1fr 1.5fr 1fr 0.6fr 40px;
 }
 
 .player-row {
+    grid-template-columns: 25px 1fr 1.5fr 1fr 40px;
     border-left-color: var(--accent);
 }
 
@@ -506,7 +507,56 @@ canvas {
     width: 60px;
 }
 
-#mapPPC:focus {
+/* Info Accordion */
+.info-accordion {
+    background: rgba(88, 101, 242, 0.05);
+    border: 1px solid rgba(88, 101, 242, 0.3);
+    border-radius: 4px;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.info-accordion summary {
+    padding: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    color: var(--accent);
+    font-size: 0.8em;
+    text-transform: uppercase;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.info-accordion summary::before {
+    content: "ℹ️";
+    font-size: 1.2em;
+}
+
+.info-accordion .info-content {
+    padding: 0 10px 10px 10px;
+    font-size: 0.85em;
+    color: #ccc;
+    text-align: left;
+    line-height: 1.5;
+}
+
+.info-accordion .info-content p {
+    margin: 5px 0;
+}
+
+.info-accordion[open] {
+    background: rgba(88, 101, 242, 0.1);
     border-color: var(--accent);
-    outline: none;
+}
+
+/* Session list item styles */
+.session-item {
+    transition: all 0.2s ease;
+}
+
+.session-item:hover {
+    background: #40444b !important;
+    transform: translateX(4px);
 }

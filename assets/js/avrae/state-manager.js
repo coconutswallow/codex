@@ -9,6 +9,7 @@ class StateManager {
         this.monsterNames = [];        // ["Goblin", "Orc", ...] for autocomplete
         this.currentSessionId = null;  // Current session ID from Supabase
         this.revealedTiles = new Set(); // Set of "x,y" strings
+        this.currentTurnTiles = new Set(); // Temporary visibility for current positions
         this.mapImage = null;          // Loaded map image
     }
 
@@ -62,6 +63,18 @@ class StateManager {
 
     setRevealedTiles(tiles) {
         this.revealedTiles = new Set(tiles);
+    }
+
+    setCurrentTurnTiles(tiles) {
+        this.currentTurnTiles = new Set(tiles);
+    }
+
+    getCurrentTurnTiles() {
+        return this.currentTurnTiles;
+    }
+
+    isCurrentlyVisible(x, y) {
+        return this.currentTurnTiles.has(`${x},${y}`);
     }
 
     // Map image

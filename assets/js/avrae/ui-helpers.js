@@ -7,13 +7,13 @@
 export const $ = (id) => document.getElementById(id);
 
 /**
- * Flash animation and copy to clipboard
+ * Flash animation and optional copy to clipboard
  */
-export function uiFlash(el) {
+export function uiFlash(el, skipCopy = false) {
     try {
         el.classList.add("clicked-flash");
         setTimeout(() => el.classList.remove("clicked-flash"), 350);
-        if (navigator.clipboard?.writeText) {
+        if (!skipCopy && navigator.clipboard?.writeText) {
             navigator.clipboard.writeText(el.innerText).catch(() => { });
         }
     } catch (_) { }

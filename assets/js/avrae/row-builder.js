@@ -9,7 +9,7 @@
 import { $ } from './ui-helpers.js';
 import { attachAutocomplete } from './autocomplete.js';
 
-const DEFAULT_PLAYER_ROWS = 8;
+const DEFAULT_PLAYER_ROWS = 4;
 const DEFAULT_NPC_ROWS = 6;
 const DEFAULT_MONSTER_ROWS = 10;
 
@@ -23,13 +23,13 @@ export function makeRow({ type, index, onLocationJump }) {
     // Checkbox
     const chk = createCheckbox(type, index);
 
-    // Name field
+    // Name field (Short Name for players, Short for NPCs, Monster for monsters)
     const nameWrap = createField({
         type,
         index,
         field: "name",
-        label: type === "player" ? "Ref Name" : (type === "npc" ? "Short" : "Monster"),
-        placeholder: type === "player" ? "e.g., Bob" : (type === "npc" ? "e.g., Guard1" : "e.g., Goblin"),
+        label: type === "player" ? "Short Name" : (type === "npc" ? "Short" : "Monster"),
+        placeholder: type === "player" ? "e.g., PP" : (type === "npc" ? "e.g., TS" : "e.g., GO1"),
         inputType: "text"
     });
 
@@ -44,8 +44,8 @@ export function makeRow({ type, index, onLocationJump }) {
         type,
         index,
         field: "full",
-        label: type === "player" ? "Full Name" : (type === "npc" ? "Name" : "Qty"),
-        placeholder: type === "player" ? "e.g., Bob the Brave" : (type === "npc" ? "e.g., City Guard" : "1"),
+        label: type === "player" ? "Name" : (type === "npc" ? "Name" : "Qty"),
+        placeholder: type === "player" ? "e.g., Peter Pan" : (type === "npc" ? "e.g., City Guard" : "1"),
         inputType: type === "monster" ? "number" : "text",
         defaultValue: type === "monster" ? "1" : undefined,
         min: type === "monster" ? "1" : undefined
@@ -57,7 +57,7 @@ export function makeRow({ type, index, onLocationJump }) {
         index,
         field: "loc",
         label: "Location (x,y)",
-        placeholder: "e.g., 10,12",
+        placeholder: "e.g. C15",
         inputType: "text"
     });
 
@@ -82,16 +82,16 @@ export function makeRow({ type, index, onLocationJump }) {
         row.appendChild(hpHidden);
     }
 
-    // Jump button
-    const btnWrap = createJumpButton(type, index, onLocationJump);
+    // Action button (Move/Copy for player, Jump for others)
+    const btnWrap = createActionButton(type, index, onLocationJump);
 
     // Assemble row based on type
     row.appendChild(chk);
 
     if (type === "player") {
         row.appendChild(nameWrap);
+        row.appendChild(fullWrap);
         row.appendChild(locWrap);
-        row.appendChild(extraWrap);
         row.appendChild(btnWrap);
     } else if (type === "npc") {
         row.appendChild(nameWrap);
@@ -138,6 +138,33 @@ export function initLists(onLocationJump) {
             monsters.appendChild(makeRow({ type: "monster", index: i, onLocationJump }));
         }
         monsters.dataset.ready = "1";
+    }
+}
+
+/**
+ * Add a new player row dynamically
+ */
+export function addPlayerRow(onLocationJump) {
+    const list = $("player-list");
+    if (!list) return;
+
+    // Determine next index
+    const existing = list.querySelectorAll(".player-row").length;
+    const nextIdx = existing + 1;
+
+    list.appendChild(makeRow({ type: "player", index: nextIdx, onLocationJump }));
+}
+
+/**
+ * Ensure at least N rows exist for a type
+ */
+export function ensureRows(type, count, onLocationJump) {
+    const list = $(`${type}-list`);
+    if (!list) return;
+
+    const existing = list.querySelectorAll(`.${type}-row`).length;
+    for (let i = existing + 1; i <= count; i++) {
+        list.appendChild(makeRow({ type, index: i, onLocationJump }));
     }
 }
 
@@ -203,24 +230,42 @@ function createExtraField(type, index) {
 }
 
 /**
- * Helper: Create jump button
+ * Helper: Create action button (Move/Copy for player, Jump for others)
  */
-function createJumpButton(type, index, onLocationJump) {
+function createActionButton(type, index, onLocationJump) {
     const btnWrap = document.createElement("div");
     btnWrap.className = "btn-group";
 
-    const moveBtn = document.createElement("button");
-    moveBtn.className = "move-btn";
-    moveBtn.innerText = "↺";
-    moveBtn.title = "Jump on map";
+    const actionBtn = document.createElement("button");
+    actionBtn.className = "move-btn";
 
-    moveBtn.onclick = () => {
-        const locInput = $(`${type}_loc_${index}`);
-        if (onLocationJump && locInput) {
-            onLocationJump(locInput.value);
-        }
-    };
+    if (type === "player") {
+        actionBtn.innerText = "➜"; // Arrow icon
+        actionBtn.title = "Copy move command";
+        actionBtn.onclick = () => {
+            const fullName = $(`player_full_${index}`)?.value?.trim();
+            const loc = $(`player_loc_${index}`)?.value?.trim();
+            if (fullName && loc) {
+                const cmd = `!map -t "${fullName}" -move ${loc}`;
+                navigator.clipboard.writeText(cmd);
+                import('./ui-helpers.js').then(({ uiFlash }) => {
+                    uiFlash(actionBtn, true);
+                });
+            } else {
+                alert("Please enter Full Name and Location.");
+            }
+        };
+    } else {
+        actionBtn.innerText = "↺";
+        actionBtn.title = "Jump on map";
+        actionBtn.onclick = () => {
+            const locInput = $(`${type}_loc_${index}`);
+            if (onLocationJump && locInput) {
+                onLocationJump(locInput.value);
+            }
+        };
+    }
 
-    btnWrap.appendChild(moveBtn);
+    btnWrap.appendChild(actionBtn);
     return btnWrap;
 }

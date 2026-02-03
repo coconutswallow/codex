@@ -10,6 +10,37 @@ import { state } from './state-manager.js';
 
 
 /**
+ * Helper: Convert column letter to number (A=1)
+ */
+function colToNum(col) {
+    let n = 0;
+    for (let i = 0; i < col.length; i++) {
+        n = n * 26 + (col.toUpperCase().charCodeAt(i) - 64);
+    }
+    return n;
+}
+
+/**
+ * Helper: Convert number to column letter (1=A)
+ */
+function numToCol(n) {
+    let c = '';
+    while (n > 0) {
+        let m = (n - 1) % 26;
+        c = String.fromCharCode(65 + m) + c;
+        n = Math.floor((n - m) / 26);
+    }
+    return c;
+}
+
+/**
+ * Helper: Convert 0-based x,y to A1 style
+ */
+function toA1(x, y) {
+    return `${numToCol(x + 1)}${y + 1}`;
+}
+
+/**
  * Show output in console (for commands)
  */
 function showInConsole(text) {
@@ -20,16 +51,35 @@ function showInConsole(text) {
 }
 
 /**
- * Parse x,y location string
+ * Parse location string (supports x,y or A1 style)
  */
 export function parseXY(str) {
     if (!str) return null;
-    const parts = str.split(",").map((s) => s.trim());
-    if (parts.length !== 2) return null;
-    const x = parseInt(parts[0], 10);
-    const y = parseInt(parts[1], 10);
-    if (isNaN(x) || isNaN(y)) return null;
-    return { x, y };
+    str = str.trim();
+
+    // Try x,y
+    if (str.includes(",")) {
+        const parts = str.split(",").map((s) => s.trim());
+        if (parts.length === 2) {
+            const x = parseInt(parts[0], 10);
+            const y = parseInt(parts[1], 10);
+            if (!isNaN(x) && !isNaN(y)) return { x, y };
+        }
+    }
+
+    // Try A1 style
+    const match = str.match(/^([A-Z]+)(\d+)$/i);
+    if (match) {
+        let alpha = match[1].toUpperCase();
+        let y = parseInt(match[2], 10) - 1;
+        let x = 0;
+        for (let i = 0; i < alpha.length; i++) {
+            x = x * 26 + (alpha.charCodeAt(i) - 64);
+        }
+        return { x: x - 1, y };
+    }
+
+    return null;
 }
 
 /**
@@ -41,12 +91,14 @@ export function updateFowOutputs() {
     const globalVis = parseInt($("visRange")?.value || "6", 10);
 
     const revealed = state.getRevealedTiles();
+    const currentTurnTiles = new Set();
     const newReveal = [];
 
-    for (let i = 1; i <= 20; i++) {
+    const playerRows = document.querySelectorAll(".player-row").length;
+
+    for (let i = 1; i <= playerRows; i++) {
         const nameEl = $(`player_name_${i}`);
         const locEl = $(`player_loc_${i}`);
-        const visEl = $(`player_extra_${i}`);
 
         if (!nameEl || !locEl) continue;
 
@@ -57,42 +109,75 @@ export function updateFowOutputs() {
         const pos = parseXY(locStr);
         if (!pos) continue;
 
-        const vis = parseInt(visEl?.value || globalVis, 10);
+        const vis = globalVis;
         const tiles = computeVisibleTiles(pos.x, pos.y, vis, mapW, mapH);
 
         tiles.forEach((t) => {
             const key = `${t.x},${t.y}`;
+            currentTurnTiles.add(key);
             if (!revealed.has(key)) {
                 newReveal.push(key);
-                state.addRevealedTile(t.x, t.y);
             }
         });
     }
 
+    state.setCurrentTurnTiles(currentTurnTiles);
+
     // Build FOW command
     const fow = $("fow-out");
     if (fow) {
-        if (newReveal.length) {
-            fow.innerText = `!map -fow ${newReveal.join(" ")}`;
+        if (newReveal.length > 0) {
+            const tileSet = new Set(newReveal);
+            const rects = optimize2D(tileSet);
+            const fowCmd = `!map -fow ${rects.map(r => `${numToCol(r.x1 + 1)}${r.y1 + 1}:${numToCol(r.x2 + 1)}${r.y2 + 1}`).join(',')}`;
+
+            fow.innerText = fowCmd;
+            fow.onclick = () => {
+                import('./ui-helpers.js').then(({ uiFlash }) => uiFlash(fow, true));
+                navigator.clipboard.writeText(fow.innerText);
+                // Permanently reveal these tiles in state
+                newReveal.forEach(key => {
+                    const [x, y] = key.split(',').map(Number);
+                    state.addRevealedTile(x, y);
+                });
+                // Redraw map to show permanent reveal
+                import('./canvas-manager.js').then(({ drawMap }) => drawMap());
+                updateFowOutputs(); // Refresh outputs
+            };
         } else {
             fow.innerText = "!map -fow ... (no new tiles)";
+            fow.onclick = null;
         }
     }
 
-    // Build view command
     const view = $("view-out");
     if (view) {
-        const playerLocs = [];
-        for (let i = 1; i <= 20; i++) {
+        const playerCoords = [];
+        const playerRows = document.querySelectorAll(".player-row").length;
+        for (let i = 1; i <= playerRows; i++) {
             const name = $(`player_name_${i}`)?.value?.trim();
-            const loc = $(`player_loc_${i}`)?.value?.trim();
-            if (name && loc) playerLocs.push(loc);
+            const locStr = $(`player_loc_${i}`)?.value?.trim();
+            if (name && locStr) {
+                const pos = parseXY(locStr);
+                if (pos) playerCoords.push(pos);
+            }
         }
 
-        if (playerLocs.length) {
-            view.innerText = `!map -view ${playerLocs.join(" ")}`;
+        if (playerCoords.length > 0) {
+            // Replicate prototype !view logic: calculate visible bounds
+            let minX = Math.max(0, Math.min(...playerCoords.map(p => p.x)) - globalVis);
+            let maxX = Math.min(mapW - 1, Math.max(...playerCoords.map(p => p.x)) + globalVis);
+            let minY = Math.max(0, Math.min(...playerCoords.map(p => p.y)) - globalVis);
+            let maxY = Math.min(mapH - 1, Math.max(...playerCoords.map(p => p.y)) + globalVis);
+
+            view.innerText = `!map -view ${toA1(minX, minY)}:${toA1(maxX, maxY)}`;
+            view.onclick = () => {
+                import('./ui-helpers.js').then(({ uiFlash }) => uiFlash(view, true));
+                navigator.clipboard.writeText(view.innerText);
+            };
         } else {
             view.innerText = "!map -view ...";
+            view.onclick = null;
         }
     }
 
@@ -120,13 +205,48 @@ export function generateMapSetupCmd() {
 }
 
 /**
- * Compute visible tiles from a position
+ * Optimize a set of tiles into rectangles (from prototype)
+ */
+function optimize2D(tileSet) {
+    let spans = [], sorted = Array.from(tileSet).map(t => {
+        const [x, y] = t.split(',').map(Number);
+        return { x, y };
+    }).sort((a, b) => a.y - b.y || a.x - b.x);
+
+    let cur = null;
+    for (let t of sorted) {
+        if (cur && t.y === cur.y && t.x === cur.x2 + 1) cur.x2 = t.x;
+        else {
+            if (cur) spans.push(cur);
+            cur = { x1: t.x, x2: t.x, y: t.y };
+        }
+    }
+    if (cur) spans.push(cur);
+
+    let rects = [];
+    while (spans.length > 0) {
+        let s = spans.shift();
+        let y2 = s.y;
+        for (let i = 0; i < spans.length; i++) {
+            if (spans[i].y === y2 + 1 && spans[i].x1 === s.x1 && spans[i].x2 === s.x2) {
+                y2 = spans[i].y;
+                spans.splice(i, 1);
+                i--;
+            }
+        }
+        rects.push({ x1: s.x1, y1: s.y, x2: s.x2, y2: y2 });
+    }
+    return rects;
+}
+
+/**
+ * Compute visible tiles from a position (Square area per prototype)
  */
 function computeVisibleTiles(cx, cy, radius, mapW, mapH) {
     const tiles = [];
     for (let dy = -radius; dy <= radius; dy++) {
         for (let dx = -radius; dx <= radius; dx++) {
-            if (dx * dx + dy * dy > radius * radius) continue;
+            // Square logic (no dx*dx + dy*dy > radius*radius check)
             const x = cx + dx;
             const y = cy + dy;
             if (x < 0 || y < 0 || x >= mapW || y >= mapH) continue;
