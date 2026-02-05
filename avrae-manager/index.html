@@ -7,7 +7,7 @@ extra_css: ["/assets/css/avrae-manager.css"]
 
 <div class="avrae-manager-app">
     <div class="header">
-        <h3>Avrae Manager</h3>
+        <h3>Avrae Battle Manager</h3>
         <div style="display:flex; align-items:center; gap:15px;">
             <span id="fileStatus" style="font-size:0.7em; color:var(--blur);">Session: Unsaved</span>
             {% include auth-header.html %}
@@ -28,8 +28,9 @@ extra_css: ["/assets/css/avrae-manager.css"]
         <h2 style="color: var(--accent);">Login Required</h2>
         <p>You must be logged in with Discord to access the Avrae Battle Manager.</p>
         <p style="font-size: 0.9em; color: var(--blur); max-width: 400px; margin: 10px 0 20px 0;">This tool helps
-            DMs
-            manage tokens, FOW, and map settings for Avrae PBP games. Login to save sessions and access your tokens.
+            DMs manage tokens, FOW, and map settings for Avrae PBP games. Generates !move commands, calculates
+            Fog-of-War based on visibility.
+            Login to save sessions and access your tokens.
         </p>
         <button onclick="window.authManager.login()" class="action-btn"
             style="padding: 12px 24px; font-size: 1.1em;">Login with Discord</button>
