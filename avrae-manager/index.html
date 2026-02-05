@@ -24,16 +24,30 @@ extra_css: ["/assets/css/avrae-manager.css"]
 
     <!-- Authentication Gate -->
     <div id="auth-gate"
-        style="display:flex; position: fixed; top: 40px; left: 0; width: 100%; height: calc(100% - 40px); background: var(--bg); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
-        <h2 style="color: var(--accent);">Login Required</h2>
-        <p>You must be logged in with Discord to access the Avrae Battle Manager.</p>
-        <p style="font-size: 0.9em; color: var(--blur); max-width: 400px; margin: 10px 0 20px 0;">This tool helps
-            DMs manage tokens, FOW, and map settings for Avrae PBP games. Generates !move commands, calculates
-            Fog-of-War based on visibility.
-            Login to save sessions and access your tokens.
-        </p>
-        <button onclick="window.authManager.login()" class="action-btn"
-            style="padding: 12px 24px; font-size: 1.1em;">Login with Discord</button>
+        style="display:flex; position: fixed; top: 40px; left: 0; width: 100%; height: calc(100% - 40px); background: var(--bg); z-index: 1000; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
+        <div style="max-width: 900px; width: 100%; text-align: left;">
+            <h2 style="color: var(--accent); margin-bottom: 20px;">Avrae Battle Manager</h2>
+            <p style="margin-bottom: 15px;">Please log in with Discord to access the Avrae Battle Manager.</p>
+            <p style="font-size: 0.9em; color: var(--blur); margin-bottom: 15px;">This tool is an all-in-one avrae
+                battle maps planner and live DM screen to make use of Avrae OTFBM easier.</p>
+            <p style="font-size: 0.9em; color: var(--blur); margin-bottom: 15px;">It generates commands for you (map
+                creation, adding monsters and NPCs and their tokens, and has a preview screen so you can see what will
+                happen before you issue the command. It's <strong>connected to the Battlemaps and Token Manager</strong>
+                in this site: no need to upload maps, select from the growing database right from the maps setup
+                screen.</p>
+            <p style="font-size: 0.9em; color: var(--blur); margin-bottom: 15px;">For tokens, any token you upload, plus
+                <strong>over 1400 monster tokens</strong> will be auto-populated based on the character or monster name
+                with commands ready to copy and paste. Generate effects like fireball circles, breath cones,
+                auras, etc. with a tool to automate the map effect over/under-lay commands.
+            </p>
+            <p style="font-size: 0.9em; color: var(--blur); margin-bottom: 15px;">For tokens, any token you upload, plus
+                <strong>Fog of War</strong> Auto-calculate fog-of-war unlocks based on each player character's
+                visibility - auto-calculate what they can see based on their location.
+
+            <p style="font-size: 0.9em; color: var(--blur); margin-bottom: 25px;">Login and try it out!</p>
+            <button onclick="window.authManager.login()" class="action-btn"
+                style="padding: 12px 24px; font-size: 1.1em;">Login with Discord</button>
+        </div>
     </div>
 
     <div class="main-content" style="display:none;">
