@@ -36,6 +36,8 @@ navigation:
         url: "/battlemaps/view"
       - title: "Avrae Tokens Manager"
         url: "/battlemaps/token"
+      - title: "Avrae Combat Manager"
+        url: "/battlemaps/avrae-manager"
       - title: "Session Image Library"
         url: "/session-images"
       - title: "Session Map Editor"
