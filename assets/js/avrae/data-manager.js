@@ -224,7 +224,8 @@ export async function saveSessionToSupabase() {
             players: structured.players,
             npcs: structured.npcs,
             monsters: structured.monsters,
-            revealed_tiles: sessionState.revealed || []
+            revealed_tiles: sessionState.revealed || [],
+            effects: sessionState.effects || {}
         };
 
         if (!sessionId) {
@@ -322,7 +323,7 @@ async function loadSession(sessionId) {
         // Load the session
         const { data: row, error } = await supabase
             .from("avrae_sessions")
-            .select("id,name,map_config,players,npcs,monsters,revealed_tiles")
+            .select("id,name,map_config,players,npcs,monsters,revealed_tiles,effects")
             .eq("id", sessionId)
             .single();
 
@@ -346,6 +347,7 @@ async function loadSession(sessionId) {
         state.setSessionName(row.name);
         state.deserialize({
             revealed: row.revealed_tiles || [],
+            effects: row.effects || {},
             inputs: flatInputs
         });
 

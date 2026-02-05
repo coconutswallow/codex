@@ -361,6 +361,50 @@ function readNpcModalRows() {
 }
 
 /**
+ * Generate OTFBM effect command
+ */
+export function generateEffectCommand(effect) {
+    const { type, color, size, width, origin, target, persistent, caster } = effect;
+    let cmd = "!map ";
+
+    const layer = (type === "aura" || ["circle", "circletop", "square"].includes(type)) ? "-under" : "-over";
+
+    let effectPart = "";
+    switch (type) {
+        case "arrow":
+            effectPart = `arrow,${color},${origin},${target}`;
+            break;
+        case "circle":
+            effectPart = `circle,${size},${color},${origin}`;
+            break;
+        case "circletop":
+            effectPart = `circletop,${size},${color},${origin}`;
+            break;
+        case "cone":
+            effectPart = `cone,${size},${color},${origin},${target}`;
+            break;
+        case "line":
+            effectPart = `line,${size},${width},${color},${origin},${target}`;
+            break;
+        case "square":
+            effectPart = `square,${size},${color},${origin}`;
+            break;
+        case "aura":
+            // Aura uses circle syntax but persistent
+            effectPart = `circle,${size},${color},{targ}`;
+            break;
+    }
+
+    cmd += `${layer} ${effectPart}`;
+
+    if (persistent || type === "aura") {
+        cmd += ` -t ${caster}`;
+    }
+
+    return cmd;
+}
+
+/**
  * Batch command generation for monsters
  */
 export function batchCmd(type, action) {

@@ -125,6 +125,15 @@ window.openNpcModal = openNpcModal;
 window.openNpcTokenModal = openNpcTokenModal;
 window.openMonsterModal = openMonsterModal;
 window.openMonsterTokenModal = openMonsterTokenModal;
+window.openEffectModal = (type, index) => {
+    import('./modal-manager.js').then(m => m.openEffectModal(type, index));
+};
+window.saveEffect = () => {
+    import('./modal-manager.js').then(m => m.saveEffect());
+};
+window.closeModal = (id) => {
+    import('./modal-manager.js').then(m => m.closeModal(id));
+};
 
 // Supabase
 window.refreshTokensFromSupabase = refreshTokensFromSupabase;

@@ -368,3 +368,150 @@ export function closeModal(modalId) {
     const modal = $(modalId);
     if (modal) modal.style.display = "none";
 }
+
+/**
+ * Open effect creation modal
+ */
+export function openEffectModal(type, index) {
+    const rowId = `${type}_${index}`;
+    const sourceId = $("effect_source_id");
+    if (sourceId) sourceId.value = rowId;
+
+    const name = $(`${type}_name_${index}`)?.value || $(`${type}_full_${index}`)?.value || "Target";
+    const loc = $(`${type}_loc_${index}`)?.value || "A1";
+
+    // Pre-fill modal
+    const effect = state.getEffect(rowId);
+    if (effect) {
+        $("effect_type").value = effect.type;
+        $("effect_color").value = effect.color;
+        $("effect_size").value = effect.size;
+        $("effect_width").value = effect.width || 5;
+        $("effect_origin").value = effect.origin || loc;
+        $("effect_target").value = effect.target || "";
+        $("effect_persistent").checked = effect.persistent || false;
+    } else {
+        $("effect_type").value = "circle";
+        $("effect_color").value = "r";
+        $("effect_size").value = 15;
+        $("effect_width").value = 5;
+        $("effect_origin").value = loc;
+        $("effect_target").value = "";
+        $("effect_persistent").checked = false;
+    }
+
+    // Modal behavior based on type
+    const updateUI = () => {
+        const typeVal = $("effect_type").value;
+        $("line_width_wrap").style.display = (typeVal === "line") ? "block" : "none";
+        $("effect_target_wrap").style.display = (["arrow", "cone", "line", "square"].includes(typeVal)) ? "block" : "none";
+
+        // Auras are persistent by default
+        if (typeVal === "aura") {
+            $("effect_persistent").checked = true;
+        }
+
+        updateEffectPreview(rowId);
+    };
+
+    $("effect_type").onchange = updateUI;
+    $("effect_color").onchange = updateUI;
+    $("effect_size").oninput = updateUI;
+    $("effect_width").oninput = updateUI;
+    $("effect_origin").oninput = updateUI;
+    $("effect_target").oninput = updateUI;
+    $("effect_persistent").onchange = updateUI;
+
+    updateUI();
+    $("effectModal").style.display = "flex";
+}
+
+/**
+ * Update the command preview in the modal
+ */
+function updateEffectPreview(rowId) {
+    import('./command-generator.js').then(m => {
+        const effect = {
+            type: $("effect_type").value,
+            color: $("effect_color").value,
+            size: $("effect_size").value,
+            width: $("effect_width").value,
+            origin: $("effect_origin").value,
+            target: $("effect_target").value,
+            persistent: $("effect_persistent").checked,
+            caster: $(`${rowId.split('_')[0]}_name_${rowId.split('_')[1]}`)?.value || "caster"
+        };
+        const cmd = m.generateEffectCommand(effect);
+        const preview = $("effect-command-preview");
+        if (preview) preview.innerText = cmd;
+    });
+}
+
+/**
+ * Save effect to state and update UI
+ */
+export function saveEffect() {
+    const rowId = $("effect_source_id").value;
+    if (!rowId) return;
+
+    const type = $("effect_type").value;
+    const color = $("effect_color").value;
+    const size = $("effect_size").value;
+    const width = $("effect_width").value;
+    const origin = $("effect_origin").value;
+    const target = $("effect_target").value;
+    const persistent = $("effect_persistent").checked;
+
+    const parts = rowId.split('_');
+    const caster = $(`${parts[0]}_name_${parts[1]}`)?.value || "caster";
+
+    const effect = { type, color, size, width, origin, target, persistent, caster };
+    state.setEffect(rowId, effect);
+
+    // Update button color
+    const nameInput = document.getElementById(`${parts[0]}_name_${parts[1]}`);
+    if (nameInput) {
+        const row = nameInput.closest('.grid-row');
+        const sBtn = row.querySelector('.spell-btn');
+        if (sBtn) sBtn.style.background = "var(--accent)";
+    }
+
+    // Copy command to clipboard
+    import('./command-generator.js').then(m => {
+        const cmd = m.generateEffectCommand(effect);
+        navigator.clipboard.writeText(cmd);
+        import('./ui-helpers.js').then(uh => uh.uiFlash($("effect-command-preview"), true));
+    });
+
+    closeModal('effectModal');
+
+    // Trigger map redraw
+    import('./canvas-manager.js').then(m => m.drawMap());
+}
+
+/**
+ * Remove effect from a combatant
+ */
+export function removeEffect(id) {
+    const effect = state.getEffect(id);
+    if (!effect) return;
+
+    const parts = id.split('_');
+    const caster = effect.caster || "caster";
+    const layer = (effect.type === "aura" || ["circle", "circletop", "square"].includes(effect.type)) ? "-under" : "-over";
+
+    // Generate remove command
+    const cmd = `!map ${layer} none -t ${caster}`;
+    navigator.clipboard.writeText(cmd);
+
+    state.setEffect(id, null);
+
+    const nameInput = document.getElementById(`${parts[0]}_name_${parts[1]}`);
+    if (nameInput) {
+        const row = nameInput.closest('.grid-row');
+        const sBtn = row.querySelector('.spell-btn');
+        if (sBtn) sBtn.style.background = "";
+    }
+
+    import('./canvas-manager.js').then(m => m.drawMap());
+}

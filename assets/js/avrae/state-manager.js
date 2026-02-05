@@ -12,6 +12,24 @@ class StateManager {
         this.revealedTiles = new Set(); // Set of "x,y" strings
         this.currentTurnTiles = new Set(); // Temporary visibility for current positions
         this.mapImage = null;          // Loaded map image
+        this.effects = {};             // { "player_1": { type, color, size, loc, persistent, ... } }
+    }
+
+    // Effect management
+    setEffect(id, effect) {
+        if (!effect) {
+            delete this.effects[id];
+        } else {
+            this.effects[id] = effect;
+        }
+    }
+
+    getEffect(id) {
+        return this.effects[id];
+    }
+
+    getAllEffects() {
+        return this.effects;
     }
 
     // Token data
@@ -99,6 +117,7 @@ class StateManager {
     serialize() {
         const state = {
             revealed: Array.from(this.revealedTiles),
+            effects: this.effects,
             inputs: {}
         };
 
@@ -113,6 +132,7 @@ class StateManager {
 
     deserialize(state) {
         this.revealedTiles = new Set(state?.revealed || []);
+        this.effects = state?.effects || {};
 
         const inputs = state?.inputs || {};
         Object.keys(inputs).forEach((id) => {
@@ -130,6 +150,7 @@ class StateManager {
         this.currentSessionId = null;
         this.currentSessionName = null;
         this.revealedTiles.clear();
+        this.effects = {};
     }
 }
 

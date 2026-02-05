@@ -173,7 +173,7 @@
 
 .grid-row {
     display: grid;
-    grid-template-columns: 25px 1fr 1.5fr 1fr 0.6fr 40px;
+    grid-template-columns: 25px 1fr 1.5fr 1fr 0.6fr 90px;
     gap: 8px;
     margin-bottom: 6px;
     padding: 8px;
@@ -186,11 +186,11 @@
 
 .npc-row,
 .monster-row {
-    grid-template-columns: 25px 1fr 1.5fr 1fr 0.6fr 40px;
+    grid-template-columns: 25px 1fr 1.5fr 1fr 0.6fr 90px;
 }
 
 .player-row {
-    grid-template-columns: 25px 1fr 1.5fr 1fr 40px;
+    grid-template-columns: 25px 0.8fr 1.5fr 0.8fr 90px;
     border-left-color: var(--accent);
 }
 
@@ -287,6 +287,7 @@ label {
     align-items: center;
     justify-content: center;
     height: 100%;
+    gap: 5px;
 }
 
 .move-btn {

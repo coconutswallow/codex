@@ -28,7 +28,8 @@ extra_css: ["/assets/css/avrae-manager.css"]
         <h2 style="color: var(--accent);">Login Required</h2>
         <p>You must be logged in with Discord to access the Avrae Battle Manager.</p>
         <p style="font-size: 0.9em; color: var(--blur); max-width: 400px; margin: 10px 0 20px 0;">This tool helps
-            DMs manage tokens, FOW, and map settings for Avrae PBP games. Generates !move commands, calculates Fog-of-War based on visibility.  
+            DMs manage tokens, FOW, and map settings for Avrae PBP games. Generates !move commands, calculates
+            Fog-of-War based on visibility.
             Login to save sessions and access your tokens.
         </p>
         <button onclick="window.authManager.login()" class="action-btn"
@@ -382,6 +383,84 @@ extra_css: ["/assets/css/avrae-manager.css"]
             <div class="modal-footer">
                 <button class="close-btn"
                     onclick="document.getElementById('monsterTokenModal').style.display='none'">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Effect Modal (Positioned Left) -->
+    <div id="effectModal" class="modal" style="justify-content: flex-start; padding-left: 20px;">
+        <div class="modal-content" style="width: 400px; margin: 0;">
+            <div class="modal-header">Create Map Effect</div>
+
+            <input type="hidden" id="effect_source_id">
+
+            <div style="display: flex; flex-direction: column; gap: 12px; padding: 10px 0;">
+                <div>
+                    <label>Effect Type</label>
+                    <select id="effect_type" class="config-select"
+                        style="width: 100%; background: var(--input-bg); color: white; border: 1px solid #222; padding: 6px; border-radius: 3px;">
+                        <option value="arrow">Arrow (Line with direction)</option>
+                        <option value="circle">Circle (Center anchor)</option>
+                        <option value="circletop">Circle (Top-left anchor)</option>
+                        <option value="cone">Cone</option>
+                        <option value="line">Line (Length/Width)</option>
+                        <option value="square">Square</option>
+                        <option value="aura">Aura (Persistent Circle)</option>
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div>
+                        <label>Color</label>
+                        <select id="effect_color"
+                            style="width: 100%; background: var(--input-bg); color: white; border: 1px solid #222; padding: 6px; border-radius: 3px;">
+                            <option value="r">Red</option>
+                            <option value="b">Blue</option>
+                            <option value="g">Green</option>
+                            <option value="y">Yellow</option>
+                            <option value="white">White</option>
+                            <option value="black">Black</option>
+                            <option value="p">Purple</option>
+                            <option value="o">Orange</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Size / Radius</label>
+                        <input type="number" id="effect_size" value="15">
+                    </div>
+                </div>
+
+                <div id="line_width_wrap" style="display: none;">
+                    <label>Line Width</label>
+                    <input type="number" id="effect_width" value="5">
+                </div>
+
+                <div>
+                    <label>Origin / Center</label>
+                    <input type="text" id="effect_origin" placeholder="e.g., A1">
+                </div>
+
+                <div id="effect_target_wrap">
+                    <label>Target / Aim</label>
+                    <input type="text" id="effect_target" placeholder="e.g., E5">
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="effect_persistent" style="margin: 0;">
+                    <label style="margin: 0; text-transform: none; color: white;">Persistent (Attaches to
+                        combatant)</label>
+                </div>
+
+                <div style="margin-top: 10px;">
+                    <label style="font-size: 0.8em; color: var(--blur);">Command Preview</label>
+                    <div class="output-box" id="effect-command-preview" style="font-size: 0.7em; min-height: 40px;">!map
+                        ...</div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="close-btn" onclick="closeModal('effectModal')">Cancel</button>
+                <button class="action-btn" onclick="saveEffect()">Save Effect</button>
             </div>
         </div>
     </div>

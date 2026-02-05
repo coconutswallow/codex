@@ -232,6 +232,30 @@ function createActionButton(type, index, onLocationJump) {
     const actionBtn = document.createElement("button");
     actionBtn.className = "move-btn";
 
+    const spellBtn = document.createElement("button");
+    spellBtn.className = "move-btn spell-btn";
+    spellBtn.innerText = "✨";
+    spellBtn.title = "Manage Effects";
+
+    const rowId = `${type}_${index}`;
+    const existingEffect = import('./state-manager.js').then(m => {
+        if (m.state.getEffect(rowId)) {
+            spellBtn.style.background = "var(--accent)";
+        }
+    });
+
+    spellBtn.onclick = () => {
+        import('./state-manager.js').then(sm => {
+            if (sm.state.getEffect(rowId)) {
+                if (confirm("Remove active effect?")) {
+                    import('./modal-manager.js').then(m => m.removeEffect(rowId));
+                }
+            } else {
+                import('./modal-manager.js').then(m => m.openEffectModal(type, index));
+            }
+        });
+    };
+
     if (type === "player" || type === "npc" || type === "monster") {
         actionBtn.innerText = "➜"; // Arrow icon
         actionBtn.title = `Copy ${type} move command`;
@@ -269,5 +293,6 @@ function createActionButton(type, index, onLocationJump) {
     }
 
     btnWrap.appendChild(actionBtn);
+    btnWrap.appendChild(spellBtn);
     return btnWrap;
 }

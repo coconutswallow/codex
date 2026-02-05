@@ -164,22 +164,17 @@ export function drawMap() {
 
         // 4. Draw Fog of War (after grid, before labels)
         const isFowEnabled = $("mapFow")?.checked;
-        console.log("[canvas-manager] FOW enabled:", isFowEnabled);
-
         if (isFowEnabled) {
             ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
             ctx.globalAlpha = 1.0;
 
-            let darkTileCount = 0;
             for (let y = 0; y < h; y++) {
                 for (let x = 0; x < w; x++) {
                     if (!state.isRevealed(x, y) && !state.isCurrentlyVisible(x, y)) {
                         ctx.fillRect(x * cell + GUTTER_W, y * cell + GUTTER_H, cell, cell);
-                        darkTileCount++;
                     }
                 }
             }
-            console.log("[canvas-manager] Drew", darkTileCount, "dark tiles out of", w * h, "total");
         }
 
         // 5. Draw labels (after FOW so they're always visible)
@@ -202,8 +197,11 @@ export function drawMap() {
             ctx.fillText(label, GUTTER_W / 2, y * cell + GUTTER_H + (cell / 2));
         }
 
-        // 6. Draw player markers (always on top)
-        drawPlayerMarkers(ctx, cell);
+        // 6. Draw Effects (below tokens)
+        drawEffects(ctx, cell);
+
+        // 7. Draw combatant markers (always on top)
+        drawCombatantMarkers(ctx, cell);
         ctx.globalAlpha = 1.0;
     } catch (error) {
         console.error("[canvas-manager] Error in drawMap:", error);
@@ -211,57 +209,161 @@ export function drawMap() {
 }
 
 /**
- * Draw player markers
+ * Draw all active effects on the map
  */
-function drawPlayerMarkers(ctx, cell) {
-    const players = getPlayerEntities();
-    if (players.length === 0) return;
-
+function drawEffects(ctx, cell) {
+    const effects = state.getAllEffects();
     ctx.save();
-    ctx.globalAlpha = 0.9;
-    ctx.fillStyle = "#5865f2";
+    ctx.globalAlpha = 0.3;
 
-    for (const p of players) {
-        const cx = (p.loc.x + 0.5) * cell + GUTTER_W;
-        const cy = (p.loc.y + 0.5) * cell + GUTTER_H;
+    const colorMap = {
+        'r': '#f00', 'b': '#00f', 'g': '#0f0', 'y': '#ff0',
+        'white': '#fff', 'black': '#000', 'p': '#800080', 'o': '#ffa500'
+    };
 
-        ctx.beginPath();
-        ctx.arc(cx, cy, Math.max(6, cell * 0.4), 0, Math.PI * 2);
-        ctx.fill();
+    for (const rowId in effects) {
+        const ef = effects[rowId];
+        const color = colorMap[ef.color] || ef.color;
 
-        if (p.name) {
-            ctx.fillStyle = "#fff";
-            ctx.font = `bold ${Math.max(9, cell * 0.4)}px sans-serif`;
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            ctx.fillText(p.name, cx, cy);
-            ctx.fillStyle = "#5865f2";
+        // Auras move with the token, others stay where they were cast
+        let originStr = ef.origin;
+        if (ef.type === 'aura') {
+            const parts = rowId.split('_');
+            const currentLoc = $(`${parts[0]}_loc_${parts[1]}`)?.value?.trim();
+            if (currentLoc) originStr = currentLoc;
+        }
+
+        const origin = parseXY(originStr);
+        if (!origin) continue;
+
+        const ox = (origin.x + 0.5) * cell + GUTTER_W;
+        const oy = (origin.y + 0.5) * cell + GUTTER_H;
+        ctx.fillStyle = color;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+
+        switch (ef.type) {
+            case "circle":
+            case "aura":
+                const radius = (ef.size / 5) * cell;
+                ctx.beginPath();
+                ctx.arc(ox, oy, radius, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+            case "circletop":
+                const rt = (ef.size / 5) * cell;
+                const otx = origin.x * cell + GUTTER_W;
+                const oty = origin.y * cell + GUTTER_H;
+                ctx.beginPath();
+                ctx.arc(otx, oty, rt, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+            case "square":
+                const s = (ef.size / 5) * cell;
+                ctx.fillRect(ox - s / 2, oy - s / 2, s, s);
+                break;
+            case "cone":
+            case "line":
+            case "arrow":
+                const target = parseXY(ef.target);
+                if (!target) break;
+                const tx = (target.x + 0.5) * cell + GUTTER_W;
+                const ty = (target.y + 0.5) * cell + GUTTER_H;
+
+                if (ef.type === "line" || ef.type === "arrow") {
+                    ctx.beginPath();
+                    ctx.moveTo(ox, oy);
+                    ctx.lineTo(tx, ty);
+                    ctx.stroke();
+                    if (ef.type === "line") {
+                        const lw = (ef.width / 5) * cell;
+                        ctx.lineWidth = lw;
+                        ctx.stroke();
+                    }
+                } else if (ef.type === "cone") {
+                    const angle = Math.atan2(ty - oy, tx - ox);
+                    const length = (ef.size / 5) * cell;
+                    ctx.beginPath();
+                    ctx.moveTo(ox, oy);
+                    ctx.arc(ox, oy, length, angle - Math.PI / 6, angle + Math.PI / 6);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                break;
         }
     }
     ctx.restore();
 }
 
 /**
- * Get player entities
+ * Draw markers for all combatants
  */
-function getPlayerEntities() {
-    const players = [];
-    const playerRows = document.querySelectorAll(".player-row").length;
+function drawCombatantMarkers(ctx, cell) {
+    const list = getCombatantEntities();
+    if (list.length === 0) return;
 
-    for (let i = 1; i <= playerRows; i++) {
-        const nameEl = $(`player_name_${i}`);
-        const locEl = $(`player_loc_${i}`);
-        const name = nameEl?.value?.trim();
-        const locStr = locEl?.value?.trim();
+    ctx.save();
 
-        if (!name || !locStr) continue;
+    for (const c of list) {
+        const cx = (c.loc.x + 0.5) * cell + GUTTER_W;
+        const cy = (c.loc.y + 0.5) * cell + GUTTER_H;
+
+        // Color based on type
+        let color = "#5865f2"; // Player (Blurple)
+        if (c.type === "npc") color = "#fee75c"; // NPC (Yellow)
+        if (c.type === "monster") color = "#ed4245"; // Monster (Red)
+
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = color;
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, Math.max(6, cell * 0.4), 0, Math.PI * 2);
+        ctx.fill();
+
+        if (c.name) {
+            ctx.fillStyle = "#000"; // Contrast text for NPC (Yellow)
+            if (c.type !== "npc") ctx.fillStyle = "#fff";
+
+            ctx.font = `bold ${Math.max(9, cell * 0.4)}px sans-serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(c.name, cx, cy);
+        }
+    }
+    ctx.restore();
+}
+
+/**
+ * Get all entities (Players, NPCs, Monsters) from the UI
+ */
+function getCombatantEntities() {
+    const list = [];
+    // Select all combatant rows
+    const rows = document.querySelectorAll('.grid-row');
+
+    rows.forEach(row => {
+        const type = row.classList.contains('player-row') ? 'player' :
+            (row.classList.contains('npc-row') ? 'npc' : 'monster');
+
+        // Find the index from input IDs like player_name_1
+        const nameInput = row.querySelector(`input[id^="${type}_name_"]`);
+        if (!nameInput) return;
+
+        const parts = nameInput.id.split('_');
+        const idx = parts[parts.length - 1];
+
+        const name = nameInput.value?.trim();
+        const locStr = $(`${type}_loc_${idx}`)?.value?.trim();
+
+        if (!name || !locStr) return;
 
         const loc = parseXY(locStr);
         if (loc) {
-            players.push({ name, loc });
+            list.push({ name, loc, type });
         }
-    }
-    return players;
+    });
+
+    return list;
 }
 
 /**
