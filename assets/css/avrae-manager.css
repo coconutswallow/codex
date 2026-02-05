@@ -280,6 +280,11 @@ label {
     cursor: pointer;
     word-break: break-all;
     position: relative;
+    transition: background 0.2s;
+}
+
+.output-box:hover {
+    background: #111;
 }
 
 .btn-group {

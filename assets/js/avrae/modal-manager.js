@@ -422,7 +422,38 @@ export function openEffectModal(type, index) {
     $("effect_target").oninput = updateUI;
     $("effect_persistent").onchange = updateUI;
 
+    // Handle combatant selection dropdowns
+    const originSelect = $("effect_origin_select");
+    const targetSelect = $("effect_target_select");
+
+    populateCombatantSelect(originSelect);
+    populateCombatantSelect(targetSelect);
+
+    originSelect.onchange = (e) => {
+        if (e.target.value) {
+            $("effect_origin").value = e.target.value;
+            updateUI();
+        }
+    };
+
+    targetSelect.onchange = (e) => {
+        if (e.target.value) {
+            $("effect_target").value = e.target.value;
+            updateUI();
+        }
+    };
+
     updateUI();
+
+    const preview = $("effect-command-preview");
+    if (preview) {
+        preview.title = "Click to copy command";
+        preview.onclick = () => {
+            navigator.clipboard.writeText(preview.innerText);
+            import('./ui-helpers.js').then(({ uiFlash }) => uiFlash(preview, true));
+        };
+    }
+
     $("effectModal").style.display = "flex";
 }
 
@@ -487,6 +518,47 @@ export function saveEffect() {
 
     // Trigger map redraw
     import('./canvas-manager.js').then(m => m.drawMap());
+}
+
+/**
+ * Populate a select element with current combatants and their locations
+ */
+function populateCombatantSelect(select) {
+    if (!select) return;
+
+    // Clear existing options except the first one
+    while (select.options.length > 1) {
+        select.remove(1);
+    }
+
+    const combatants = [];
+    ['player', 'npc', 'monster'].forEach(type => {
+        const rows = document.querySelectorAll(`.${type}-row`);
+        rows.forEach(row => {
+            const nameInput = row.querySelector(`input[id^="${type}_name_"]`);
+            if (!nameInput) return;
+
+            const parts = nameInput.id.split('_');
+            const idx = parts[parts.length - 1];
+
+            const name = nameInput.value?.trim();
+            const loc = document.getElementById(`${type}_loc_${idx}`)?.value?.trim();
+
+            if (name && loc) {
+                combatants.push({ name, loc });
+            }
+        });
+    });
+
+    // Sort by name
+    combatants.sort((a, b) => a.name.localeCompare(b.name));
+
+    combatants.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.loc;
+        opt.text = `${c.name} (${c.loc})`;
+        select.add(opt);
+    });
 }
 
 /**

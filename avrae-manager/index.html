@@ -437,12 +437,24 @@ extra_css: ["/assets/css/avrae-manager.css"]
 
                 <div>
                     <label>Origin / Center</label>
-                    <input type="text" id="effect_origin" placeholder="e.g., A1">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="effect_origin" placeholder="e.g., A1" style="flex: 1;">
+                        <select id="effect_origin_select"
+                            style="width: 120px; background: var(--input-bg); color: white; border: 1px solid #222; padding: 6px; border-radius: 3px; font-size: 0.8em;">
+                            <option value="">-- Select --</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div id="effect_target_wrap">
                     <label>Target / Aim</label>
-                    <input type="text" id="effect_target" placeholder="e.g., E5">
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="effect_target" placeholder="e.g., E5" style="flex: 1;">
+                        <select id="effect_target_select"
+                            style="width: 120px; background: var(--input-bg); color: white; border: 1px solid #222; padding: 6px; border-radius: 3px; font-size: 0.8em;">
+                            <option value="">-- Select --</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 8px;">
