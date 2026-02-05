@@ -10,8 +10,8 @@ import { $ } from './ui-helpers.js';
 import { attachAutocomplete } from './autocomplete.js';
 
 const DEFAULT_PLAYER_ROWS = 4;
-const DEFAULT_NPC_ROWS = 6;
-const DEFAULT_MONSTER_ROWS = 10;
+const DEFAULT_NPC_ROWS = 4;
+const DEFAULT_MONSTER_ROWS = 4;
 
 /**
  * Create a single row for player/NPC/monster
@@ -28,28 +28,26 @@ export function makeRow({ type, index, onLocationJump }) {
         type,
         index,
         field: "name",
-        label: type === "player" ? "Short Name" : (type === "npc" ? "Short" : "Monster"),
+        label: type === "player" ? "Short Name" : (type === "npc" ? "Short" : "Short"),
         placeholder: type === "player" ? "e.g., PP" : (type === "npc" ? "e.g., TS" : "e.g., GO1"),
         inputType: "text"
     });
-
-    // Autocomplete for monsters
-    if (type === "monster") {
-        const input = nameWrap.querySelector("input");
-        attachAutocomplete(input);
-    }
 
     // Full name / Qty field
     const fullWrap = createField({
         type,
         index,
         field: "full",
-        label: type === "player" ? "Name" : (type === "npc" ? "Name" : "Qty"),
-        placeholder: type === "player" ? "e.g., Peter Pan" : (type === "npc" ? "e.g., City Guard" : "1"),
-        inputType: type === "monster" ? "number" : "text",
-        defaultValue: type === "monster" ? "1" : undefined,
-        min: type === "monster" ? "1" : undefined
+        label: type === "player" ? "Name" : (type === "npc" ? "Name" : "Name"),
+        placeholder: type === "player" ? "e.g., Peter Pan" : (type === "npc" ? "e.g., City Guard" : "e.g., Goblin"),
+        inputType: "text"
     });
+
+    // Autocomplete for monsters
+    if (type === "monster") {
+        const input = fullWrap.querySelector("input");
+        attachAutocomplete(input);
+    }
 
     // Location field
     const locWrap = createField({
@@ -87,22 +85,17 @@ export function makeRow({ type, index, onLocationJump }) {
 
     // Assemble row based on type
     row.appendChild(chk);
+    row.appendChild(nameWrap);
+    row.appendChild(fullWrap);
 
     if (type === "player") {
-        row.appendChild(nameWrap);
-        row.appendChild(fullWrap);
         row.appendChild(locWrap);
         row.appendChild(btnWrap);
-    } else if (type === "npc") {
-        row.appendChild(nameWrap);
-        row.appendChild(fullWrap);
-        row.appendChild(extraWrap);
+    } else if (type === "npc" || type === "monster") {
         row.appendChild(locWrap);
         row.appendChild(btnWrap);
     } else {
-        // monster
-        row.appendChild(nameWrap);
-        row.appendChild(fullWrap);
+        // Fallback or future types
         row.appendChild(locWrap);
         row.appendChild(extraWrap);
         row.appendChild(btnWrap);
@@ -142,17 +135,17 @@ export function initLists(onLocationJump) {
 }
 
 /**
- * Add a new player row dynamically
+ * Add a new row dynamically
  */
-export function addPlayerRow(onLocationJump) {
-    const list = $("player-list");
+export function addRow(type, onLocationJump) {
+    const list = $(`${type}-list`);
     if (!list) return;
 
     // Determine next index
-    const existing = list.querySelectorAll(".player-row").length;
+    const existing = list.querySelectorAll(`.${type}-row`).length;
     const nextIdx = existing + 1;
 
-    list.appendChild(makeRow({ type: "player", index: nextIdx, onLocationJump }));
+    list.appendChild(makeRow({ type, index: nextIdx, onLocationJump }));
 }
 
 /**
@@ -239,20 +232,29 @@ function createActionButton(type, index, onLocationJump) {
     const actionBtn = document.createElement("button");
     actionBtn.className = "move-btn";
 
-    if (type === "player") {
+    if (type === "player" || type === "npc" || type === "monster") {
         actionBtn.innerText = "➜"; // Arrow icon
-        actionBtn.title = "Copy move command";
+        actionBtn.title = `Copy ${type} move command`;
         actionBtn.onclick = () => {
-            const fullName = $(`player_full_${index}`)?.value?.trim();
-            const loc = $(`player_loc_${index}`)?.value?.trim();
-            if (fullName && loc) {
-                const cmd = `!map -t "${fullName}" -move ${loc}`;
+            const shortName = $(`${type}_name_${index}`)?.value?.trim();
+            const fullName = $(`${type}_full_${index}`)?.value?.trim();
+            const loc = $(`${type}_loc_${index}`)?.value?.trim();
+
+            if (loc) {
+                let target = (type === "player") ? fullName : shortName;
+                if (!target) return alert(`Missing ${type === "player" ? "Full Name" : "Short Name"}`);
+
+                let color = "c";
+                if (type === "npc") color = "y";
+                if (type === "monster") color = "r";
+
+                const cmd = `!map -t ${target} -move ${loc} -color ${color}`;
                 navigator.clipboard.writeText(cmd);
                 import('./ui-helpers.js').then(({ uiFlash }) => {
                     uiFlash(actionBtn, true);
                 });
             } else {
-                alert("Please enter Full Name and Location.");
+                alert("Please enter a Location.");
             }
         };
     } else {

@@ -1,5 +1,5 @@
 # AI Context Files
-context/
+.context/
 
 # Agent Configs
 .agent/
@@ -15,3 +15,13 @@ _site/
 
 #back-end tools
 tools/
+
+#testing tools
+node_modules/
+tests/
+vite.config.js
+package-lock.json
+package.json
+
+
+

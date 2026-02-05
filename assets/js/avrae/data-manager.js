@@ -47,7 +47,7 @@ export async function refreshTokensFromSupabase() {
 
     } catch (e) {
         console.error(`[${MODULE}] refreshTokensFromSupabase failed`, e);
-        await logError(MODULE, `refreshTokensFromSupabase failed: ${e.message}`);
+        await logError(MODULE, `refreshTokensFromSupabase failed: ${e.message}`, 'error');
         alert("Failed to load tokens from Supabase.");
     }
 }
@@ -199,11 +199,20 @@ export async function saveSessionToSupabase() {
             return alert("You must be logged in.");
         }
 
-        const name = prompt("Session name:", "Avrae Session");
+        const currentName = state.getSessionName() || "Avrae Session";
+        const name = prompt("Session name:", currentName);
         if (!name) return;
 
         const sessionState = state.serialize();
-        const sessionId = state.getSessionId();
+        let sessionId = state.getSessionId();
+
+        // If name changed and we have a sessionId, ask if we should create a new session
+        if (sessionId && name !== currentName) {
+            const saveAsNew = confirm(`You changed the session name to "${name}". \n\nSave as a NEW session? \n(Cancel = Overwrite "${currentName}" with the new name)`);
+            if (saveAsNew) {
+                sessionId = null; // Force insert instead of update
+            }
+        }
 
         // Transform to structured format
         const structured = transformToStructured(sessionState.inputs);
@@ -229,6 +238,7 @@ export async function saveSessionToSupabase() {
             if (error) throw error;
 
             state.setSessionId(data.id);
+            state.setSessionName(name);
             updateFileStatus(`Session: Saved (${name})`);
         } else {
             // Update existing session
@@ -241,12 +251,13 @@ export async function saveSessionToSupabase() {
                 .eq("id", sessionId);
 
             if (error) throw error;
+            state.setSessionName(name);
             updateFileStatus(`Session: Updated (${name})`);
         }
 
     } catch (e) {
         console.error(`[${MODULE}] saveSessionToSupabase failed`, e);
-        await logError(MODULE, `saveSessionToSupabase failed: ${e.message}`);
+        await logError(MODULE, `saveSessionToSupabase failed: ${e.message}`, 'error');
         alert("Failed to save session.");
     }
 }
@@ -332,6 +343,7 @@ async function loadSession(sessionId) {
 
         // Deserialize into state
         state.setSessionId(row.id);
+        state.setSessionName(row.name);
         state.deserialize({
             revealed: row.revealed_tiles || [],
             inputs: flatInputs
@@ -380,7 +392,7 @@ export async function searchBattlemaps(query) {
 
     } catch (e) {
         console.error(`[${MODULE}] searchBattlemaps failed`, e);
-        await logError(MODULE, `searchBattlemaps failed: ${e.message}`);
+        await logError(MODULE, `searchBattlemaps failed: ${e.message}`, 'error');
         return [];
     }
 }

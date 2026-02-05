@@ -5,7 +5,7 @@
 
 import { $ } from './ui-helpers.js';
 import { state } from './state-manager.js';
-import { searchBattlemaps } from './supabase-service.js';
+import { searchBattlemaps } from './data-manager.js';
 import { loadImage, drawMap } from './canvas-manager.js';
 import { updateFowOutputs } from './command-generator.js';
 

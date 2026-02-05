@@ -8,6 +8,7 @@ class StateManager {
         this.tokenData = {};           // { "goblin": {token, size, display}, ... }
         this.monsterNames = [];        // ["Goblin", "Orc", ...] for autocomplete
         this.currentSessionId = null;  // Current session ID from Supabase
+        this.currentSessionName = null; // Current session Name from Supabase
         this.revealedTiles = new Set(); // Set of "x,y" strings
         this.currentTurnTiles = new Set(); // Temporary visibility for current positions
         this.mapImage = null;          // Loaded map image
@@ -42,6 +43,14 @@ class StateManager {
 
     getSessionId() {
         return this.currentSessionId;
+    }
+
+    setSessionName(name) {
+        this.currentSessionName = name;
+    }
+
+    getSessionName() {
+        return this.currentSessionName;
     }
 
     // Fog of War
@@ -119,6 +128,7 @@ class StateManager {
 
     reset() {
         this.currentSessionId = null;
+        this.currentSessionName = null;
         this.revealedTiles.clear();
     }
 }

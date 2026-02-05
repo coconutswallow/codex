@@ -12,6 +12,7 @@ class AuthManager {
     constructor() {
         this.client = supabase;
         this.user = null;
+        this._sessionLock = false; // Prevents redundant handleSession calls
     }
 
     /**
@@ -27,6 +28,7 @@ class AuthManager {
                 onUserReady(null);
                 return;
             }
+            // getSession is often redundant with onAuthStateChange firing INITIAL_SESSION
             this.handleSession(data.session, onUserReady);
         });
 
@@ -53,24 +55,33 @@ class AuthManager {
             return;
         }
 
-        // 1. Check the DB for 'last_seen'
-        const isFresh = await this.checkSessionFreshness(session.user.id);
+        // Prevent redundant calls during same tick/page load
+        if (this._sessionLock) return;
+        this._sessionLock = true;
 
-        if (isFresh) {
-            // DB is fresh (sync happened < 24h ago). We are good.
-            this.user = session.user;
-            if (callback) callback(this.user);
-        } else {
-            // DB is stale. We must Sync to update last_seen and basic info.
-            console.log("Auth: Session stale or missing. Syncing...");
-            try {
-                await this.syncDiscordToDB(session);
+        try {
+            // 1. Check the DB for 'last_seen'
+            const isFresh = await this.checkSessionFreshness(session.user.id);
+
+            if (isFresh) {
+                // DB is fresh (sync happened < 24h ago). We are good.
                 this.user = session.user;
                 if (callback) callback(this.user);
-            } catch (error) {
-                await logError('auth-manager', `Sync failed: ${error.message || error}`);
-                await this.logout();
+            } else {
+                // DB is stale. We must Sync to update last_seen and basic info.
+                console.log("Auth: Session stale or missing. Syncing...");
+                try {
+                    await this.syncDiscordToDB(session);
+                    this.user = session.user;
+                    if (callback) callback(this.user);
+                } catch (error) {
+                    await logError('auth-manager', `Sync failed: ${error.message || error}`, 'critical');
+                    await this.logout();
+                }
             }
+        } finally {
+            // Release lock after handling
+            this._sessionLock = false;
         }
     }
 
@@ -90,7 +101,9 @@ class AuthManager {
             if (error) {
                 // PGRST116 is "no rows returned", which is expected for new users
                 if (error.code !== 'PGRST116') {
-                    logError('auth-manager', `Freshness check query failed: ${error.message}`);
+                    // Treat network errors or specific DB failures as warnings
+                    const level = error.message?.includes('fetch') ? 'warning' : 'error';
+                    logError('auth-manager', `Freshness check query failed: ${error.message}`, level);
                 }
                 return false;
             }
@@ -103,7 +116,7 @@ class AuthManager {
 
             return ageInMs < MAX_SESSION_AGE;
         } catch (e) {
-            logError('auth-manager', `Critical failure in freshness check: ${e.message}`);
+            logError('auth-manager', `Critical failure in freshness check: ${e.message}`, 'critical');
             return false; // Fail safe: assume stale
         }
     }
@@ -151,7 +164,7 @@ class AuthManager {
             });
             if (error) throw error;
         } catch (error) {
-            logError('auth-manager', `Login flow failed: ${error.message}`);
+            logError('auth-manager', `Login flow failed: ${error.message}`, 'error');
             alert('Failed to initiate login. Please try again.');
         }
     }
@@ -165,7 +178,7 @@ class AuthManager {
             if (error) throw error;
             window.location.reload();
         } catch (error) {
-            logError('auth-manager', `Logout failed: ${error.message}`);
+            logError('auth-manager', `Logout failed: ${error.message}`, 'warning');
             // Force reload anyway to clear state if possible
             window.location.reload();
         }

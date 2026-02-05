@@ -165,15 +165,23 @@ export function updateFowOutputs() {
         }
     }
 
-    // Build Map Setup Command
-    const mapSetup = $("setup-cmd-out");
-    if (mapSetup) {
-        mapSetup.innerText = generateMapSetupCmd();
+    // Build Map Setup Commands
+    const initSetup = $("init-setup-out");
+    const mapSetup = $("map-setup-out");
+
+    if (initSetup && mapSetup) {
+        const url = $("mapImgUrl")?.value?.trim() || "URL_HERE";
+        const w = $("mapW")?.value || "20";
+        const h = $("mapH")?.value || "20";
+        const ppc = $("mapPPC")?.value || "30";
+
+        initSetup.innerText = `!multiline\n!i begin\n!i add 50 DM -p`;
+        mapSetup.innerText = `!map -bg "${url}" -mapsize ${w}x${h} -options dc${ppc} -t DM`;
     }
 }
 
 /**
- * Generate the master map setup command
+ * Generate the master map setup command (Legacy/Internal helper)
  */
 export function generateMapSetupCmd() {
     const url = $("mapImgUrl")?.value?.trim() || "URL_HERE";
@@ -181,11 +189,7 @@ export function generateMapSetupCmd() {
     const h = $("mapH")?.value || "20";
     const ppc = $("mapPPC")?.value || "30";
 
-    return `!multiline
-!i begin
-!i add 50 DM -p
-
-!map -bg "${url}" -mapsize ${w}x${h} -options dc${ppc} -t DM`;
+    return `!multiline\n!i begin\n!i add 50 DM -p\n\n!map -bg "${url}" -mapsize ${w}x${h} -options dc${ppc} -t DM`;
 }
 
 /**
@@ -259,8 +263,11 @@ export function generateTokenCommands() {
             continue;
         }
 
-        const locPart = loc ? ` -loc ${loc}` : "";
-        lines.push(`!map -token add "${full}" "${tok}" -size ${size}${locPart}`);
+        const sizeMap = { "M": "medium", "L": "large", "S": "small", "H": "huge", "G": "gargantuan" };
+        const fullSize = sizeMap[size?.toUpperCase()] || size || "medium";
+
+        const locPart = loc ? ` -move ${loc}` : "";
+        lines.push(`!map -t "${full}" -token ${tok} -size ${fullSize} -color c${locPart}`);
     }
 
     $("tokenModal").style.display = "none";
@@ -268,20 +275,27 @@ export function generateTokenCommands() {
 }
 
 /**
- * Generate NPC add commands
+ * Update NPC add command output box
  */
-export function generateNpcAddCmds() {
+export function updateNpcAddCmd() {
     const npcs = readNpcModalRows();
-    if (!npcs.length) return alert("No NPCs to add.");
+    const out = $("npc-add-out");
+    if (!out) return;
 
-    const lines = [];
-    for (const n of npcs) {
-        const locPart = n.loc ? ` -p ${n.loc}` : "";
-        lines.push(`!i add 0 "${n.name}" -p ${n.ac} -hp ${n.hp} -name "${n.short}"${locPart}`);
+    if (!npcs.length) {
+        out.innerText = "# No NPCs selected or configured";
+        return;
     }
 
-    $("npcModal").style.display = "none";
-    showInConsole(lines.join("\n"));
+    const lines = ["!multiline"];
+    for (const n of npcs) {
+        // Transform Full Name: replace _ with space and trim
+        const displayName = n.name.replace(/_/g, ' ').trim();
+        const note = `Name:${displayName} AC:${n.ac}| Location: ${n.loc || '??'}`;
+        lines.push(`!i add 0 ${n.short} -ac ${n.ac} -hp ${n.hp} -note "${note}"`);
+    }
+
+    out.innerText = lines.join("\n");
 }
 
 /**
@@ -293,8 +307,15 @@ export function generateNpcTokenCmds() {
 
     const lines = [];
     for (const n of npcs) {
-        const locPart = n.loc ? ` -loc ${n.loc}` : "";
-        lines.push(`!map -token add "${n.short}" "" -size M${locPart}`);
+        let tokenPart = "";
+        // If we have token data in state, try to find it
+        const tokenInfo = state.getTokenData()[n.name.toLowerCase()] || state.getTokenData()[n.short.toLowerCase()];
+        if (tokenInfo && tokenInfo.token) {
+            tokenPart = ` -token ${tokenInfo.token}`;
+        }
+
+        const locPart = n.loc ? ` -move ${n.loc}` : "";
+        lines.push(`!map -t ${n.short}${tokenPart} -size medium -color y${locPart}`);
     }
 
     $("npcModal").style.display = "none";
@@ -302,21 +323,38 @@ export function generateNpcTokenCmds() {
 }
 
 /**
- * Read NPC modal rows
+ * Read NPC modal rows or selected list rows
  */
 function readNpcModalRows() {
-    const rows = Array.from(document.querySelectorAll("#npcTableBody tr"));
+    const modalRows = Array.from(document.querySelectorAll("#npcTableBody tr"));
     const out = [];
 
-    for (const tr of rows) {
-        const short = tr.querySelector(".bm_npc_short")?.value?.trim();
-        const name = tr.querySelector(".bm_npc_name")?.value?.trim();
-        const ac = tr.querySelector(".bm_npc_ac")?.value?.trim();
-        const hp = tr.querySelector(".bm_npc_hp")?.value?.trim();
-        const loc = tr.querySelector(".bm_npc_loc")?.value?.trim();
+    // If modal is visible, read from it
+    if ($("npcModal").style.display === "flex") {
+        for (const tr of modalRows) {
+            const short = tr.querySelector(".bm_npc_short")?.value?.trim();
+            const name = tr.querySelector(".bm_npc_name")?.value?.trim();
+            const ac = tr.querySelector(".bm_npc_ac")?.value?.trim();
+            const hp = tr.querySelector(".bm_npc_hp")?.value?.trim();
+            const loc = tr.querySelector(".bm_npc_loc")?.value?.trim();
 
-        if (!short || !name) continue;
-        out.push({ short, name, ac, hp, loc });
+            if (!short || !name) continue;
+            out.push({ short, name, ac, hp, loc });
+        }
+    } else {
+        // Otherwise grab from checked rows in main list
+        const checked = Array.from(document.querySelectorAll('input[id^="npc_sel_"]:checked'));
+        for (const chk of checked) {
+            const idx = chk.id.split("_").pop();
+            const short = $(`npc_name_${idx}`)?.value?.trim();
+            const name = $(`npc_full_${idx}`)?.value?.trim();
+            const ac = $(`npc_extra_${idx}`)?.value?.trim();
+            const hp = $(`npc_hp_${idx}`)?.value?.trim() || "11";
+            const loc = $(`npc_loc_${idx}`)?.value?.trim();
+
+            if (!short || !name) continue;
+            out.push({ short, name, ac, hp, loc });
+        }
     }
 
     return out;
@@ -333,42 +371,65 @@ export function batchCmd(type, action) {
 
     for (const chk of sel) {
         const idx = chk.id.split("_").pop();
-        const name = $(`${type}_name_${idx}`)?.value?.trim();
-        const qty = parseInt($(`${type}_full_${idx}`)?.value || "1", 10);
+        const short = $(`${type}_name_${idx}`)?.value?.trim();
+        const name = $(`${type}_full_${idx}`)?.value?.trim();
         const loc = $(`${type}_loc_${idx}`)?.value?.trim();
-        const ac = $(`${type}_extra_${idx}`)?.value?.trim();
 
         if (!name) continue;
 
-        const tokenInfo = state.getTokenInfo(name);
-        if (!tokenInfo && action === "setup-token") {
-            lines.push(`# No token for ${name}`);
-            continue;
-        }
-
-        const locPart = loc ? ` -p ${loc}` : "";
-
         if (action === "setup-monster") {
-            // !i madd
-            const args = [];
-            if (qty > 1) args.push(`-n ${qty}`);
-            if (ac) args.push(`-ac ${ac}`);
-            if (loc) args.push(`-p ${loc}`);
-            lines.push(`!i madd "${name}" ${args.join(" ")}`);
+            lines.push(`!i madd "${name}" -name ${short} -h`);
         } else if (action === "setup-token") {
-            // !map -token
-            const size = tokenInfo.size || "M";
-            const token = tokenInfo.token || "";
-            const display = tokenInfo.display || name;
-
-            for (let i = 1; i <= qty; i++) {
-                const suffix = qty > 1 ? `${i}` : "";
-                const finalName = `${display}${suffix}`;
-                const finalLoc = loc ? ` -loc ${loc}` : "";
-                lines.push(`!map -token add "${finalName}" "${token}" -size ${size}${finalLoc}`);
-            }
+            const tokenInfo = state.getTokenData()[name.toLowerCase()] || state.getTokenData()[short.toLowerCase()];
+            const token = tokenInfo?.token || "";
+            const tokenPart = token ? ` -token ${token}` : "";
+            lines.push(`!map -t ${short}${tokenPart} -size medium -color r -move ${loc || ''}`);
         }
     }
 
     if (lines.length) showInConsole(lines.join("\n"));
+}
+
+/**
+ * Update Monster add command output box
+ */
+export function updateMonsterAddCmd() {
+    const monsters = readMonsterModalRows();
+    const out = $("monster-add-out");
+    if (!out) return;
+
+    if (!monsters.length) {
+        out.innerText = "# No monsters selected or configured";
+        return;
+    }
+
+    const lines = ["!multiline"];
+    for (const m of monsters) {
+        let cmd = `!i madd "${m.name}"`;
+        if (m.short) cmd += ` -name ${m.short}`;
+        cmd += ` -h`;
+        lines.push(cmd);
+    }
+
+    out.innerText = lines.join("\n");
+}
+
+/**
+ * Read monster data from modal rows
+ */
+function readMonsterModalRows() {
+    const modalRows = Array.from(document.querySelectorAll("#monsterTableBody tr"));
+    const out = [];
+
+    for (const tr of modalRows) {
+        const short = tr.querySelector(".bm_monster_short")?.value?.trim();
+        const name = tr.querySelector(".bm_monster_name")?.value?.trim();
+        const ac = tr.querySelector(".bm_monster_ac")?.value?.trim();
+        const loc = tr.querySelector(".bm_monster_loc")?.value?.trim();
+
+        if (!name) continue;
+        out.push({ short, name, ac, loc });
+    }
+
+    return out;
 }

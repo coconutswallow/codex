@@ -17,8 +17,6 @@ extra_css: ["/assets/css/avrae-manager.css"]
                     <!-- Supabase-backed -->
                     <button onclick="saveSessionToSupabase()">Save Session</button>
                     <button onclick="loadSessionPrompt()">Load Session</button>
-                    <button onclick="refreshTokensFromSupabase()">Refresh Tokens</button>
-                    <button style="background:var(--danger)" onclick="resetFog()">Reset Fog</button>
                 </div>
             </div>
         </div>
@@ -64,11 +62,12 @@ extra_css: ["/assets/css/avrae-manager.css"]
                 <div class="control-strip">
                     <input type="checkbox" class="select-all-box" title="Select All"
                         onclick="selectAll('player', this.checked)">
-                    <button onclick="addPlayerRow()">Add Another Player</button>
                     <button onclick="openTokenModal()">Setup Token</button>
-                    <button onclick="clearChecked('player')">Clear Selection</button>
                 </div>
                 <div id="player-list"></div>
+                <button class="action-btn" style="width: 100%; margin: 10px 0;" onclick="addRow('player')">Add Another
+                    Player</button>
+
                 <label style="margin-top:10px;">FOW Update (New Only)</label>
                 <div class="output-box" id="fow-out" onclick="uiFlash(this)">!map -fow ...</div>
                 <label style="margin-top:10px;">Auto-Zoom View</label>
@@ -76,25 +75,45 @@ extra_css: ["/assets/css/avrae-manager.css"]
             </div>
 
             <div id="tab-npcs" class="tab-content">
+                <details class="info-accordion">
+                    <summary>NPC Setup Instructions</summary>
+                    <div class="info-content">
+                        <p><strong>1:</strong> Add NPCs below. Similar to players, use short names for map display.</p>
+                        <p><strong>2:</strong> Use "Add NPC to Avrae" to generate combat initiative commands.</p>
+                        <p><strong>3:</strong> Setup tokens to apply images to the battlemap.</p>
+                    </div>
+                </details>
                 <div class="control-strip">
                     <input type="checkbox" class="select-all-box" title="Select All"
                         onclick="selectAll('npc', this.checked)">
-                    <button onclick="openNpcModal()">Add NPC</button>
-                    <button onclick="generateNpcTokenCmds()">Setup Token</button>
-                    <button onclick="clearChecked('npc')">Clear</button>
+                    <button onclick="openNpcModal()">Add NPC to Avrae</button>
+                    <button onclick="openNpcTokenModal()">Setup NPC Token</button>
                 </div>
                 <div id="npc-list"></div>
+                <button class="action-btn" style="width: 100%; margin: 10px 0;" onclick="addRow('npc')">Add Another
+                    NPC</button>
             </div>
 
             <div id="tab-monsters" class="tab-content">
+                <details class="info-accordion">
+                    <summary>Monster Setup Instructions</summary>
+                    <div class="info-content">
+                        <p><strong>1:</strong> Add monsters below. Use "Short" for the map identifier (e.g., GO1) and
+                            "Name" for the monster type (e.g., Goblin). The name field has autocomplete from your token
+                            database.</p>
+                        <p><strong>2:</strong> Use "Add Monster to Avrae" to generate <code>!i madd</code> commands.</p>
+                        <p><strong>3:</strong> Setup tokens to apply images to the battlemap.</p>
+                    </div>
+                </details>
                 <div class="control-strip">
                     <input type="checkbox" class="select-all-box" title="Select All"
                         onclick="selectAll('monster', this.checked)">
-                    <button onclick="batchCmd('monster', 'setup-monster')">Setup Monster</button>
-                    <button onclick="batchCmd('monster', 'setup-token')">Setup Token</button>
-                    <button onclick="clearChecked('monster')">Clear</button>
+                    <button onclick="openMonsterModal()">Add Monster to Avrae</button>
+                    <button onclick="openMonsterTokenModal()">Setup Monster Token</button>
                 </div>
                 <div id="monster-list"></div>
+                <button class="action-btn" style="width: 100%; margin: 10px 0;" onclick="addRow('monster')">Add Another
+                    Monster</button>
             </div>
 
             <div id="tab-config" class="tab-content">
@@ -187,13 +206,18 @@ extra_css: ["/assets/css/avrae-manager.css"]
                         onclick="applyMapConfig()">Apply & Render Map</button>
 
                     <div class="config-section">
-                        <label class="section-label">4. Avrae Setup Command</label>
-                        <div class="output-box" id="setup-cmd-out"
+                        <label class="section-label">4. Initiative Initialization</label>
+                        <div class="output-box" id="init-setup-out"
                             onclick="navigator.clipboard.writeText(this.innerText); uiFlash(this)"
-                            style="font-size: 0.7em; min-height: 40px;">!multiline...</div>
-                        <p style="font-size: 0.7em; color: var(--blur); margin-top: 5px;">Copy the commands above. Note
-                            commands in paragraphs can be executed together, each one separated by space needs to be
-                            executed individually.</p>
+                            style="font-size: 0.7em; min-height: 40px; margin-bottom: 10px;">!multiline...</div>
+
+                        <label class="section-label">5. Map Setup Command</label>
+                        <div class="output-box" id="map-setup-out"
+                            onclick="navigator.clipboard.writeText(this.innerText); uiFlash(this)"
+                            style="font-size: 0.7em; min-height: 40px;">!map...</div>
+
+                        <p style="font-size: 0.7em; color: var(--blur); margin-top: 10px;">Click each box above to copy
+                            its command to your clipboard.</p>
                     </div>
 
                     <div id="active-map-summary"
@@ -260,10 +284,37 @@ extra_css: ["/assets/css/avrae-manager.css"]
                 </thead>
                 <tbody id="npcTableBody"></tbody>
             </table>
+            <div style="padding: 15px;">
+                <label style="font-size: 0.8em; color: var(--blur);">Avrae Command (Click to Copy)</label>
+                <div class="output-box" id="npc-add-out" style="font-size: 0.7em; min-height: 60px; margin-top: 5px;"
+                    onclick="navigator.clipboard.writeText(this.innerText); uiFlash(this)">!multiline...</div>
+            </div>
             <div class="modal-footer">
-                <button class="action-btn" onclick="generateNpcAddCmds()">Generate !i add</button>
                 <button class="close-btn"
                     onclick="document.getElementById('npcModal').style.display='none'">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="npcTokenModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Setup NPC Tokens</div>
+            <table class="modal-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%">Short (Cmd)</th>
+                        <th style="width: 20%">Name</th>
+                        <th style="width: 15%">Location</th>
+                        <th style="width: 10%">Size</th>
+                        <th style="width: 25%">Token URL/Code</th>
+                        <th style="width: 10%">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="npcTokenTableBody"></tbody>
+            </table>
+            <div class="modal-footer">
+                <button class="close-btn"
+                    onclick="document.getElementById('npcTokenModal').style.display='none'">Close</button>
             </div>
         </div>
     </div>
@@ -282,6 +333,55 @@ extra_css: ["/assets/css/avrae-manager.css"]
             <div class="modal-footer">
                 <button class="close-btn"
                     onclick="document.getElementById('loadSessionModal').style.display='none'">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="monsterModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Add Monsters</div>
+            <table class="modal-table">
+                <thead>
+                    <tr>
+                        <th style="width: 15%">Short</th>
+                        <th style="width: 35%">Name</th>
+                        <th style="width: 15%">AC</th>
+                        <th style="width: 20%">Location</th>
+                    </tr>
+                </thead>
+                <tbody id="monsterTableBody"></tbody>
+            </table>
+            <div style="padding: 15px;">
+                <label style="font-size: 0.8em; color: var(--blur);">Avrae Command (Click to Copy)</label>
+                <div class="output-box" id="monster-add-out"
+                    style="font-size: 0.7em; min-height: 60px; margin-top: 5px;"
+                    onclick="navigator.clipboard.writeText(this.innerText); uiFlash(this)">!multiline...</div>
+            </div>
+            <div class="modal-footer">
+                <button class="close-btn"
+                    onclick="document.getElementById('monsterModal').style.display='none'">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="monsterTokenModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Setup Monster Tokens</div>
+            <table class="modal-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%">Display (Cmd)</th>
+                        <th style="width: 20%">Location</th>
+                        <th style="width: 10%">Size</th>
+                        <th style="width: 35%">Token URL/Code</th>
+                        <th style="width: 10%">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="monsterTokenTableBody"></tbody>
+            </table>
+            <div class="modal-footer">
+                <button class="close-btn"
+                    onclick="document.getElementById('monsterTokenModal').style.display='none'">Close</button>
             </div>
         </div>
     </div>
