@@ -104,11 +104,26 @@
             }
 
             // 5. Update UI for manual fallback
+            console.log("Input hash:", hash);
+            console.log("Final payload:", payload);
+
             var btn = document.getElementById('obsidian-btn');
             if (btn) btn.href = payload;
 
             var manual = document.getElementById('manual-link');
-            if (manual) manual.style.display = 'block';
+            if (manual) {
+                manual.style.display = 'block';
+                // Show the constructed URL for easier debugging
+                var debugInfo = document.createElement('div');
+                debugInfo.id = 'debug-info';
+                debugInfo.style.marginTop = '20px';
+                debugInfo.style.fontSize = '0.8em';
+                debugInfo.style.color = '#666';
+                debugInfo.style.wordBreak = 'break-all';
+                debugInfo.style.padding = '0 20px';
+                debugInfo.innerHTML = "<strong>Redirecting to:</strong><br>" + payload;
+                manual.appendChild(debugInfo);
+            }
 
             // 6. Execute Redirect
             // Use window.location.replace to avoid back-button loops
