@@ -3,21 +3,120 @@
 
 <head>
     <title>Opening Obsidian...</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            text-align: center;
+            padding-top: 100px;
+            color: #333;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #7c4dff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #manual-link {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #7c4dff;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background: #673ab7;
+        }
+    </style>
 </head>
 
 <body>
+    <div class="spinner"></div>
+    <p>Opening Obsidian...</p>
+
+    <div id="manual-link">
+        <p>If Obsidian didn't open automatically, click below:</p>
+        <a id="obsidian-btn" href="#" class="btn">Open in Obsidian</a>
+    </div>
+
     <script>
-        // 1. Get the part of the URL after the #
-        var payload = window.location.hash;
+        function doRedirect() {
+            // 1. Get the payload from hash (strip leading #)
+            var hash = window.location.hash.substring(1);
+            if (!hash) {
+                document.body.innerHTML = "<h1>Error</h1><p>No redirection target provided.</p>";
+                return;
+            }
 
-        // 2. If it exists, strip the # and open the link
-        if (payload.length > 1) {
-            // substring(1) removes the '#' character
-            window.location.href = payload.substring(1);
+            // 2. Decode in case it was double-encoded
+            var payload = decodeURIComponent(hash);
 
-            // Optional: Close the tab automatically
-            setTimeout(function () { window.close(); }, 100);
+            // 3. Ensure it starts with the correct protocol
+            if (!payload.startsWith('obsidian://')) {
+                // If it looks like parameters, prefix it
+                if (payload.includes('vault=')) {
+                    payload = 'obsidian://' + payload.replace(/^obsidian:\/*/, '');
+                }
+            }
+
+            // 4. Standardize 'obsidian://open' links
+            if (payload.startsWith('obsidian://open')) {
+                var parts = payload.split('?');
+                if (parts.length > 1) {
+                    var baseUrl = parts[0];
+                    var params = new URLSearchParams(parts[1]);
+
+                    var file = params.get('file');
+                    if (file) {
+                        // Append .md if missing
+                        if (!file.toLowerCase().endsWith('.md')) {
+                            file += '.md';
+                        }
+                        params.set('file', file);
+                    }
+
+                    // Reconstruct encoding spaces as %20 (more compatible than +)
+                    // URLSearchParams.toString() automatically encodes slashes as %2F
+                    payload = baseUrl + '?' + params.toString().replace(/\+/g, '%20');
+                }
+            }
+
+            // 5. Update UI for manual fallback
+            var btn = document.getElementById('obsidian-btn');
+            if (btn) btn.href = payload;
+
+            var manual = document.getElementById('manual-link');
+            if (manual) manual.style.display = 'block';
+
+            // 6. Execute Redirect
+            // Use window.location.replace to avoid back-button loops
+            window.location.replace(payload);
         }
+
+        // Execute on load
+        window.addEventListener('load', doRedirect);
     </script>
 </body>
 
