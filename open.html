@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Redirecting...</title>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding-top: 50px;
+        }
+    </style>
+</head>
+
+<body>
+    <p>Opening Obsidian...</p>
+    <script>
+        // 1. Get the part of the URL after the '#'
+        var destination = window.location.hash.substring(1);
+
+        // 2. Decode it (in case the browser encoded special chars like space or /)
+        if (destination) {
+            var decoded = decodeURIComponent(destination);
+
+            // 3. Force the browser to navigate to the deep link
+            window.location.href = decoded;
+
+            // Optional: Close this tab after 1 second so you don't have clutter
+            setTimeout(function () {
+                window.close();
+            }, 1000);
+        } else {
+            document.body.innerText = "No destination provided. Add #obsidian://... to the URL.";
+        }
+    </script>
+</body>
+
+</html>
