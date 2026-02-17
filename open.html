@@ -55,6 +55,8 @@
 <body>
     <div class="spinner"></div>
     <p>Opening Obsidian...</p>
+    <p id="closing-msg" style="display:none; color: #666; font-size: 0.9em; margin-top: 10px;">This window will close
+        automatically in a moment.</p>
 
     <div id="manual-link">
         <p>If Obsidian didn't open automatically, click below:</p>
@@ -128,6 +130,20 @@
             // 6. Execute Redirect
             // Use window.location.replace to avoid back-button loops
             window.location.replace(payload);
+
+            // 7. Auto-close logic
+            var closingMsg = document.getElementById('closing-msg');
+            if (closingMsg) closingMsg.style.display = 'block';
+
+            setTimeout(function () {
+                window.close();
+                // Fallback if window.close() is blocked by browser security
+                if (closingMsg) {
+                    closingMsg.innerText = "Redirect attempted. You can now close this tab.";
+                    closingMsg.style.color = "#333";
+                    closingMsg.style.fontWeight = "bold";
+                }
+            }, 5000);
         }
 
         // Execute on load
