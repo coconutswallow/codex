@@ -36,7 +36,7 @@ Note: Some quests say "not yet available" - they require an additional pre-requi
 | **R&D** | **Research New Equipment**<br>Research new gear for the party | Unlock 3 homebrew equipment for purchase in the AC | 6 (Not Yet Available) |
 | **R&D** | **Research the Legend of Huma** | Unlock +1 save against dragonfear and dragonbreath | 10 |
 | **Personal** | **Petition to become a knight of Solamnia** | Gain a unique feat from the UA Knight of Solamnia | 8 (Not Yet Available) |
-| **Personal** | **Become an initiate to the Order of Magic** | Benefit from the Moon Phases of Krynn for Spellcasting | 6 |
+| **Personal** | **Deepen your knowledge of the Magic of Krynn** | Benefit from the Moon Phases of Krynn for Spellcasting | 6 |
 | **Personal** | **Research the old Gods of Krynn** | Unlock +1 save against necrotic | 10 |
 | **Personal** | **Custom Personal Quest** | Custom | 5 to 10 |
 
