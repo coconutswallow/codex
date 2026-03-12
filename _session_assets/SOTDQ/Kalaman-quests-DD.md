@@ -28,7 +28,7 @@ Note: Some quests say "not yet available" - they require an additional pre-requi
 
 | Type | Quest | Benefit | Cost (RP) |
 | :--- | :--- | :--- | :--- |
-| **Military** | **Vogler Training 1**<br>Help Darrett Training Vogler Military Recruits | Vogler NPC Combatants get +1 Attack | 4 |
+| **Military** | **Vogler Training 1**<br>Help Darrett Training Vogler Military Recruits | Vogler NPC Combatants get +1 Attack | Completed |
 | **Military** | **Vogler Training 2**<br>Help Darrett Training Vogler Military Recruits | Vogler NPC Combatants get +1 AC | 4 |
 | **Political** | **Rally The Council Members**<br>Meet Council Members and rally support for Marshal Vedri and the defense efforts | +10% NPC Soldiers<br>*(Can be repeated up to 3 times)* | 3 each |
 | **Political** | **Redacted |
@@ -45,5 +45,5 @@ Note: Some quests say "not yet available" - they require an additional pre-requi
 ## Reputation Points Balance
 
 - **Points Earned:** 12
-- **Points Spent:** 0
-- **Remaining:** 12
+- **Points Spent:** 4
+- **Remaining:** 8
