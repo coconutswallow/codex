@@ -47,3 +47,8 @@ Note: Some quests say "not yet available" - they require an additional pre-requi
 - **Points Earned:** 12
 - **Points Spent:** 4
 - **Remaining:** 8
+
+## Maps
+
+[Map of Ansalon](https://coconutswallow.github.io/codex/maps/showmap#ansalon)
+[Map of the City of Kalaman](https://coconutswallow.github.io/codex/maps/showmap#kalaman)
