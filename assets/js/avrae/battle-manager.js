@@ -5,7 +5,7 @@
  * This file imports and coordinates all the individual modules.
  */
 
-// Import modules
+import { supabase } from '../supabaseClient.js';
 import {
     $,
     uiFlash,
@@ -83,6 +83,11 @@ function init() {
     updateFowOutputs();
     updateMapSummary();
 
+    // Fail-safe check for admin status in case handlePageAuth was called before battle-manager.js loaded
+    if (window.authManager?.user) {
+        window.handlePageAuth(window.authManager.user);
+    }
+
     console.info("[battle-manager] Initialized (modular version)");
 }
 
@@ -151,11 +156,35 @@ window.ensureRows = (type, count) => ensureRows(type, count, handleLocationJump)
 window.handlePageAuth = async (user) => {
     const mainContent = document.querySelector('.main-content');
     const authGate = document.getElementById('auth-gate');
+    const adminBtn = document.getElementById('admin-monster-mgr');
 
     if (user) {
+        console.log(`[battle-manager] User authenticated: ${user.id}`);
         // User is logged in - show the app
         if (mainContent) mainContent.style.display = 'flex';
         if (authGate) authGate.style.display = 'none';
+
+        // Check for admin status to show extra menu items
+        try {
+            const { data, error } = await supabase
+                .from('discord_users')
+                .select('roles')
+                .eq('user_id', user.id)
+                .single();
+
+            if (error) {
+                console.warn(`[battle-manager] Admin check error:`, error);
+            } else {
+                const isAdmin = data?.roles && Array.isArray(data.roles) && data.roles.includes('Admin');
+                console.log(`[battle-manager] Admin status (Admin role):`, isAdmin);
+                if (isAdmin && adminBtn) {
+                    console.log(`[battle-manager] Showing admin menu button`);
+                    adminBtn.style.display = 'block';
+                }
+            }
+        } catch (e) {
+            console.error(`[battle-manager] Admin check failed:`, e);
+        }
 
         // Initial data load if we haven't already
         if (!window.battleManagerInitialized) {
@@ -167,6 +196,7 @@ window.handlePageAuth = async (user) => {
         // User is logged out - show the gate
         if (mainContent) mainContent.style.display = 'none';
         if (authGate) authGate.style.display = 'flex';
+        if (adminBtn) adminBtn.style.display = 'none';
         window.battleManagerInitialized = false;
     }
 };

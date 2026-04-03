@@ -1,0 +1,88 @@
+---
+layout: default
+title: Monster & Token Manager
+permalink: /avrae-manager/monster-manager/
+extra_css: ["/assets/css/monster-manager.css"]
+---
+
+<div class="monster-manager-app">
+    <div class="header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <a href="{{ site.baseurl }}/avrae-manager/" style="color: var(--accent); text-decoration: none; font-size: 1.2em;">←</a>
+            <h3>Monster & Token Manager</h3>
+        </div>
+        <div style="display:flex; align-items:center; gap:15px;">
+            {% include auth-header.html %}
+        </div>
+    </div>
+
+    <!-- Access Denied / Auth Gate -->
+    <div id="auth-gate-panel" class="auth-gate" style="display:flex;">
+        <h2>Access Restricted</h2>
+        <p id="gate-message">Verifying permissions...</p>
+        <button onclick="window.location.href='/avrae-manager/'" class="save-btn" style="background: var(--accent); color: white;">Back to Battle Manager</button>
+    </div>
+
+    <!-- Main Manager Interface -->
+    <div id="manager-app-panel" class="main-content" style="display:none;">
+        <div class="search-container" style="flex-direction: column; gap: 15px;">
+            <div style="display: flex; gap: 10px; align-items: flex-end; border-bottom: 1px solid #444; padding-bottom: 15px;">
+                <div style="flex: 1;">
+                    <label>New Token Name</label>
+                    <input type="text" id="new-name" placeholder="Name (e.g. Ancient Red Dragon)" class="search-input">
+                </div>
+                <div style="width: 150px;">
+                    <label>Type</label>
+                    <select id="new-type" class="search-input" style="padding: 9px;">
+                        <option value="Monsters">Monsters</option>
+                        <option value="Players">Players</option>
+                    </select>
+                </div>
+                <div style="width: 120px;">
+                    <label>Size</label>
+                    <select id="new-size" class="search-input" style="padding: 9px;">
+                        <option value="Tiny">Tiny</option>
+                        <option value="Small">Small</option>
+                        <option value="Medium" selected>Medium</option>
+                        <option value="Large">Large</option>
+                        <option value="Huge">Huge</option>
+                        <option value="Gargantuan">Gargantuan</option>
+                    </select>
+                </div>
+                <button onclick="createNewToken()" class="save-btn" style="height: 38px; padding: 0 20px;">Add Token</button>
+            </div>
+
+            <div style="width: 100%;">
+                <label>Search & Filter</label>
+                <input type="text" id="monster-search" placeholder="Search by name or type..." 
+                       oninput="handleSearch(this.value)" class="search-input">
+            </div>
+        </div>
+
+        <div class="monster-table-container">
+            <table class="monster-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">Icon</th>
+                        <th style="width: 25%;">Monster/Name</th>
+                        <th style="width: 15%;">Token Code/ID</th>
+                        <th style="width: 120px;">Size</th>
+                        <th>Image URL</th>
+                        <th style="width: 120px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="monster-table-body">
+                    <!-- Loaded via JS -->
+                    <tr><td colspan="7" class="no-results">Loading monsters...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Configuration -->
+    <script>window.siteBaseUrl = "{{ site.baseurl }}";</script>
+
+    <!-- Scripts -->
+    <script type="module" src="{{ site.baseurl }}/assets/js/auth-manager.js"></script>
+    <script type="module" src="{{ site.baseurl }}/assets/js/avrae/monster-manager.js?v={{ site.time | date: '%s' }}"></script>
+</div>

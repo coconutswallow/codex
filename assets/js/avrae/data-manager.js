@@ -398,3 +398,66 @@ export async function searchBattlemaps(query) {
         return [];
     }
 }
+
+/**
+ * Create a new token in Supabase
+ * @param {Object} tokenData - Data for the new token
+ * @returns {Promise<Object>} The created token including its new ID
+ */
+export async function createToken(tokenData) {
+    try {
+        const { data, error } = await supabase
+            .from("tokens")
+            .insert([tokenData])
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    } catch (e) {
+        console.error(`[${MODULE}] createToken failed`, e);
+        await logError(MODULE, `createToken failed: ${e.message}`, 'error');
+        throw e;
+    }
+}
+
+/**
+ * Update a token in Supabase
+ * @param {string} id - Token UUID
+ * @param {Object} updates - Fields to update
+ */
+export async function updateToken(id, updates) {
+    try {
+        const { error } = await supabase
+            .from("tokens")
+            .update(updates)
+            .eq("id", id);
+
+        if (error) throw error;
+        return true;
+    } catch (e) {
+        console.error(`[${MODULE}] updateToken failed`, e);
+        await logError(MODULE, `updateToken failed: ${e.message}`, 'error');
+        throw e;
+    }
+}
+
+/**
+ * Delete a token from Supabase
+ * @param {string} id - Token UUID
+ */
+export async function deleteToken(id) {
+    try {
+        const { error } = await supabase
+            .from("tokens")
+            .delete()
+            .eq("id", id);
+
+        if (error) throw error;
+        return true;
+    } catch (e) {
+        console.error(`[${MODULE}] deleteToken failed`, e);
+        await logError(MODULE, `deleteToken failed: ${e.message}`, 'error');
+        throw e;
+    }
+}

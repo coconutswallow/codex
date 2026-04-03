@@ -1,0 +1,186 @@
+/* Monster Manager Styles */
+.monster-manager-app {
+    --bg: #1e1f22;
+    --panel: #2b2d31;
+    --text: #f2f3f5;
+    --blur: #b5bac1;
+    --accent: #949cf7; /* Brighter blue for better contrast */
+    --danger: #fa777c;
+    --success: #3ba55c;
+    --input-bg: #1e1f22;
+
+    font-family: 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.header {
+    background: var(--panel);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #444;
+    height: 50px;
+}
+
+.header h3 {
+    margin: 0;
+    color: var(--accent);
+}
+
+.main-content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.search-container {
+    display: flex;
+    gap: 10px;
+    background: var(--panel);
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #444;
+}
+
+.search-input {
+    flex: 1;
+    padding: 10px;
+    background: var(--input-bg);
+    border: 1px solid #222;
+    color: white;
+    border-radius: 4px;
+}
+
+.monster-table-container {
+    background: var(--panel);
+    border-radius: 8px;
+    border: 1px solid #444;
+    overflow: hidden;
+}
+
+.monster-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.monster-table th {
+    text-align: left;
+    padding: 12px 10px;
+    background: #111214;
+    color: #dbdee1; /* High contrast header text */
+    font-size: 0.75em;
+    font-weight: 800;
+    text-transform: uppercase;
+    border-bottom: 2px solid #333;
+}
+
+.monster-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #333;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.monster-table tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.item-name {
+    font-weight: bold;
+    color: var(--accent);
+}
+
+.item-type {
+    font-size: 0.85em;
+    color: var(--blur);
+}
+
+.item-control {
+    width: 100%;
+}
+
+.item-control input, .item-control select {
+    background: var(--input-bg);
+    border: 1px solid #444;
+    color: var(--text); /* Near-white text for maximum readability */
+    padding: 5px 8px;
+    border-radius: 4px;
+    width: 100%;
+    font-size: 0.85em;
+    box-sizing: border-box;
+}
+
+.item-control input:focus {
+    border-color: var(--accent);
+    outline: none;
+}
+
+.save-btn {
+    background: var(--success);
+    color: #000;
+    font-weight: bold;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    font-size: 0.8em;
+}
+
+.save-btn:hover {
+    opacity: 0.8;
+}
+
+.save-btn:disabled {
+    background: #444;
+    cursor: not-allowed;
+    color: #888;
+}
+
+.thumbnail {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    background: #000;
+}
+
+.no-results {
+    padding: 40px;
+    text-align: center;
+    color: var(--blur);
+}
+
+/* Auth Gate Styles */
+.auth-gate {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+    padding: 20px;
+}
+
+.auth-gate h2 {
+    color: var(--danger);
+    margin-bottom: 10px;
+}
+
+.auth-gate p {
+    color: var(--blur);
+    max-width: 400px;
+    margin-bottom: 20px;
+}
