@@ -239,7 +239,7 @@ title: Token Library | Battlemaps
     async function fetchTokens() {
         // Fetch tokens, filtering out NULL or Empty image_urls
         const { data, error } = await supabase
-            .from('tokens')
+            .from('CCS_tokens')
             .select('id, name, type, token_code, image_url, created_at')
             .not('image_url', 'is', null)  // 1. Exclude NULLs
             .neq('image_url', '')          // 2. Exclude empty strings
@@ -247,7 +247,7 @@ title: Token Library | Battlemaps
 
         if (error) {
             console.error(error);
-            document.getElementById('loading-status').innerText = "Error loading tokens.";
+            document.getElementById('loading-status').innerText = "Error loading CCS_tokens.";
             return;
         }
 
@@ -281,19 +281,19 @@ title: Token Library | Battlemaps
         container.innerHTML = ''; 
         let hasContent = false;
 
-        for (const [type, tokens] of Object.entries(groupedTokens)) {
-            if (tokens.length === 0) continue;
+        for (const [type, CCS_tokens] of Object.entries(groupedTokens)) {
+            if (CCS_tokens.length === 0) continue;
             hasContent = true;
 
             const section = document.createElement('div');
             section.className = `category-section`;
-            section.innerHTML = `<h3 class="category-header">${type} <span style="font-size:0.6em; opacity:0.6; margin-left:auto;">${tokens.length}</span></h3>`;
+            section.innerHTML = `<h3 class="category-header">${type} <span style="font-size:0.6em; opacity:0.6; margin-left:auto;">${CCS_tokens.length}</span></h3>`;
             
             const grid = document.createElement('div');
             grid.className = 'token-grid';
             
             // Render Cards
-            grid.innerHTML = tokens.map(t => {
+            grid.innerHTML = CCS_tokens.map(t => {
                 let codeHtml = '';
                 if (t.token_code === 'Generating...') {
                     codeHtml = `<div class="token-code" style="color:#888; font-style:italic;"><span class="blink">Generating...</span></div>`;
@@ -329,7 +329,7 @@ title: Token Library | Battlemaps
             container.appendChild(section);
         }
 
-        if(!hasContent) container.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">No tokens found.</div>`;
+        if(!hasContent) container.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">No CCS_tokens found.</div>`;
     }
 
     // --- 3. UI Helpers (Modal & Tabs) ---
@@ -397,8 +397,8 @@ title: Token Library | Battlemaps
         try {
             const { data: { user } } = await supabase.auth.getUser();
 
-            // Insert directly into tokens (no more freehost_images dependency)
-            const { data: insertedData, error } = await supabase.from('tokens').insert([{
+            // Insert directly into CCS_tokens (no more freehost_images dependency)
+            const { data: insertedData, error } = await supabase.from('CCS_tokens').insert([{
                 user_id: user.id,
                 name: name,
                 type: type,
@@ -440,14 +440,14 @@ title: Token Library | Battlemaps
 
     window.deleteToken = async (id) => {
         if (!confirm("Delete this token?")) return;
-        await supabase.from('tokens').delete().eq('id', id);
+        await supabase.from('CCS_tokens').delete().eq('id', id);
         fetchTokens();
     };
 
     window.saveManualCode = async (id) => {
         const val = document.getElementById(`input-${id}`).value.trim();
         if (val) {
-            await supabase.from('tokens').update({ token_code: val }).eq('id', id);
+            await supabase.from('CCS_tokens').update({ token_code: val }).eq('id', id);
             fetchTokens();
         }
     };

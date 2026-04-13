@@ -288,7 +288,7 @@ title: Bulk Submit Battle Maps
 
   // UPDATED: Check for Admin or Contributor roles instead of simple boolean
   const { data: profile } = await supabase
-    .from("discord_users")
+    .from("CCS_discord_users")
     .select("roles")
     .eq("user_id", currentUser.id)
     .single();
@@ -555,7 +555,7 @@ title: Bulk Submit Battle Maps
     }
 
     const { error } = await supabase
-      .from('battlemaps')
+      .from('CCS_battlemaps')
       .insert(mapsToInsert);
 
     if (error) {

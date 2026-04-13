@@ -248,7 +248,7 @@ window.authManager = new AuthManager();
           return;
       }
 
-      const { data, error } = await db.from('maps').select('*').eq('id', id).single();
+      const { data, error } = await db.from('CCS_battlemaps').select('*').eq('id', id).single();
       
       if(error || !data) {
           alert("Error loading map data.");
@@ -432,7 +432,7 @@ window.authManager = new AuthManager();
           payload.offset_y = 0;
       }
 
-      const { error: updateError } = await db.from('maps')
+      const { error: updateError } = await db.from('CCS_battlemaps')
           .update(payload)
           .eq('id', originalMapId);
 
@@ -469,7 +469,7 @@ window.authManager = new AuthManager();
       /* 1. ARCHIVE OLD MAP */
       // We fetch the old submitter first so we don't lose that info
       const { data: oldData, error: fetchError } = await db
-          .from('maps')
+          .from('CCS_battlemaps')
           .select('submitted_by')
           .eq('id', originalMapId)
           .single();
@@ -522,7 +522,7 @@ window.authManager = new AuthManager();
           payload.offset_y = 0;
       }
 
-      const { error: insertError } = await db.from('maps').insert(payload);
+      const { error: insertError } = await db.from('CCS_battlemaps').insert(payload);
 
       if(insertError) {
            msg.innerText = "Error saving new version: " + insertError.message;

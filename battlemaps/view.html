@@ -200,7 +200,7 @@ title: Battle Maps
     loadMoreBtn.textContent = "Loading…";
 
     let query = supabase
-      .from("battlemaps")
+      .from("CCS_battlemaps")
       .select("*", { count: "exact" })
       .eq("is_approved", true)
       .order("created_at", { ascending: false })

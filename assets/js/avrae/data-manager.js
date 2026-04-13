@@ -16,7 +16,7 @@ const MODULE = "avrae-supabase-service";
 export async function refreshTokensFromSupabase() {
     try {
         const { data, error } = await supabase
-            .from("tokens")
+            .from("CCS_tokens")
             .select("name,type,token_code,size,image_url");
 
         if (error) throw error;
@@ -231,7 +231,7 @@ export async function saveSessionToSupabase() {
         if (!sessionId) {
             // Create new session
             const { data, error } = await supabase
-                .from("avrae_sessions")
+                .from("CCS_avrae_sessions")
                 .insert([sessionData])
                 .select("id")
                 .single();
@@ -244,7 +244,7 @@ export async function saveSessionToSupabase() {
         } else {
             // Update existing session
             const { error } = await supabase
-                .from("avrae_sessions")
+                .from("CCS_avrae_sessions")
                 .update({
                     ...sessionData,
                     updated_at: new Date().toISOString()
@@ -277,7 +277,7 @@ export async function loadSessionPrompt() {
 
         // Get user's sessions
         const { data, error } = await supabase
-            .from("avrae_sessions")
+            .from("CCS_avrae_sessions")
             .select("id,name,updated_at")
             .eq("user_id", user.id)
             .order("updated_at", { ascending: false })
@@ -322,7 +322,7 @@ async function loadSession(sessionId) {
 
         // Load the session
         const { data: row, error } = await supabase
-            .from("avrae_sessions")
+            .from("CCS_avrae_sessions")
             .select("id,name,map_config,players,npcs,monsters,revealed_tiles,effects")
             .eq("id", sessionId)
             .single();
@@ -383,7 +383,7 @@ export async function searchBattlemaps(query) {
         if (!query || query.trim().length < 2) return [];
 
         const { data, error } = await supabase
-            .from("battlemaps")
+            .from("CCS_battlemaps")
             .select("id,name,grid_width,grid_height,cell_size_px,thumbnail_url,source_url,image_url,optimized_url")
             .or(`name.ilike.%${query}%,keywords.ilike.%${query}%`)
             .eq("is_approved", true)
@@ -407,7 +407,7 @@ export async function searchBattlemaps(query) {
 export async function createToken(tokenData) {
     try {
         const { data, error } = await supabase
-            .from("tokens")
+            .from("CCS_tokens")
             .insert([tokenData])
             .select()
             .single();
@@ -429,7 +429,7 @@ export async function createToken(tokenData) {
 export async function updateToken(id, updates) {
     try {
         const { error } = await supabase
-            .from("tokens")
+            .from("CCS_tokens")
             .update(updates)
             .eq("id", id);
 
@@ -449,7 +449,7 @@ export async function updateToken(id, updates) {
 export async function deleteToken(id) {
     try {
         const { error } = await supabase
-            .from("tokens")
+            .from("CCS_tokens")
             .delete()
             .eq("id", id);
 

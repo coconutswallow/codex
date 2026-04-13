@@ -130,7 +130,7 @@ title: Battle Map Admin
     tableBody.innerHTML = "";
 
     const { data: maps, error } = await supabase
-      .from("battlemaps")
+      .from("CCS_battlemaps")
       .select("*")
       .eq("is_approved", false)
       .order("created_at", { ascending: false });
@@ -150,7 +150,7 @@ title: Battle Map Admin
 
     if (submitterIds.length > 0) {
       const { data: profiles } = await supabase
-        .from("discord_users")
+        .from("CCS_discord_users")
         .select("user_id, username, discord_username")
         .in("user_id", submitterIds);
         
@@ -223,7 +223,7 @@ title: Battle Map Admin
     btn.disabled = true;
 
     const { error } = await supabase
-      .from("battlemaps")
+      .from("CCS_battlemaps")
       .update({ is_approved: true })
       .eq("id", id);
 

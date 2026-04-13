@@ -245,10 +245,10 @@ title: Session Assets | Library
     async function fetchAssets() {
         // CHANGED: 'thumbnail_url' -> 'thumb_url'
         const { data, error } = await supabase
-            .from('session_images')
+            .from('CCS_session_images')
             .select(`
                 id, name, search_keys, image_id, created_at,
-                freehost_images ( image_url, thumb_url ) 
+                CCS_freehost_images ( image_url, thumb_url ) 
             `)
             .order('created_at', { ascending: false });
 
@@ -262,7 +262,7 @@ title: Session Assets | Library
         
         // Flatten Data Structure
         allAssets = data.map(item => {
-            const imgData = item.freehost_images;
+            const imgData = item.CCS_freehost_images;
             const imgObj = Array.isArray(imgData) ? imgData[0] : imgData;
             
             return { 
@@ -342,7 +342,7 @@ title: Session Assets | Library
         try {
             const { data: { user } } = await supabase.auth.getUser();
 
-            const { error } = await supabase.from('session_images').insert([{
+            const { error } = await supabase.from('CCS_session_images').insert([{
                 image_id: currentUploadData.id,
                 user_id: user.id,
                 name: name,
@@ -369,9 +369,9 @@ title: Session Assets | Library
         if (!confirm("Delete this asset permanently?")) return;
         try {
             // Delete metadata row
-            await supabase.from('session_images').delete().eq('id', rowId);
+            await supabase.from('CCS_session_images').delete().eq('id', rowId);
             // Optionally delete the underlying image if you don't want orphans
-            if (imageId) await supabase.from('freehost_images').delete().eq('id', imageId);
+            if (imageId) await supabase.from('CCS_freehost_images').delete().eq('id', imageId);
             fetchAssets(); 
         } catch (err) { alert(err.message); }
     };

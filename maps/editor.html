@@ -94,7 +94,7 @@ title: Map Editor
 
                 // 2. Check Authorization (Must be "Admin")
                 const { data: profile } = await supabase
-                    .from("discord_users")
+                    .from("CCS_discord_users")
                     .select("roles")
                     .eq("user_id", user.id)
                     .single();

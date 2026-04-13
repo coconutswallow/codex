@@ -13,7 +13,7 @@ export async function checkAccess(userId, requiredRole) {
 
     try {
         const { data, error } = await supabase
-            .from('discord_users')
+            .from('CCS_discord_users')
             .select('roles')
             .eq('user_id', userId)
             .single();

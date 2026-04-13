@@ -86,14 +86,14 @@ class AuthManager {
     }
 
     /**
-     * Verifies if the user's data in the `discord_users` table is recent.
+     * Verifies if the user's data in the `CCS_discord_users` table is recent.
      * @param {string} userId - The Supabase User UUID.
      * @returns {Promise<boolean>} TRUE if last_seen is < 24 hours ago, FALSE otherwise.
      */
     async checkSessionFreshness(userId) {
         try {
             const { data, error } = await this.client
-                .from('discord_users')
+                .from('CCS_discord_users')
                 .select('last_seen')
                 .eq('user_id', userId)
                 .single();
@@ -140,7 +140,7 @@ class AuthManager {
         };
 
         const { error } = await this.client
-            .from('discord_users')
+            .from('CCS_discord_users')
             .upsert(updates, { onConflict: 'discord_id' });
 
         if (error) {

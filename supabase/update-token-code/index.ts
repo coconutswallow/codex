@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
         );
 
         const { error: updateError } = await supabase
-            .from('tokens')
+            .from('CCS_tokens')
             .update({ token_code: cleanCode })
             .eq('id', record_id);
 
@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
                     Deno.env.get('SUPABASE_URL') ?? '',
                     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
                 );
-                await supabase.from('tokens').update({ token_code: "" }).eq('id', record_id);
+                await supabase.from('CCS_tokens').update({ token_code: "" }).eq('id', record_id);
                 console.log("Fail-safe: Reset token_code to empty string.");
             } catch (dbError) {
                 console.error("Fail-safe DB update failed:", dbError);

@@ -23,9 +23,9 @@
  * - Supabase client
  * 
  * DATABASE SCHEMA EXPECTATIONS:
- * - location_maps: id, name, map_file_url, width, height, display_height, 
+ * - CCS_location_maps: id, name, map_file_url, width, height, display_height, 
  *                  initial_x, initial_y, initial_zoom
- * - locations: id, map_id, name, description, link_url, is_home, x, y
+ * - CCS_locations: id, map_id, name, description, link_url, is_home, x, y
  */
 
 import { supabase } from './supabaseClient.js';
@@ -127,11 +127,11 @@ class MapComponent {
 
     /**
      * Load map by database ID
-     * @param {string|number} id - Primary key of location_maps record
+     * @param {string|number} id - Primary key of CCS_location_maps record
      */
     async loadMapById(id) {
         const { data, error } = await supabase
-            .from('location_maps')
+            .from('CCS_location_maps')
             .select('*')
             .eq('id', id)
             .single();
@@ -142,11 +142,11 @@ class MapComponent {
 
     /**
      * Load map by unique name
-     * @param {string} name - Unique name field of location_maps record
+     * @param {string} name - Unique name field of CCS_location_maps record
      */
     async loadMapByName(name) {
         const { data, error } = await supabase
-            .from('location_maps')
+            .from('CCS_location_maps')
             .select('*')
             .ilike('name', name) // Use ilike for case-insensitive search
             .single();
@@ -175,7 +175,7 @@ class MapComponent {
      * - maxBounds: Constrains panning to image boundaries
      * - maxBoundsViscosity: 1.0 (hard stop at edges, no "bounce")
      * 
-     * @param {Object} mapData - Database record from location_maps table
+     * @param {Object} mapData - Database record from CCS_location_maps table
      */
     renderMap(mapData) {
         this.currentMapData = mapData;
@@ -240,11 +240,11 @@ class MapComponent {
 
     /**
      * Load all location pins for current map from database
-     * Queries locations table and creates a marker for each record
+     * Queries CCS_locations table and creates a marker for each record
      */
     async loadLocations() {
         const { data } = await supabase
-            .from('locations')
+            .from('CCS_locations')
             .select('*')
             .eq('map_id', this.currentMapData.id);
         
@@ -263,7 +263,7 @@ class MapComponent {
      * - View mode: Shows name, description, and optional link
      * - Edit mode: Adds delete button in popup
      * 
-     * @param {Object} location - Database record from locations table
+     * @param {Object} location - Database record from CCS_locations table
      */
     addMarker(location) {
         const y = parseFloat(location.y);
@@ -416,7 +416,7 @@ class MapComponent {
 
         // Insert new location record
         const { data, error } = await supabase
-            .from('locations')
+            .from('CCS_locations')
             .insert([{
                 map_id: this.currentMapData.id,
                 name: name,
@@ -448,7 +448,7 @@ class MapComponent {
         const zoom = this.map.getZoom();
 
         const { error } = await supabase
-            .from('location_maps')
+            .from('CCS_location_maps')
             .update({
                 initial_x: center.lng,  // X coordinate
                 initial_y: center.lat,  // Y coordinate (negative in Leaflet)
@@ -469,7 +469,7 @@ class MapComponent {
         if (!confirm("Delete this pin?")) return;
         
         const { error } = await supabase
-            .from('locations')
+            .from('CCS_locations')
             .delete()
             .eq('id', id);
         
@@ -526,7 +526,7 @@ export function initMapComponents() {
 
 export async function fetchMapList() {
     const { data, error } = await supabase
-        .from('location_maps')
+        .from('CCS_location_maps')
         .select('id, name')
         .order('name');
     

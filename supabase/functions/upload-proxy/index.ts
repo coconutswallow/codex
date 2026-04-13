@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
         let originalUrl, originalFilename, originalWidth, originalHeight, thumbUrl, providerId, viewerUrl;
 
         if (type === 'batch_resize' && imageId) {
-            const { data: img, error: imgError } = await supabase.from('freehost_images').select('*').eq('id', imageId).single()
+            const { data: img, error: imgError } = await supabase.from('CCS_freehost_images').select('*').eq('id', imageId).single()
             if (imgError || !img) throw new Error(`Image not found in DB (ID: ${imageId})`);
 
             originalUrl = img.image_url;
@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
 
         let finalId = imageId;
         if (type === 'batch_resize') {
-            const { error: updErr } = await supabase.from('freehost_images').update({
+            const { error: updErr } = await supabase.from('CCS_freehost_images').update({
                 resized_url: resizedUrl,
                 resized_width: rW,
                 resized_height: rH,
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
             }).eq('id', imageId)
             if (updErr) throw new Error(`Database update failed: ${updErr.message}`);
         } else {
-            const { data, error: insertError } = await supabase.from('freehost_images').insert({
+            const { data, error: insertError } = await supabase.from('CCS_freehost_images').insert({
                 image_url: originalUrl,
                 thumb_url: thumbUrl,
                 provider_id: providerId,
@@ -140,7 +140,7 @@ Deno.serve(async (req) => {
     } catch (error) {
         console.error("Function Error:", error.message);
         try {
-            await supabase.from('errors').insert({
+            await supabase.from('CCS_errors').insert({
                 module: 'upload-proxy',
                 error: error.message
             });

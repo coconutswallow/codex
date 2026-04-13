@@ -29,7 +29,7 @@ export async function logError(moduleName, errorMessage, level = 'error') {
         // 3. If not cached, fetch from 'system' table
         if (debugCache === null) {
             const { data, error: fetchError } = await supabase
-                .from('system')
+                .from('CCS_system')
                 .select('value')
                 .eq('setting', 'debug')
                 .single();
@@ -73,7 +73,7 @@ export async function logError(moduleName, errorMessage, level = 'error') {
             if (userId) payload.user_id = userId;
 
             const { error: insertError } = await supabase
-                .from('errors')
+                .from('CCS_errors')
                 .insert([payload]);
 
             if (insertError) {

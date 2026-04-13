@@ -96,7 +96,7 @@ async function checkAdminAccess(userId) {
     try {
         console.log(`[${MODULE}] Checking role for user: ${userId}`);
         const { data, error } = await supabase
-            .from('discord_users')
+            .from('CCS_discord_users')
             .select('roles')
             .eq('user_id', userId)
             .single();
@@ -149,7 +149,7 @@ function showGate(message) {
 async function fetchTokens() {
     try {
         const { data, error } = await supabase
-            .from('tokens')
+            .from('CCS_tokens')
             .select('*')
             .order('name', { ascending: true });
 

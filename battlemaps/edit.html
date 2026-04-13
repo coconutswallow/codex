@@ -166,7 +166,7 @@ title: Submit / Edit Battle Map
   let isApprovedSubmitter = false;
   // UPDATED: Check for Admin or Contributor roles instead of simple boolean
   const { data: profile } = await supabase
-    .from("discord_users")
+    .from("CCS_discord_users")
     .select("roles")
     .eq("user_id", currentUser.id)
     .single();
@@ -188,7 +188,7 @@ title: Submit / Edit Battle Map
     if (!nameInput.value.trim() && dbId) {
       try {
         const { data: imgData, error } = await supabase
-          .from('freehost_images')
+          .from('CCS_freehost_images')
           .select('original_filename')
           .eq('id', dbId)
           .maybeSingle();
@@ -255,7 +255,7 @@ title: Submit / Edit Battle Map
 
   if (mapId) {
     document.getElementById("page-title").innerText = "Edit Battle Map";
-    const { data, error } = await supabase.from("battlemaps").select("*").eq("id", mapId).single();
+    const { data, error } = await supabase.from("CCS_battlemaps").select("*").eq("id", mapId).single();
 
     if (!error && data) {
       nameInput.value = data.name;
@@ -312,10 +312,10 @@ title: Submit / Edit Battle Map
 
     let result;
     if (mapId) {
-      result = await supabase.from("battlemaps").update(payload).eq("id", parseInt(mapId));
+      result = await supabase.from("CCS_battlemaps").update(payload).eq("id", parseInt(mapId));
     } else {
       payload.submitted_by = currentUser.id;
-      result = await supabase.from("battlemaps").insert(payload);
+      result = await supabase.from("CCS_battlemaps").insert(payload);
     }
 
     if (result.error) {

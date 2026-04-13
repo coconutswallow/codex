@@ -4,9 +4,9 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 vi.mock('../assets/js/supabaseClient.js', () => ({
     supabase: {
         from: vi.fn(() => ({
-            select: vi.fn(() => ({
-                eq: vi.fn(() => ({
-                    single: vi.fn(() => Promise.resolve({ data: { site_admin: true }, error: null })),
+            select: vi.fn((query) => ({
+                eq: vi.fn((col, val) => ({
+                    single: vi.fn(() => Promise.resolve({ data: { roles: ['Admin'] }, error: null })),
                     order: vi.fn(() => Promise.resolve({ data: [], error: null }))
                 })),
                 order: vi.fn(() => Promise.resolve({ data: [

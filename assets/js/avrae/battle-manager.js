@@ -167,7 +167,7 @@ window.handlePageAuth = async (user) => {
         // Check for admin status to show extra menu items
         try {
             const { data, error } = await supabase
-                .from('discord_users')
+                .from('CCS_discord_users')
                 .select('roles')
                 .eq('user_id', user.id)
                 .single();
