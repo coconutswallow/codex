@@ -32,8 +32,8 @@ Note: Some quests say "not yet available" - they require an additional pre-requi
 | **Military** | **Vogler Training 2**<br>Help Darrett Training Vogler Military Recruits | Vogler NPC Combatants get +1 AC | 4 |
 | **Political** | **Rally The Council Members**<br>Meet Council Members and rally support for Marshal Vedri and the defense efforts | +10% NPC Soldiers<br>*(Can be repeated up to 3 times)* | 3 each |
 | **Political** | **Redacted |
-| **R&D** | **Research New Defenses**<br>Work with the R&D Team to research new defense systems for the city of Kalaman | New Defense capabilities in case of invasion | 5 (Not Yet Available) |
-| **R&D** | **Research New Equipment**<br>Research new gear for the party | Unlock 3 homebrew equipment for purchase in the AC | 6 (Not Yet Available) |
+| **R&D** | **Research New Defenses**<br>Work with the R&D Team to research new defense systems for the city of Kalaman | New Defense capabilities in case of invasion | 5  |
+| **R&D** | **Research New Equipment**<br>Research new gear for the party | Unlock 3 homebrew equipment for purchase in the AC | 6  |
 | **R&D** | **Research the Legend of Huma** | Unlock +1 save against dragonfear and dragonbreath | 10 |
 | **Personal** | **Petition to become a knight of Solamnia** | Gain a unique feat from the UA Knight of Solamnia | 8 (Not Yet Available) |
 | **Personal** | **Deepen your knowledge of the Magic of Krynn** | Benefit from the Moon Phases of Krynn for Spellcasting | 6 |
@@ -44,9 +44,9 @@ Note: Some quests say "not yet available" - they require an additional pre-requi
 
 ## Reputation Points Balance
 
-- **Points Earned:** 12
+- **Points Earned:** 24
 - **Points Spent:** 4
-- **Remaining:** 8
+- **Remaining:** 20
 
 ## Maps
 

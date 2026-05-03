@@ -1,0 +1,394 @@
+---
+layout: default
+title: Card Manager
+---
+
+{% include auth-header.html %}
+
+<section class="hero-block">
+  <h1>Card Manager</h1>
+  <p>Create and edit virtual trading cards.</p>
+</section>
+
+<!-- Required for image uploading -->
+<script src="/codex/assets/js/freeimage-upload.js"></script>
+
+<style>
+  .admin-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 30px;
+  }
+  @media (max-width: 768px) {
+    .admin-container {
+      grid-template-columns: 1fr;
+    }
+  }
+  .card-form {
+    background: var(--palette-bg-page-light);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+  }
+  .card-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .card-table th, .card-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+  }
+  .card-table th {
+    background: var(--palette-bg-dark);
+  }
+  .thumb-preview {
+    width: 50px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 4px;
+    background: #000;
+  }
+  .action-btn {
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 0.85em;
+    border-radius: 4px;
+    border: none;
+    margin-right: 5px;
+  }
+  .btn-edit { background: var(--palette-accent); color: white; }
+  .btn-delete { background: var(--palette-danger); color: white; }
+  .btn-copy { background: var(--color-text-muted); color: white; }
+  .form-group {
+    margin-bottom: 15px;
+  }
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: var(--color-text-main);
+  }
+  .form-group input[type="text"],
+  .form-group input[type="number"],
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--palette-bg-page);
+    color: var(--color-text-main);
+    box-sizing: border-box;
+  }
+  .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--palette-brand-accent);
+    box-shadow: 0 0 0 2px rgba(var(--palette-brand-accent-rgb), 0.2);
+  }
+  .form-row {
+    display: flex;
+    gap: 15px;
+  }
+  .form-row .form-group {
+    flex: 1;
+  }
+</style>
+
+<div class="admin-container">
+  
+  <!-- Left Column: Form -->
+  <div class="card-form">
+    <h3 id="form-title" style="margin-top: 0;">Create New Card</h3>
+    <form id="card-form">
+      <input type="hidden" id="card-id">
+      
+      <div class="form-group">
+        <label>Monster Type</label>
+        <input type="text" id="monster-type" placeholder="e.g. Undead, Dragon" required list="type-list">
+        <datalist id="type-list"></datalist>
+      </div>
+
+      <div class="form-group">
+        <label>Card Name</label>
+        <input type="text" id="name" required>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Card Number (1-5)</label>
+          <input type="number" id="card-number" min="1" max="5" required>
+        </div>
+        <div class="form-group">
+          <label>Rarity</label>
+          <select id="rarity">
+            <option value="common">Common</option>
+            <option value="uncommon">Uncommon</option>
+            <option value="rare">Rare</option>
+            <option value="legendary">Legendary</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Bonus Description</label>
+        <input type="text" id="bonus-description" placeholder="Short description of effect" required>
+      </div>
+
+      <div class="form-group">
+        <label>Passive Bonus Text (Hold 3+ unique cards)</label>
+        <textarea id="passive-bonus-text" rows="2" placeholder="Effect when holding 3 or more unique cards of this type"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Mega Bonus Text (Expend 5 cards)</label>
+        <textarea id="mega-bonus-text" rows="2" placeholder="Effect when expending all 5 unique cards simultaneously"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Flavor Text</label>
+        <textarea id="flavor-text" rows="2"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Card Art</label>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button type="button" class="trigger-upload" style="padding: 6px 12px; font-size: 0.9em;">📤 Upload Image</button>
+          <span id="upload-status" style="font-size: 0.85em;"></span>
+        </div>
+        <input type="hidden" id="image-url">
+        
+        <div id="preview-container" style="display:none; margin-top: 10px;">
+          <img id="preview" style="max-height: 100px; border-radius: 4px; border: 1px solid var(--color-border);">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Image Credit (Optional)</label>
+        <input type="text" id="image-credit" placeholder="Artist name or URL">
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox" style="display:flex; align-items:center; gap:8px; cursor: pointer;">
+          <input type="checkbox" id="is-active" checked>
+          <span>Active (Available in pulls)</span>
+        </label>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button type="submit" id="save-btn" style="flex:1;">Save Card</button>
+        <button type="button" id="cancel-btn" style="background:var(--palette-bg-dark); display:none;">Cancel</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Right Column: List -->
+  <div>
+    <h3 style="margin-top: 0;">Card Library</h3>
+    <div style="overflow-x: auto;">
+      <table class="card-table">
+        <thead>
+          <tr>
+            <th>Art</th>
+            <th>Type</th>
+            <th>Num</th>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="card-list">
+          <tr><td colspan="6">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+  import { supabase } from '/codex/assets/js/supabaseClient.js';
+  import { checkAccess } from '/codex/assets/js/auth-check.js';
+  import { cardDataManager } from '/codex/assets/js/cards/card-data-manager.js';
+
+  let currentUser = null;
+  let allCards = [];
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !(await checkAccess(user.id, ['Admin', 'Site Admin']))) {
+      document.querySelector('.admin-container').innerHTML = "<p style='color:red;'>⛔ Access Denied.</p>";
+      return;
+    }
+    currentUser = user;
+    loadCards();
+  });
+
+  // Handle Image Upload
+  window.addEventListener('image-upload-complete', (e) => {
+    const url = e.detail.resizedUrl || e.detail.url || e.detail.thumb;
+    document.getElementById('image-url').value = url;
+    document.getElementById('preview').src = url;
+    document.getElementById('preview-container').style.display = 'block';
+    document.getElementById('upload-status').textContent = '✓ Uploaded';
+    document.getElementById('upload-status').style.color = 'var(--palette-success)';
+  });
+
+  async function loadCards() {
+    allCards = await cardDataManager.getCards(true);
+    renderCards();
+    updateDatalist();
+  }
+
+  function renderCards() {
+    const tbody = document.getElementById('card-list');
+    tbody.innerHTML = '';
+    
+    if (allCards.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6">No cards found.</td></tr>';
+      return;
+    }
+
+    allCards.forEach(card => {
+      const tr = document.createElement('tr');
+      tr.style.opacity = card.is_active ? '1' : '0.5';
+      
+      const img = card.image_url ? `<img src="${card.image_url}" class="thumb-preview">` : 'None';
+      
+      tr.innerHTML = `
+        <td>${img}</td>
+        <td>${escapeHtml(card.monster_type)}</td>
+        <td>#${card.card_number}</td>
+        <td>${escapeHtml(card.name)}</td>
+        <td>${card.is_active ? 'Active' : 'Inactive'}</td>
+        <td>
+          <button class="action-btn btn-edit" onclick="editCard('${card.id}')">Edit</button>
+          <button class="action-btn btn-copy" onclick="copyCard('${card.id}')">Copy</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function updateDatalist() {
+    const types = [...new Set(allCards.map(c => c.monster_type))];
+    const dl = document.getElementById('type-list');
+    dl.innerHTML = '';
+    types.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t;
+      dl.appendChild(opt);
+    });
+  }
+
+  window.copyCard = (id) => {
+    const card = allCards.find(c => c.id === id);
+    if (!card) return;
+
+    document.getElementById('form-title').textContent = "Copying Card (Unsaved)";
+    document.getElementById('card-id').value = ''; // Ensure it's treated as a new card
+    document.getElementById('monster-type').value = card.monster_type;
+    document.getElementById('name').value = card.name;
+    document.getElementById('card-number').value = parseInt(card.card_number) + 1; // Auto-increment for convenience
+    document.getElementById('rarity').value = card.rarity || 'common';
+    document.getElementById('bonus-description').value = card.bonus_description;
+    document.getElementById('passive-bonus-text').value = card.passive_bonus_text || '';
+    document.getElementById('mega-bonus-text').value = card.mega_bonus_text || '';
+    document.getElementById('flavor-text').value = card.flavor_text || '';
+    document.getElementById('image-credit').value = card.image_credit || '';
+    document.getElementById('is-active').checked = card.is_active;
+    
+    document.getElementById('image-url').value = card.image_url || '';
+    if (card.image_url) {
+      document.getElementById('preview').src = card.image_url;
+      document.getElementById('preview-container').style.display = 'block';
+    } else {
+      document.getElementById('preview-container').style.display = 'none';
+    }
+
+    document.getElementById('cancel-btn').style.display = 'block';
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  window.editCard = (id) => {
+    const card = allCards.find(c => c.id === id);
+    if (!card) return;
+
+    document.getElementById('form-title').textContent = "Edit Card";
+    document.getElementById('card-id').value = card.id;
+    document.getElementById('monster-type').value = card.monster_type;
+    document.getElementById('name').value = card.name;
+    document.getElementById('card-number').value = card.card_number;
+    document.getElementById('rarity').value = card.rarity || 'common';
+    document.getElementById('bonus-description').value = card.bonus_description;
+    document.getElementById('passive-bonus-text').value = card.passive_bonus_text || '';
+    document.getElementById('mega-bonus-text').value = card.mega_bonus_text || '';
+    document.getElementById('flavor-text').value = card.flavor_text || '';
+    document.getElementById('image-credit').value = card.image_credit || '';
+    document.getElementById('is-active').checked = card.is_active;
+    
+    document.getElementById('image-url').value = card.image_url || '';
+    if (card.image_url) {
+      document.getElementById('preview').src = card.image_url;
+      document.getElementById('preview-container').style.display = 'block';
+    } else {
+      document.getElementById('preview-container').style.display = 'none';
+    }
+
+    document.getElementById('cancel-btn').style.display = 'block';
+  };
+
+  document.getElementById('cancel-btn').addEventListener('click', () => {
+    document.getElementById('card-form').reset();
+    document.getElementById('card-id').value = '';
+    document.getElementById('form-title').textContent = "Create New Card";
+    document.getElementById('preview-container').style.display = 'none';
+    document.getElementById('upload-status').textContent = '';
+    document.getElementById('cancel-btn').style.display = 'none';
+  });
+
+  document.getElementById('card-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true;
+    btn.textContent = "Saving...";
+
+    const payload = {
+      monster_type: document.getElementById('monster-type').value,
+      name: document.getElementById('name').value,
+      card_number: parseInt(document.getElementById('card-number').value),
+      rarity: document.getElementById('rarity').value,
+      bonus_description: document.getElementById('bonus-description').value,
+      passive_bonus_text: document.getElementById('passive-bonus-text').value,
+      mega_bonus_text: document.getElementById('mega-bonus-text').value,
+      flavor_text: document.getElementById('flavor-text').value,
+      image_credit: document.getElementById('image-credit').value,
+      image_url: document.getElementById('image-url').value || null,
+      is_active: document.getElementById('is-active').checked
+    };
+
+    const id = document.getElementById('card-id').value;
+    if (id) payload.id = id;
+    else payload.created_by = currentUser.id;
+
+    try {
+      await cardDataManager.saveCard(payload);
+      document.getElementById('cancel-btn').click(); // resets form
+      await loadCards();
+    } catch (err) {
+      alert("Error saving card: " + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Save Card";
+    }
+  });
+
+  function escapeHtml(text) {
+    if (!text) return "";
+    return text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+</script>

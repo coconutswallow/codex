@@ -1,0 +1,534 @@
+---
+layout: default
+title: My Card Collection
+---
+
+{% include auth-header.html %}
+
+<style>
+  .cards-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--palette-bg-dark);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    border: 1px solid var(--color-border);
+  }
+  .balance-display {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--palette-brand-accent);
+  }
+  .draw-btn {
+    background: var(--palette-accent);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 1.1em;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.2s;
+  }
+  .draw-btn:hover { transform: scale(1.05); }
+  .draw-btn:disabled { background: var(--color-text-muted); cursor: not-allowed; transform: none; }
+
+  /* Type Group */
+  .type-group {
+    margin-bottom: 40px;
+    background: var(--palette-bg-page-light);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+  }
+  .type-header {
+    background: var(--palette-bg-dark);
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .type-title { margin: 0; display: flex; align-items: center; gap: 15px; }
+  
+  .set-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: bold;
+    background: var(--color-text-muted);
+    color: #fff;
+  }
+  .set-badge.active {
+    background: var(--palette-success);
+    box-shadow: 0 0 10px var(--palette-success);
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+  }
+
+  .combo-btn {
+    background: var(--palette-warning);
+    color: #000;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    display: none;
+  }
+
+  /* Grid */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+    padding: 20px;
+  }
+
+  /* The Card */
+  .card-item {
+    perspective: 1000px;
+    width: 100%;
+    aspect-ratio: 2.5/3.5;
+    cursor: pointer;
+    position: relative;
+    transition: opacity 0.5s, transform 0.5s;
+  }
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+  }
+  .card-item.revealed .card-inner, .card-item.used .card-inner {
+    transform: rotateY(180deg);
+  }
+  
+  .card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: 8px;
+    border: 2px solid var(--color-border);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  /* Unrevealed (?) face */
+  .card-front {
+    background: linear-gradient(135deg, var(--palette-bg-dark), var(--palette-bg-page-light));
+    color: var(--palette-brand-accent);
+    font-size: 4em;
+    font-weight: bold;
+  }
+  
+  /* Revealed (Art) face */
+  .card-back {
+    background: #000;
+    transform: rotateY(180deg);
+  }
+  .card-back img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.8;
+  }
+  .card-back .overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 10px;
+    text-align: left;
+  }
+  .card-back .overlay h4 { margin: 0 0 5px 0; font-size: 0.9em; }
+  .card-back .overlay p { margin: 0; font-size: 0.7em; color: #ccc; }
+
+  /* Used State (just for the fade out animation before deletion) */
+  .card-item.used {
+    opacity: 0;
+    transform: scale(0.8);
+    pointer-events: none;
+  }
+  .card-item.used .card-back {
+    filter: grayscale(100%) brightness(0.5);
+  }
+
+  /* Combo Selection Mode */
+  .combo-mode .card-item.revealed { cursor: pointer; }
+  .combo-mode .card-item.revealed.selected {
+    box-shadow: 0 0 0 4px var(--palette-warning);
+    border-radius: 8px;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  .modal-content {
+    background: var(--palette-bg-page-light);
+    padding: 30px;
+    border-radius: 8px;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    border: 1px solid var(--color-border);
+  }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .modal-actions button { flex:1; padding: 10px; cursor: pointer; border-radius: 4px; border:none; font-weight: bold; }
+  .btn-confirm { background: var(--palette-accent); color: white; }
+  .btn-cancel { background: var(--palette-bg-dark); color: white; }
+</style>
+
+<div class="cards-container">
+  
+  <div class="header-bar">
+    <div>
+      <h2 style="margin: 0;">My Collection</h2>
+      <div id="balance-display" class="balance-display">-- pts</div>
+    </div>
+    <div>
+      <button id="draw-btn" class="draw-btn">Draw Card (<span id="cost-display">?</span> pts)</button>
+    </div>
+  </div>
+
+  <div id="loading-msg">Loading your collection...</div>
+  
+  <div id="collection-grid"></div>
+
+</div>
+
+<!-- Use Card Modal -->
+<div id="use-modal" class="modal-overlay">
+  <div class="modal-content">
+    <h3 id="modal-title">Use Card</h3>
+    <p id="modal-desc"></p>
+    <p id="modal-warning" style="color:var(--palette-danger); font-size:0.85em; font-weight:bold;"></p>
+    <div class="modal-actions">
+      <button id="modal-cancel" class="btn-cancel">Cancel</button>
+      <button id="modal-confirm" class="btn-confirm">Consume Card</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { supabase } from '/codex/assets/js/supabaseClient.js';
+  import { cardLogic } from '/codex/assets/js/cards/card-logic.js';
+  import { cardDataManager } from '/codex/assets/js/cards/card-data-manager.js';
+
+  let currentUser = null;
+  let collection = [];
+  let pointCost = 10;
+  let comboModeData = null; // { monsterType, selectedIds: [] }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      document.querySelector('.cards-container').innerHTML = "<p style='text-align:center;'>Please log in via Discord.</p>";
+      return;
+    }
+    currentUser = user;
+
+    // Check participant access
+    const { data: part } = await supabase.from('CCS_card_participants').select('enabled').eq('user_id', user.id).single();
+    if (!part || !part.enabled) {
+      document.querySelector('.cards-container').innerHTML = "<p style='text-align:center; color:red;'>⛔ You are not enrolled in the card system or your access is blocked.</p>";
+      return;
+    }
+
+    pointCost = await cardLogic.getGlobalPointCost();
+    document.getElementById('cost-display').textContent = pointCost;
+    
+    await refreshData();
+  });
+
+  async function refreshData() {
+    document.getElementById('loading-msg').style.display = 'block';
+    
+    const balance = await cardDataManager.getBalance(currentUser.id);
+    document.getElementById('balance-display').textContent = `${balance} pts`;
+    
+    const drawBtn = document.getElementById('draw-btn');
+    if (balance < pointCost) {
+      drawBtn.disabled = true;
+      drawBtn.title = "Not enough points";
+    } else {
+      drawBtn.disabled = false;
+      drawBtn.title = "";
+    }
+
+    collection = await cardLogic.getPlayerCollection(currentUser.id);
+    renderCollection();
+    
+    document.getElementById('loading-msg').style.display = 'none';
+  }
+
+  function renderCollection() {
+    const container = document.getElementById('collection-grid');
+    container.innerHTML = '';
+
+    if (collection.length === 0) {
+      container.innerHTML = '<p>You have no cards yet. Draw one!</p>';
+      return;
+    }
+
+    // Group by monster type
+    const grouped = {};
+    collection.forEach(item => {
+      const type = item.card?.monster_type || 'Unknown';
+      if (!grouped[type]) grouped[type] = [];
+      grouped[type].push(item);
+    });
+
+    // Sort types alphabetically
+    const types = Object.keys(grouped).sort();
+
+    types.forEach(type => {
+      const items = grouped[type];
+      const revealedItems = items.filter(i => i.state === 'revealed');
+      const hasFullSet = revealedItems.length >= 3;
+      const canCombo = revealedItems.length === 5;
+
+      const groupDiv = document.createElement('div');
+      groupDiv.className = 'type-group';
+
+      // Find passive bonus text from any card in this set that has it defined
+      let setBonusText = "3 unique cards to activate passive bonus";
+      const cardWithSetBonus = items.find(i => i.card && i.card.passive_bonus_text);
+      if (cardWithSetBonus) {
+        setBonusText = cardWithSetBonus.card.passive_bonus_text;
+      }
+
+      const badgeClass = hasFullSet ? 'set-badge active' : 'set-badge';
+      
+      let comboBtnHtml = '';
+      if (canCombo) {
+        comboBtnHtml = `<button class="combo-btn" onclick="startComboMode('${type}')" id="combo-btn-${type}" style="display:inline-block;">⚡ Trigger Mega Bonus</button>`;
+      }
+
+      groupDiv.innerHTML = `
+        <div class="type-header">
+          <h3 class="type-title">
+            ${escapeHtml(type)}
+            <span class="${badgeClass}" title="${escapeHtml(setBonusText)}">
+              ${hasFullSet ? '✓ ' + escapeHtml(setBonusText) : `${revealedItems.length}/3 for Passive Bonus`}
+            </span>
+          </h3>
+          <div>${comboBtnHtml}</div>
+        </div>
+        <div class="card-grid" id="grid-${type}"></div>
+      `;
+
+      container.appendChild(groupDiv);
+
+      const gridDiv = groupDiv.querySelector('.card-grid');
+      
+      // Sort items by card number
+      items.sort((a, b) => (a.card?.card_number || 0) - (b.card?.card_number || 0));
+
+      items.forEach(item => {
+        const cardDiv = document.createElement('div');
+        cardDiv.className = `card-item ${item.state}`;
+        cardDiv.id = `card-${item.id}`;
+        
+        cardDiv.innerHTML = `
+          <div class="card-inner">
+            <div class="card-front">?</div>
+            <div class="card-back">
+              ${item.card?.image_url ? `<img src="${item.card.image_url}" loading="lazy">` : ''}
+              <div class="overlay">
+                <h4>#${item.card?.card_number || '?'} ${escapeHtml(item.card?.name)}</h4>
+                <p>${escapeHtml(item.card?.bonus_description)}</p>
+                ${item.card?.image_credit ? `<p style="font-size:0.6em; margin-top:5px; color:#888;">Art: ${escapeHtml(item.card.image_credit)}</p>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Click handlers
+        cardDiv.addEventListener('click', () => handleCardClick(item, type, hasFullSet));
+
+        gridDiv.appendChild(cardDiv);
+      });
+    });
+  }
+
+  document.getElementById('draw-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('draw-btn');
+    btn.disabled = true;
+    btn.textContent = "Drawing...";
+    
+    try {
+      await cardLogic.pullCard(currentUser.id);
+      await refreshData();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      btn.textContent = `Draw Card (${pointCost} pts)`;
+    }
+  });
+
+  async function handleCardClick(item, type, hasFullSet) {
+    if (comboModeData && comboModeData.monsterType === type && item.state === 'revealed') {
+      // Toggle selection for combo
+      const el = document.getElementById(`card-${item.id}`);
+      if (comboModeData.selectedIds.includes(item.id)) {
+        comboModeData.selectedIds = comboModeData.selectedIds.filter(id => id !== item.id);
+        el.classList.remove('selected');
+      } else {
+        if (comboModeData.selectedIds.length < 5) {
+          comboModeData.selectedIds.push(item.id);
+          el.classList.add('selected');
+        }
+      }
+      
+      if (comboModeData.selectedIds.length === 5) {
+        promptComboConfirmation();
+      }
+      return;
+    }
+
+    if (item.state === 'unrevealed') {
+      try {
+        await cardLogic.revealCard(item.id);
+        // Visual flip without full reload to be snappy
+        const el = document.getElementById(`card-${item.id}`);
+        el.classList.remove('unrevealed');
+        el.classList.add('revealed');
+        item.state = 'revealed';
+        // Reload after animation to update badges
+        setTimeout(refreshData, 800);
+      } catch (err) { alert("Failed to reveal: " + err.message); }
+      return;
+    }
+
+    if (item.state === 'revealed') {
+      // Prompt single use
+      promptSingleUse(item, type, hasFullSet);
+    }
+  }
+
+  /* Single Use Modal */
+  let pendingUseItem = null;
+  function promptSingleUse(item, type, hasFullSet) {
+    pendingUseItem = item;
+    document.getElementById('modal-title').textContent = `Use ${item.card?.name}`;
+    document.getElementById('modal-desc').textContent = `Effect: ${item.card?.bonus_description}`;
+    
+    const warnEl = document.getElementById('modal-warning');
+    if (hasFullSet) {
+      warnEl.textContent = `Warning: Using this card will consume it. If you drop below 3 cards, your ${type} Passive Bonus will deactivate!`;
+    } else {
+      warnEl.textContent = `Using this card will consume it from your inventory.`;
+    }
+
+    document.getElementById('use-modal').style.display = 'flex';
+  }
+
+  document.getElementById('modal-cancel').addEventListener('click', () => {
+    document.getElementById('use-modal').style.display = 'none';
+    pendingUseItem = null;
+  });
+
+  document.getElementById('modal-confirm').addEventListener('click', async () => {
+    if (!pendingUseItem) return;
+    document.getElementById('modal-confirm').disabled = true;
+    try {
+      await cardLogic.useCard(pendingUseItem.id);
+      
+      // Animate deletion
+      const el = document.getElementById(`card-${pendingUseItem.id}`);
+      if (el) el.classList.add('used');
+      
+      document.getElementById('use-modal').style.display = 'none';
+      
+      // Give the animation time to play before refreshing the data
+      setTimeout(refreshData, 500);
+
+    } catch (err) {
+      alert("Error: " + err.message);
+    } finally {
+      document.getElementById('modal-confirm').disabled = false;
+      pendingUseItem = null;
+    }
+  });
+
+  /* Combo Mode */
+  window.startComboMode = (type) => {
+    const btn = document.getElementById(`combo-btn-${type}`);
+    if (comboModeData && comboModeData.monsterType === type) {
+      // Cancel
+      comboModeData = null;
+      btn.textContent = "⚡ Trigger Mega Bonus";
+      document.body.classList.remove('combo-mode');
+      document.querySelectorAll('.card-item.selected').forEach(el => el.classList.remove('selected'));
+    } else {
+      comboModeData = { monsterType: type, selectedIds: [] };
+      btn.textContent = "Cancel Mega Bonus";
+      document.body.classList.add('combo-mode');
+      alert("Select exactly 5 revealed cards of this type to trigger the mega bonus.");
+    }
+  };
+
+  async function promptComboConfirmation() {
+    if (confirm(`Trigger Mega Bonus?\n\nThis will consume all 5 selected cards from your inventory.\n\nPlease communicate your mega bonus effect with your DM in Discord.`)) {
+      try {
+        await cardLogic.triggerCombo(currentUser.id, comboModeData.selectedIds);
+        
+        // Animate deletions
+        comboModeData.selectedIds.forEach(id => {
+          const el = document.getElementById(`card-${id}`);
+          if (el) {
+            el.classList.remove('selected');
+            el.classList.add('used');
+          }
+        });
+
+        comboModeData = null;
+        document.body.classList.remove('combo-mode');
+        
+        setTimeout(refreshData, 500);
+
+      } catch (err) {
+        alert("Combo failed: " + err.message);
+      }
+    } else {
+      // Deselect
+      comboModeData.selectedIds.forEach(id => {
+        document.getElementById(`card-${id}`).classList.remove('selected');
+      });
+      comboModeData.selectedIds = [];
+    }
+  }
+
+  function escapeHtml(text) {
+    if (!text) return "";
+    return text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+</script>

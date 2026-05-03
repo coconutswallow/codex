@@ -1,0 +1,52 @@
+---
+layout: default
+title: Card System Admin
+---
+
+{% include auth-header.html %}
+
+<section class="hero-block">
+  <h1>Card System Admin</h1>
+  <p>Manage cards, set bonuses, and player points.</p>
+</section>
+
+<div class="content-container" style="max-width: 800px; margin: 2rem auto; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+    
+    <a href="cards" class="action-card" style="display: block; padding: 2rem; background: var(--palette-bg-page-light); border: 1px solid var(--color-border); border-radius: 8px; text-decoration: none; text-align: center;">
+        <h3 style="margin-top: 0;">🃏 Card Manager</h3>
+        <p style="color: var(--color-text-muted);">Create, edit, and upload artwork for cards.</p>
+    </a>
+
+
+    <a href="participants" class="action-card" style="display: block; padding: 2rem; background: var(--palette-bg-page-light); border: 1px solid var(--color-border); border-radius: 8px; text-decoration: none; text-align: center;">
+        <h3 style="margin-top: 0;">👥 Participants</h3>
+        <p style="color: var(--color-text-muted);">Enroll users and manage point balances.</p>
+    </a>
+
+</div>
+
+<style>
+    .action-card:hover {
+        background: var(--palette-bg-dark) !important;
+        transform: translateY(-2px);
+        transition: all 0.2s ease;
+    }
+</style>
+
+<script type="module">
+    import { supabase } from '/codex/assets/js/supabaseClient.js';
+    import { checkAccess } from '/codex/assets/js/auth-check.js';
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            document.querySelector('.content-container').innerHTML = "<p style='text-align:center;'>Please log in via Discord.</p>";
+            return;
+        }
+
+        const hasAccess = await checkAccess(user.id, ['Admin', 'Site Admin']);
+        if (!hasAccess) {
+            document.querySelector('.content-container').innerHTML = "<p style='text-align:center; color:red;'>⛔ Access Denied: Admin role required.</p>";
+        }
+    });
+</script>

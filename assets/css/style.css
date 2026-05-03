@@ -299,6 +299,7 @@ a:hover { text-decoration: underline; color: var(--palette-brand-main); }
   padding: 10px;
   border-radius: var(--border-radius);
   font-weight: 600;
+  font-size: 0.9rem;
   transition: background 0.2s;
 }
 
@@ -338,7 +339,7 @@ a:hover { text-decoration: underline; color: var(--palette-brand-main); }
 
 .nav-dropdown .sub-link {
   display: block;
-  font-size: 0.9em;
+  font-size: 0.8rem;
   opacity: 0.8;
   padding: 8px 10px;
 }

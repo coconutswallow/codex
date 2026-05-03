@@ -141,7 +141,7 @@ class AuthManager {
 
         const { error } = await this.client
             .from('CCS_discord_users')
-            .upsert(updates, { onConflict: 'discord_id' });
+            .upsert(updates, { onConflict: 'user_id' });
 
         if (error) {
             console.error("Auth: Direct sync failed.", error);

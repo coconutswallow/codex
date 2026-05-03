@@ -1,0 +1,230 @@
+---
+layout: default
+title: Participant Manager
+---
+
+{% include auth-header.html %}
+
+<section class="hero-block">
+  <h1>Participant Manager</h1>
+  <p>Enroll players into the card system and manage point balances.</p>
+</section>
+
+<style>
+  .admin-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .tools-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+  @media (max-width: 768px) {
+    .tools-section { grid-template-columns: 1fr; }
+  }
+  .admin-box {
+    background: var(--palette-bg-page-light);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .data-table th, .data-table td {
+    padding: 10px;
+    border-bottom: 1px solid var(--color-border);
+    text-align: left;
+  }
+  .data-table th { background: var(--palette-bg-dark); }
+  .badge-enabled { background: var(--palette-success); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; }
+  .badge-disabled { background: var(--palette-danger); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; }
+  .form-group {
+    margin-bottom: 15px;
+  }
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: var(--color-text-main);
+  }
+  .form-group input[type="number"],
+  .form-group select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--palette-bg-page);
+    color: var(--color-text-main);
+    box-sizing: border-box;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline: none;
+    border-color: var(--palette-brand-accent);
+    box-shadow: 0 0 0 2px rgba(var(--palette-brand-accent-rgb), 0.2);
+  }
+</style>
+
+<div class="admin-container">
+  
+  <div class="tools-section">
+    <!-- Enroll Form -->
+    <div class="admin-box">
+      <h3 style="margin-top: 0;">Enroll Participant</h3>
+      <form id="enroll-form">
+        <div class="form-group">
+          <label>Select User</label>
+          <select id="user-select" required>
+            <option value="">Loading users...</option>
+          </select>
+        </div>
+        <button type="submit" style="width: 100%; padding: 10px; border-radius: 4px; border: none; background: var(--palette-accent); color: white; font-weight: bold; cursor: pointer;">Enroll User</button>
+      </form>
+    </div>
+
+    <!-- Edit Points Form -->
+    <div class="admin-box">
+      <h3 style="margin-top: 0;">Edit Point Balance</h3>
+      <form id="points-form">
+        <div class="form-group">
+          <label>Participant</label>
+          <select id="participant-select" required>
+            <option value="">Loading participants...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>New Balance</label>
+          <input type="number" id="new-balance" required placeholder="e.g. 50" min="0">
+        </div>
+        <button type="submit" style="width: 100%; padding: 10px; border-radius: 4px; border: none; background: var(--palette-accent); color: white; font-weight: bold; cursor: pointer;">Update Balance</button>
+      </form>
+    </div>
+  </div>
+
+  <h3>Enrolled Participants</h3>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Player</th>
+        <th>Balance</th>
+        <th>Status</th>
+        <th>Enrolled</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="participant-list">
+      <tr><td colspan="5">Loading...</td></tr>
+    </tbody>
+  </table>
+
+</div>
+
+<script type="module">
+  import { supabase } from '/codex/assets/js/supabaseClient.js';
+  import { checkAccess } from '/codex/assets/js/auth-check.js';
+  import { cardDataManager } from '/codex/assets/js/cards/card-data-manager.js';
+
+  let currentUser = null;
+  let participants = [];
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !(await checkAccess(user.id, ['Admin', 'Site Admin']))) {
+      document.querySelector('.admin-container').innerHTML = "<p style='color:red;'>⛔ Access Denied.</p>";
+      return;
+    }
+    currentUser = user;
+    
+    await loadUsersForEnrollment();
+    await loadParticipants();
+  });
+
+  async function loadUsersForEnrollment() {
+    const { data } = await supabase.from('CCS_discord_users').select('user_id, display_name, discord_username').order('display_name');
+    const sel = document.getElementById('user-select');
+    sel.innerHTML = '<option value="">Select a user...</option>';
+    if (data) {
+      data.forEach(u => {
+        const name = u.display_name || u.discord_username || 'Unknown';
+        sel.innerHTML += `<option value="${u.user_id}">${name}</option>`;
+      });
+    }
+  }
+
+  async function loadParticipants() {
+    participants = await cardDataManager.getParticipants();
+    
+    const tbody = document.getElementById('participant-list');
+    const pSel = document.getElementById('participant-select');
+    
+    tbody.innerHTML = '';
+    pSel.innerHTML = '<option value="">Select participant...</option>';
+    
+    if (participants.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5">No participants enrolled yet.</td></tr>';
+      return;
+    }
+
+    for (let p of participants) {
+      const balance = p.points;
+      const name = p.user?.display_name || 'Unknown';
+      const dateStr = new Date(p.enrolled_at).toLocaleDateString();
+      const statusBadge = p.enabled ? '<span class="badge-enabled">Active</span>' : '<span class="badge-disabled">Blocked</span>';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${escapeHtml(name)}</strong></td>
+        <td><strong style="color:var(--palette-brand-accent); font-size:1.1em;">${balance} pts</strong></td>
+        <td>${statusBadge}</td>
+        <td><small>${dateStr}</small></td>
+        <td>
+          <button onclick="toggleAccess('${p.user_id}', ${!p.enabled})" style="padding: 4px 8px; font-size:0.85em; cursor:pointer;">
+            ${p.enabled ? 'Block' : 'Unblock'}
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+
+      if (p.enabled) {
+        pSel.innerHTML += `<option value="${p.user_id}">${escapeHtml(name)} (Current: ${balance})</option>`;
+      }
+    }
+  }
+
+  document.getElementById('enroll-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const userId = document.getElementById('user-select').value;
+    try {
+      await cardDataManager.enrollParticipant(userId, currentUser.id);
+      await loadParticipants();
+    } catch (err) { alert(err.message); }
+  });
+
+  document.getElementById('points-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const userId = document.getElementById('participant-select').value;
+    const newBalance = parseInt(document.getElementById('new-balance').value);
+    
+    try {
+      await cardDataManager.updateBalance(userId, newBalance);
+      document.getElementById('points-form').reset();
+      await loadParticipants();
+    } catch (err) { alert(err.message); }
+  });
+
+  window.toggleAccess = async (userId, enabled) => {
+    try {
+      await cardDataManager.toggleParticipantAccess(userId, enabled);
+      await loadParticipants();
+    } catch (err) { alert(err.message); }
+  };
+
+  function escapeHtml(text) {
+    if (!text) return "";
+    return text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+</script>
