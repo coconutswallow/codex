@@ -44,9 +44,9 @@ Note: Some quests say "not yet available" - they require an additional pre-requi
 
 ## Reputation Points Balance
 
-- **Points Earned:** 24
+- **Points Earned:** 22
 - **Points Spent:** 4
-- **Remaining:** 20
+- **Remaining:** 18
 
 ## Maps
 
