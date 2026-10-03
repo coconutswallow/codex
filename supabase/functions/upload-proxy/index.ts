@@ -1,3 +1,9 @@
+/**
+ * @file index.ts
+ * @description Supabase Edge Function to proxy image uploads to FreeImage.host and Resizely,
+ * saving image metadata into the CCS_freehost_images table and logging errors into CCS_errors.
+ */
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const MAX_DIMENSION = 2000;

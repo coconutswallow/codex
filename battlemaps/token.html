@@ -332,6 +332,16 @@ title: Token Library | Battlemaps
         if(!hasContent) container.innerHTML = `<div style="text-align:center; padding:40px; color:#666;">No CCS_tokens found.</div>`;
     }
 
+    function isValidHttpUrl(str) {
+        if (!str || typeof str !== 'string') return false;
+        try {
+            const parsed = new URL(str);
+            return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+        } catch (_) {
+            return false;
+        }
+    }
+
     // --- 3. UI Helpers (Modal & Tabs) ---
     window.openTokenModal = () => {
         document.getElementById('details-overlay').style.display = 'flex';
@@ -342,6 +352,7 @@ title: Token Library | Battlemaps
         document.getElementById('t-preview-img').src = "https://placehold.co/120x120?text=Preview";
         document.getElementById('save-status').innerText = "";
         currentUploadUrl = null;
+        switchTab('upload');
     };
 
     window.switchTab = (mode) => {
@@ -363,12 +374,27 @@ title: Token Library | Battlemaps
         }
     };
 
-    // Listen for manual URL input to update preview
+    // Listen for manual URL input to update preview with validation
     document.getElementById('t-url-input').addEventListener('input', (e) => {
         const url = e.target.value.trim();
-        if(url) {
-            document.getElementById('t-preview-img').src = url;
-            currentUploadUrl = url;
+        const previewImg = document.getElementById('t-preview-img');
+        const status = document.getElementById('save-status');
+
+        if (url) {
+            if (isValidHttpUrl(url)) {
+                previewImg.src = url;
+                currentUploadUrl = url;
+                status.innerText = "";
+            } else {
+                previewImg.src = "https://placehold.co/120x120?text=Invalid+URL";
+                currentUploadUrl = null;
+                status.style.color = '#ff6b6b';
+                status.innerText = "Please enter a valid URL starting with http:// or https://";
+            }
+        } else {
+            previewImg.src = "https://placehold.co/120x120?text=Preview";
+            currentUploadUrl = null;
+            status.innerText = "";
         }
     });
 
@@ -383,13 +409,16 @@ title: Token Library | Battlemaps
 
     // --- 4. Save Logic (Unified) ---
     document.getElementById('save-token-db').addEventListener('click', async () => {
-        const name = document.getElementById('t-name').value;
+        const name = document.getElementById('t-name').value.trim();
         const type = document.getElementById('t-type').value;
         const status = document.getElementById('save-status');
         const size = document.getElementById('t-size').value;
 
         if (!name) { alert("Please enter a name."); return; }
-        if (!currentUploadUrl) { alert("Please upload an image or paste a URL."); return; }
+        if (!currentUploadUrl || !isValidHttpUrl(currentUploadUrl)) {
+            alert("Please upload an image or enter a valid URL starting with http:// or https://.");
+            return;
+        }
 
         status.innerText = "Saving...";
         status.style.color = "#fff";
@@ -397,7 +426,7 @@ title: Token Library | Battlemaps
         try {
             const { data: { user } } = await supabase.auth.getUser();
 
-            // Insert directly into CCS_tokens (no more CCS_freehost_images dependency)
+            // Insert directly into CCS_tokens
             const { data: insertedData, error } = await supabase.from('CCS_tokens').insert([{
                 user_id: user.id,
                 name: name,
@@ -412,13 +441,18 @@ title: Token Library | Battlemaps
             document.getElementById('details-overlay').style.display = 'none';
             await fetchTokens(); 
 
-            // Trigger Edge Function
+            // Trigger Edge Function (Background)
             supabase.functions.invoke('update-token-code', {
                 body: { 
                     record_id: insertedData.id, 
                     image_url: currentUploadUrl 
                 }
-            }).then(() => fetchTokens());
+            }).then(() => {
+                fetchTokens();
+            }).catch(err => {
+                console.warn("Auto-token generation notice:", err);
+                fetchTokens();
+            });
 
         } catch (err) {
             status.style.color = '#ff6b6b';
