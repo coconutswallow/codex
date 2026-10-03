@@ -9,9 +9,9 @@
 import { $ } from './ui-helpers.js';
 import { attachAutocomplete } from './autocomplete.js';
 
-const DEFAULT_PLAYER_ROWS = 4;
-const DEFAULT_NPC_ROWS = 4;
-const DEFAULT_MONSTER_ROWS = 4;
+export const DEFAULT_PLAYER_ROWS = 4;
+export const DEFAULT_NPC_ROWS = 4;
+export const DEFAULT_MONSTER_ROWS = 4;
 
 /**
  * Create a single row for player/NPC/monster
@@ -62,9 +62,9 @@ export function makeRow({ type, index, onLocationJump }) {
     // Extra field (Vis/AC/HP)
     const extraWrap = createExtraField(type, index);
 
-    // Hidden Token field for players/monsters
+    // Hidden Token field for players/npcs/monsters
     let tokenHidden;
-    if (type === "player" || type === "monster") {
+    if (type === "player" || type === "npc" || type === "monster") {
         tokenHidden = document.createElement("input");
         tokenHidden.type = "hidden";
         tokenHidden.id = `${type}_token_${index}`;
@@ -146,6 +146,13 @@ export function addRow(type, onLocationJump) {
     const nextIdx = existing + 1;
 
     list.appendChild(makeRow({ type, index: nextIdx, onLocationJump }));
+}
+
+/**
+ * Add a player row (convenience helper)
+ */
+export function addPlayerRow(onLocationJump) {
+    return addRow("player", onLocationJump);
 }
 
 /**

@@ -1,6 +1,6 @@
 /**
  * /assets/js/avrae/monster-manager.js
- * Logic for managing the 'tokens' table in Supabase.
+ * Logic for managing the 'CCS_tokens' table in Supabase.
  * Restricted to site administrators.
  */
 

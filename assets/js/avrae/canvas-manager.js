@@ -336,7 +336,7 @@ function drawCombatantMarkers(ctx, cell) {
 /**
  * Get all entities (Players, NPCs, Monsters) from the UI
  */
-function getCombatantEntities() {
+export function getCombatantEntities() {
     const list = [];
     // Select all combatant rows
     const rows = document.querySelectorAll('.grid-row');
@@ -352,10 +352,13 @@ function getCombatantEntities() {
         const parts = nameInput.id.split('_');
         const idx = parts[parts.length - 1];
 
-        const name = nameInput.value?.trim();
+        const shortName = nameInput.value?.trim();
+        const fullName = $(`${type}_full_${idx}`)?.value?.trim();
         const locStr = $(`${type}_loc_${idx}`)?.value?.trim();
 
-        if (!name || !locStr) return;
+        if (!locStr) return;
+
+        const name = shortName || fullName || (type === 'npc' ? 'NPC' : (type === 'monster' ? 'M' : 'P'));
 
         const loc = parseXY(locStr);
         if (loc) {

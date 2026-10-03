@@ -45,7 +45,10 @@ export function openTokenModal() {
         // Location -> Syncs to player_loc_{idx}
         tr.appendChild(createModalInput("bm_modal_loc", "text", loc, "e.g., B12", (val) => {
             const el = $(`player_loc_${idx}`);
-            if (el) el.value = val;
+            if (el) {
+                el.value = val;
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+            }
         }));
 
         // Size
@@ -156,12 +159,16 @@ export function openNpcTokenModal() {
         const short = $(`npc_name_${idx}`)?.value?.trim() || "";
         const fullName = $(`npc_full_${idx}`)?.value?.trim() || "";
         const loc = $(`npc_loc_${idx}`)?.value?.trim() || "";
-        let tokenVal = "";
+        let tokenVal = $(`npc_token_${idx}`)?.value || "";
 
         // Auto-search token if empty (using full name if possible)
-        if (fullName) {
-            const found = tokenData[fullName.toLowerCase()] || tokenData[short.toLowerCase()];
-            if (found) tokenVal = found.token;
+        if (!tokenVal && (fullName || short)) {
+            const found = (fullName ? tokenData[fullName.toLowerCase()] : null) || tokenData[short.toLowerCase()];
+            if (found) {
+                tokenVal = found.token;
+                const el = $(`npc_token_${idx}`);
+                if (el) el.value = tokenVal;
+            }
         }
 
         const tr = document.createElement("tr");
@@ -175,14 +182,20 @@ export function openNpcTokenModal() {
         // Location -> Syncs to npc_loc_{idx}
         tr.appendChild(createModalInput("bm_modal_npc_loc", "text", loc, "e.g., B12", (val) => {
             const el = $(`npc_loc_${idx}`);
-            if (el) el.value = val;
+            if (el) {
+                el.value = val;
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+            }
         }));
 
         // Size
         tr.appendChild(createModalInput("bm_modal_npc_size", "text", "M", "M/L/H"));
 
         // Token URL
-        const tdToken = createModalInput("bm_modal_npc_token", "text", tokenVal, "Token URL or code");
+        const tdToken = createModalInput("bm_modal_npc_token", "text", tokenVal, "Token URL or code", (val) => {
+            const el = $(`npc_token_${idx}`);
+            if (el) el.value = val;
+        });
         tdToken.querySelector("input").style.width = "120px";
         tr.appendChild(tdToken);
 
@@ -275,12 +288,16 @@ export function openMonsterTokenModal() {
         const short = $(`monster_name_${idx}`)?.value?.trim() || "";
         const fullName = $(`monster_full_${idx}`)?.value?.trim() || "";
         const loc = $(`monster_loc_${idx}`)?.value?.trim() || "";
-        let tokenVal = "";
+        let tokenVal = $(`monster_token_${idx}`)?.value || "";
 
         // Auto-search token
-        if (fullName) {
-            const found = tokenData[fullName.toLowerCase()] || tokenData[short.toLowerCase()];
-            if (found) tokenVal = found.token;
+        if (!tokenVal && (fullName || short)) {
+            const found = (fullName ? tokenData[fullName.toLowerCase()] : null) || tokenData[short.toLowerCase()];
+            if (found) {
+                tokenVal = found.token;
+                const el = $(`monster_token_${idx}`);
+                if (el) el.value = tokenVal;
+            }
         }
 
         const tr = document.createElement("tr");
@@ -291,14 +308,20 @@ export function openMonsterTokenModal() {
         // Location
         tr.appendChild(createModalInput("bm_modal_monster_loc", "text", loc, "Location", (val) => {
             const el = $(`monster_loc_${idx}`);
-            if (el) el.value = val;
+            if (el) {
+                el.value = val;
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+            }
         }));
 
         // Size
         tr.appendChild(createModalInput("bm_modal_monster_size", "text", "M", "M/L/H"));
 
         // Token URL
-        const tdToken = createModalInput("bm_modal_monster_token", "text", tokenVal, "Token URL or code");
+        const tdToken = createModalInput("bm_modal_monster_token", "text", tokenVal, "Token URL or code", (val) => {
+            const el = $(`monster_token_${idx}`);
+            if (el) el.value = val;
+        });
         tdToken.querySelector("input").style.width = "120px";
         tr.appendChild(tdToken);
 
@@ -367,6 +390,7 @@ function createModalInput(className, type, value, placeholder, onChangeCallback,
 export function closeModal(modalId) {
     const modal = $(modalId);
     if (modal) modal.style.display = "none";
+    import('./canvas-manager.js').then(cm => cm.drawMap());
 }
 
 /**

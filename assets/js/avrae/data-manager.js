@@ -96,10 +96,11 @@ function transformToStructured(inputs) {
         const location = inputs[`npc_loc_${i}`] || "";
         const ac = inputs[`npc_extra_${i}`];
         const hp = inputs[`npc_hp_${i}`];
+        const tokenCode = inputs[`npc_token_${i}`] || "";
         const checked = inputs[`npc_sel_${i}`] || false;
 
-        if (shortName || fullName || location) {
-            npcs.push({ shortName, fullName, location, ac, hp, checked });
+        if (shortName || fullName || location || tokenCode) {
+            npcs.push({ shortName, fullName, location, ac, hp, tokenCode, checked });
         }
     }
 
@@ -170,6 +171,7 @@ function transformToFlat(structured) {
         inputs[`npc_sel_${i}`] = n.checked || false;
         if (n.ac !== undefined) inputs[`npc_extra_${i}`] = n.ac;
         if (n.hp !== undefined) inputs[`npc_hp_${i}`] = n.hp;
+        if (n.tokenCode !== undefined) inputs[`npc_token_${i}`] = n.tokenCode;
     }
 
     // Monsters

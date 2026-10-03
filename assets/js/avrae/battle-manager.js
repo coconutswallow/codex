@@ -55,6 +55,8 @@ function setupEventListeners() {
 
         // Redraw and update outputs when relevant inputs change
         if (id.startsWith("player_") ||
+            id.startsWith("npc_") ||
+            id.startsWith("monster_") ||
             id === "mapW" ||
             id === "mapH" ||
             id === "mapPPC" ||
@@ -62,7 +64,9 @@ function setupEventListeners() {
             id === "mapOffsetY" ||
             id === "mapImgUrl" ||
             id === "visRange") {
-            updateFowOutputs();
+            if (id.startsWith("player_") || id.startsWith("map") || id === "visRange") {
+                updateFowOutputs();
+            }
             drawMap();
         }
     });

@@ -253,7 +253,7 @@ title: Token Library | Battlemaps
 
         document.getElementById('loading-status').style.display = 'none';
         
-        // Map data (No longer need to process freehost_images array)
+        // Map data (No longer need to process CCS_freehost_images array)
         allTokensData = data.map(token => {
             return { ...token, safeImg: token.image_url };
         });
@@ -397,7 +397,7 @@ title: Token Library | Battlemaps
         try {
             const { data: { user } } = await supabase.auth.getUser();
 
-            // Insert directly into CCS_tokens (no more freehost_images dependency)
+            // Insert directly into CCS_tokens (no more CCS_freehost_images dependency)
             const { data: insertedData, error } = await supabase.from('CCS_tokens').insert([{
                 user_id: user.id,
                 name: name,

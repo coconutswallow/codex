@@ -422,7 +422,7 @@ export function batchCmd(type, action) {
         if (!name) continue;
 
         if (action === "setup-monster") {
-            lines.push(`!i madd "${name}" -name ${short} -h`);
+            lines.push(`!i madd "${name}" -name ${short}`);
         } else if (action === "setup-token") {
             const tokenInfo = state.getTokenData()[name.toLowerCase()] || state.getTokenData()[short.toLowerCase()];
             const token = tokenInfo?.token || "";
@@ -451,7 +451,6 @@ export function updateMonsterAddCmd() {
     for (const m of monsters) {
         let cmd = `!i madd "${m.name}"`;
         if (m.short) cmd += ` -name ${m.short}`;
-        cmd += ` -h`;
         lines.push(cmd);
     }
 
