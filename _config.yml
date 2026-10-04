@@ -23,15 +23,9 @@ collections:
 navigation:
   - title: "Home"
     url: "/"
-  - title: "New to D&D?"
-    url: "/new-to-dnd"
-  - title: "Avrae Quick Reference Guide"
-    url: "/avrae"
   - title: "My DM Tools"
     url: "#"
     sublinks:
-      - title: "Useful Links for DMs"
-        url: "/dm-links"
       - title: "Battle Maps"
         url: "/battlemaps/view"
       - title: "Avrae Tokens Manager"
