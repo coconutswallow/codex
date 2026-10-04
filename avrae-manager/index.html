@@ -150,18 +150,18 @@ extra_css: ["/assets/css/avrae-manager.css"]
                 <div style="padding: 15px; display: flex; flex-direction: column; gap: 15px;">
                     <div class="config-section">
                         <label class="section-label">1. Map Source</label>
-                        <p style="font-size: 0.75em; color: var(--blur); margin: -5px 0 10px 0;">Paste your map URL, or
-                            use the map search to select a map from the database</p>
+                        <p style="font-size: 0.75em; color: var(--blur); margin: -5px 0 10px 0;">Paste a map image URL, or
+                            type a name to search the battlemaps database:</p>
 
-                        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;">
-                            <input type="text" id="mapImgUrl" placeholder="https://example.com/map.jpg"
-                                oninput="handleMapUrlChange()">
-                            <button class="action-btn" style="width: 100%; font-size: 0.8em; padding: 8px;"
+                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                            <input type="text" id="mapImgUrl" placeholder="Search battlemap name or paste image URL..."
+                                oninput="handleMapUrlChange()" style="flex: 1;">
+                            <button class="action-btn" style="font-size: 0.8em; padding: 8px 12px; white-space: nowrap;"
                                 onclick="toggleMapSearch()">Search Database</button>
                         </div>
 
                         <div id="modalMapSearchArea" style="display: none; margin-bottom: 10px;">
-                            <input type="text" id="modalMapSearchInput" placeholder="Search battlemaps..."
+                            <input type="text" id="modalMapSearchInput" placeholder="Search battlemaps by name or keyword..."
                                 oninput="searchMapsModal(this.value)">
                             <div id="modalMapSearchResults" class="search-results"
                                 style="margin-top: 8px; max-height: 200px;"></div>
@@ -210,11 +210,11 @@ extra_css: ["/assets/css/avrae-manager.css"]
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
                             <div>
                                 <label>Vertical Offset</label>
-                                <input type="number" id="mapOffsetY" value="0">
+                                <input type="number" id="mapOffsetY" value="0" oninput="updateFowOutputs()">
                             </div>
                             <div>
                                 <label>Horizontal Offset</label>
-                                <input type="number" id="mapOffsetX" value="0">
+                                <input type="number" id="mapOffsetX" value="0" oninput="updateFowOutputs()">
                             </div>
                         </div>
 

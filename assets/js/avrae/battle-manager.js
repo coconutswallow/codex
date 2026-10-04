@@ -30,6 +30,8 @@ import {
     updateGridFromPPC,
     toggleMapSearch,
     searchMapsModal,
+    selectMapByIndex,
+    selectMapModal,
     updateMapSummary,
     applyMapConfig
 } from './map-setup.js';
@@ -114,6 +116,8 @@ window.updateMapCalculations = updateMapCalculations;
 window.updateGridFromPPC = updateGridFromPPC;
 window.toggleMapSearch = toggleMapSearch;
 window.searchMapsModal = searchMapsModal;
+window.selectMapByIndex = selectMapByIndex;
+window.selectMapModal = selectMapModal;
 window.updateMapSummary = updateMapSummary;
 window.applyMapConfig = applyMapConfig;
 

@@ -173,10 +173,18 @@ export function updateFowOutputs() {
         const url = $("mapImgUrl")?.value?.trim() || "URL_HERE";
         const w = $("mapW")?.value || "20";
         const h = $("mapH")?.value || "20";
-        const ppc = $("mapPPC")?.value || "30";
+        const ppc = $("mapPPC")?.value?.trim() || "";
+        const offX = parseInt($("mapOffsetX")?.value || "0", 10) || 0;
+        const offY = parseInt($("mapOffsetY")?.value || "0", 10) || 0;
+
+        let options = ppc ? `dc${ppc}` : "";
+        if (offX !== 0 || offY !== 0) {
+            options += `o${offX}:${offY}`;
+        }
+        if (!options) options = "d";
 
         initSetup.innerText = `!multiline\n!i begin\n!i add 50 DM -p`;
-        mapSetup.innerText = `!map -bg "${url}" -mapsize ${w}x${h} -options dc${ppc} -t DM`;
+        mapSetup.innerText = `!map -bg "${url}" -mapsize ${w}x${h} -options ${options} -t DM`;
     }
 }
 
@@ -187,9 +195,17 @@ export function generateMapSetupCmd() {
     const url = $("mapImgUrl")?.value?.trim() || "URL_HERE";
     const w = $("mapW")?.value || "20";
     const h = $("mapH")?.value || "20";
-    const ppc = $("mapPPC")?.value || "30";
+    const ppc = $("mapPPC")?.value?.trim() || "";
+    const offX = parseInt($("mapOffsetX")?.value || "0", 10) || 0;
+    const offY = parseInt($("mapOffsetY")?.value || "0", 10) || 0;
 
-    return `!multiline\n!i begin\n!i add 50 DM -p\n\n!map -bg "${url}" -mapsize ${w}x${h} -options dc${ppc} -t DM`;
+    let options = ppc ? `dc${ppc}` : "";
+    if (offX !== 0 || offY !== 0) {
+        options += `o${offX}:${offY}`;
+    }
+    if (!options) options = "d";
+
+    return `!multiline\n!i begin\n!i add 50 DM -p\n\n!map -bg "${url}" -mapsize ${w}x${h} -options ${options} -t DM`;
 }
 
 /**

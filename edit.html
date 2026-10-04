@@ -372,7 +372,7 @@ window.authManager = new AuthManager();
     if (isAvraeOn) {
         let options = `dc${ppi}`;
         if (ox > 0 || oy > 0) {
-            options += ` -o${ox}:${oy}`;
+            options += `o${ox}:${oy}`;
         }
         cmd = `!map -bg "${document.getElementById('imgUrl').value}" -mapsize ${w}x${h} -options ${options} -t DM`;
     }
