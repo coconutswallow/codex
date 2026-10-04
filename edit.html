@@ -88,8 +88,11 @@ title: Edit Map
         </div>
 
         <div class="section">
-            <button id="save-btn" onclick="saveMap()">Save</button> 
-            <p id="statusMsg"></p>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button id="save-btn" onclick="saveMap()" style="flex: 1;">Save</button> 
+                <button id="delete-btn" onclick="deleteMap()" style="display: none; background: var(--palette-danger); color: var(--palette-white); border: none; padding: 10px 18px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 0.9em;">Delete Map</button>
+            </div>
+            <p id="statusMsg" style="margin-top: 10px;"></p>
         </div>
     </div>
   </div>
@@ -161,13 +164,27 @@ class AuthManager {
         window.location.reload();
     }
 
-    // Helper to check for Admin status (assuming a function or metadata flag is set)
-    // NOTE: This is a placeholder. Real admin checks must be done on the server/DB.
+    // Helper to check for Admin status (supports metadata, known admin ID, or CCS_discord_users roles)
     isAdmin() {
          if (!this.user) return false;
-         // Placeholder for a real admin check: If user_metadata contains an 'is_admin: true' field
+         if (this.user.id === 'c565b7c8-5bdb-4bf4-a56e-663c1f50fa13') return true;
          const meta = this.user.user_metadata;
          return meta && meta.is_admin === true; 
+    }
+
+    async checkAdmin() {
+         if (!this.user) return false;
+         if (this.user.id === 'c565b7c8-5bdb-4bf4-a56e-663c1f50fa13') return true;
+         if (this.user.user_metadata?.is_admin === true) return true;
+         try {
+             const { data } = await this.db.from('CCS_discord_users').select('roles').eq('user_id', this.user.id).maybeSingle();
+             if (data?.roles && Array.isArray(data.roles) && (data.roles.includes('Admin') || data.roles.includes('admin'))) {
+                 return true;
+             }
+         } catch (e) {
+             console.warn("Admin check failed:", e);
+         }
+         return false;
     }
 
     // Helper to get formatted name
@@ -212,19 +229,19 @@ window.authManager = new AuthManager();
         return;
     }
 
-    window.authManager.init((user) => {
+    window.authManager.init(async (user) => {
         currentUser = user;
         db = window.authManager.getClient(); // Get the DB client
 
         // 3. Security Guard: Redirect if not logged in
         if (!user) {
             alert("You must be logged in to edit.");
-            setTimeout(() => { window.location.href = "/codex/maps/"; }, 100); 
+            setTimeout(() => { window.location.href = "/codex/battlemaps/view"; }, 100); 
             return;
         }
 
-        // NEW: Check for admin status
-        isAdmin = window.authManager.isAdmin(); 
+        // Check for admin status
+        isAdmin = await window.authManager.checkAdmin(); 
         if (isAdmin) {
              document.getElementById('admin-badge').style.display = 'inline-block';
              document.getElementById('save-btn').innerText = 'Save Changes (Admin)';
@@ -290,6 +307,13 @@ window.authManager = new AuthManager();
       document.getElementById('loading-msg').style.display = 'none';
       document.getElementById('editor-ui').style.display = 'block';
       
+      // Check if user is allowed to delete map (Admin or original submitter)
+      const deleteBtn = document.getElementById('delete-btn');
+      const isOwner = currentUser && (data.submitted_by === currentUser.id || data.submitted_by === currentUser.email);
+      if (deleteBtn && (isAdmin || isOwner)) {
+          deleteBtn.style.display = 'inline-block';
+      }
+
       img.src = data.image_url;
       img.onload = () => {
           img.style.display = 'block';
@@ -532,7 +556,71 @@ window.authManager = new AuthManager();
       } else {
            msg.innerText = "Success! New version submitted.";
            msg.style.color = "var(--palette-success)";
-           setTimeout(() => { window.location.href = "/codex/maps"; }, 1500);
+           setTimeout(() => { window.location.href = "/codex/battlemaps/view"; }, 1500);
       }
   }
+
+  /* --- DELETE MAP --- */
+  /**
+   * Permanently delete the map from CCS_battlemaps
+   */
+  async function deleteMap() {
+      if (!originalMapId || !db) {
+          alert("No map ID provided to delete.");
+          return;
+      }
+
+      const mapName = document.getElementById('mapName')?.value?.trim() || "this map";
+      const confirmDelete = confirm(`Are you sure you want to permanently delete "${mapName}"?\n\nThis action cannot be undone.`);
+      if (!confirmDelete) return;
+
+      const delBtn = document.getElementById('delete-btn');
+      const saveBtn = document.getElementById('save-btn');
+      const msg = document.getElementById('statusMsg');
+
+      if (delBtn) {
+          delBtn.disabled = true;
+          delBtn.innerText = "Deleting...";
+      }
+      if (saveBtn) saveBtn.disabled = true;
+      if (msg) {
+          msg.innerText = "Deleting map from database...";
+          msg.style.color = "var(--color-text-muted)";
+      }
+
+      try {
+          const { error } = await db.from('CCS_battlemaps').delete().eq('id', originalMapId);
+          if (error) {
+              console.error("Delete error:", error);
+              if (msg) {
+                  msg.innerText = "Error deleting map: " + error.message;
+                  msg.style.color = "var(--palette-danger)";
+              }
+              alert("Failed to delete map: " + error.message);
+              if (delBtn) {
+                  delBtn.disabled = false;
+                  delBtn.innerText = "Delete Map";
+              }
+              if (saveBtn) saveBtn.disabled = false;
+              return;
+          }
+
+          if (msg) {
+              msg.innerText = "Success! Map deleted.";
+              msg.style.color = "var(--palette-success)";
+          }
+          alert(`Map "${mapName}" has been successfully deleted.`);
+          window.location.href = "/codex/battlemaps/view";
+      } catch (err) {
+          console.error("Unexpected delete error:", err);
+          alert("Unexpected error occurred while deleting the map.");
+          if (delBtn) {
+              delBtn.disabled = false;
+              delBtn.innerText = "Delete Map";
+          }
+          if (saveBtn) saveBtn.disabled = false;
+      }
+  }
+
+  window.deleteMap = deleteMap;
 </script>

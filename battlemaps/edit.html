@@ -129,7 +129,10 @@ title: Submit / Edit Battle Map
       <input id="keywords" type="text" placeholder="forest, cave, snow, ambush..." />
     </div>
 
-    <button type="submit" id="submit-btn">Save Map</button>
+    <div style="display: flex; gap: 12px; align-items: center; margin-top: 20px;">
+      <button type="submit" id="submit-btn" style="flex: 1;">Save Map</button>
+      <button type="button" id="delete-btn" style="display: none; background: var(--palette-danger); color: var(--palette-white); padding: 10px 20px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Delete Map</button>
+    </div>
 
   </form>
 </div>
@@ -276,6 +279,38 @@ title: Submit / Edit Battle Map
         document.getElementById('resized-url').value = existingOptimizedUrl || "";
         showPreview(existingThumbUrl || existingImageUrl, existingImageUrl);
         uploadStatus.textContent = "Using existing image";
+      }
+
+      // Configure delete button if user is authorized (Admin/Contributor or original submitter)
+      const deleteBtn = document.getElementById("delete-btn");
+      const isOwner = currentUser && (currentUser.id === data.submitted_by);
+      if (deleteBtn && (isApprovedSubmitter || isOwner)) {
+        deleteBtn.style.display = "inline-block";
+        deleteBtn.addEventListener("click", async () => {
+          const mapTitle = nameInput.value || data.name || "this map";
+          if (!confirm(`Are you sure you want to permanently delete "${mapTitle}"?\n\nThis action cannot be undone.`)) {
+            return;
+          }
+          deleteBtn.disabled = true;
+          deleteBtn.textContent = "Deleting...";
+          btn.disabled = true;
+
+          const { error: delError } = await supabase
+            .from("CCS_battlemaps")
+            .delete()
+            .eq("id", parseInt(mapId));
+
+          if (delError) {
+            console.error("Error deleting map:", delError);
+            alert("Error deleting map: " + delError.message);
+            deleteBtn.disabled = false;
+            deleteBtn.textContent = "Delete Map";
+            btn.disabled = false;
+          } else {
+            alert(`Map "${mapTitle}" was successfully deleted.`);
+            window.location.href = "/codex/battlemaps/view";
+          }
+        });
       }
     }
   }
