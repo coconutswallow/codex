@@ -156,6 +156,20 @@ export function addPlayerRow(onLocationJump) {
 }
 
 /**
+ * Add an NPC row (convenience helper)
+ */
+export function addNpcRow(onLocationJump) {
+    return addRow("npc", onLocationJump);
+}
+
+/**
+ * Add a monster row (convenience helper)
+ */
+export function addMonsterRow(onLocationJump) {
+    return addRow("monster", onLocationJump);
+}
+
+/**
  * Ensure at least N rows exist for a type
  */
 export function ensureRows(type, count, onLocationJump) {

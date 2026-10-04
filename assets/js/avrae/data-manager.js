@@ -57,7 +57,7 @@ export async function refreshTokensFromSupabase() {
  * @param {Object} inputs - Flat inputs object from state.serialize()
  * @returns {Object} Structured data for database
  */
-function transformToStructured(inputs) {
+export function transformToStructured(inputs) {
     // Extract map configuration with transformation fields
     const map_config = {
         imageUrl: inputs.mapImgUrl || "",
@@ -74,9 +74,23 @@ function transformToStructured(inputs) {
         autoViewEnabled: !!inputs.mapAutoView
     };
 
-    // Extract players (Dynamic count based on player-row presence in HTML)
+    const getMaxInputIndex = (prefix) => {
+        let max = 0;
+        const regex = new RegExp(`^${prefix}_(?:name|full|loc)_(\\d+)$`);
+        for (const key of Object.keys(inputs || {})) {
+            const match = key.match(regex);
+            if (match) {
+                const idx = parseInt(match[1], 10);
+                if (idx > max) max = idx;
+            }
+        }
+        return max;
+    };
+
+    // Extract players (Dynamic count based on player-row presence in HTML or inputs)
     const players = [];
-    const playerRows = document.querySelectorAll(".player-row").length;
+    const domPlayerRows = typeof document !== 'undefined' ? document.querySelectorAll(".player-row").length : 0;
+    const playerRows = Math.max(domPlayerRows, getMaxInputIndex("player"));
     for (let i = 1; i <= playerRows; i++) {
         const shortName = inputs[`player_name_${i}`] || "";
         const fullName = inputs[`player_full_${i}`] || "";
@@ -88,9 +102,11 @@ function transformToStructured(inputs) {
         }
     }
 
-    // Extract NPCs (DEFAULT_NPC_ROWS = 6)
+    // Extract NPCs (Dynamic count based on npc-row presence in HTML or inputs)
     const npcs = [];
-    for (let i = 1; i <= 6; i++) {
+    const domNpcRows = typeof document !== 'undefined' ? document.querySelectorAll(".npc-row").length : 0;
+    const npcRows = Math.max(domNpcRows, getMaxInputIndex("npc"));
+    for (let i = 1; i <= npcRows; i++) {
         const shortName = inputs[`npc_name_${i}`] || "";
         const fullName = inputs[`npc_full_${i}`] || "";
         const location = inputs[`npc_loc_${i}`] || "";
@@ -104,18 +120,20 @@ function transformToStructured(inputs) {
         }
     }
 
-    // Extract monsters (DEFAULT_MONSTER_ROWS = 10)
+    // Extract monsters (Dynamic count based on monster-row presence in HTML or inputs)
     const monsters = [];
-    for (let i = 1; i <= 10; i++) {
+    const domMonsterRows = typeof document !== 'undefined' ? document.querySelectorAll(".monster-row").length : 0;
+    const monsterRows = Math.max(domMonsterRows, getMaxInputIndex("monster"));
+    for (let i = 1; i <= monsterRows; i++) {
         const shortName = inputs[`monster_name_${i}`] || "";
-        const qty = inputs[`monster_full_${i}`] || "1";
+        const fullName = inputs[`monster_full_${i}`] || "";
         const location = inputs[`monster_loc_${i}`] || "";
         const ac = inputs[`monster_extra_${i}`];
         const tokenCode = inputs[`monster_token_${i}`] || "";
         const checked = inputs[`monster_sel_${i}`] || false;
 
-        if (shortName || location || tokenCode) {
-            monsters.push({ shortName, qty, location, ac, tokenCode, checked });
+        if (shortName || fullName || location || tokenCode) {
+            monsters.push({ shortName, fullName, qty: fullName, location, ac, tokenCode, checked });
         }
     }
 
@@ -132,7 +150,7 @@ function transformToStructured(inputs) {
  * @param {Object} structured - Structured data from database
  * @returns {Object} Flat inputs object for state.deserialize()
  */
-function transformToFlat(structured) {
+export function transformToFlat(structured) {
     const inputs = {};
 
     // Map configuration
@@ -152,18 +170,22 @@ function transformToFlat(structured) {
 
     // Players
     const players = structured.players || [];
-    players.forEach((p, i) => {
-        const idx = i + 1;
-        inputs[`player_name_${idx}`] = p.shortName || "";
-        inputs[`player_full_${idx}`] = p.fullName || "";
-        inputs[`player_loc_${idx}`] = p.location || "";
-        inputs[`player_token_${idx}`] = p.tokenCode || "";
-        inputs[`player_sel_${idx}`] = p.checked || false;
-    });
+    const domPlayerRows = typeof document !== 'undefined' ? document.querySelectorAll(".player-row").length : 0;
+    const totalPlayerRows = Math.max(domPlayerRows, players.length, 4);
+    for (let i = 1; i <= totalPlayerRows; i++) {
+        const p = players[i - 1] || {};
+        inputs[`player_name_${i}`] = p.shortName || "";
+        inputs[`player_full_${i}`] = p.fullName || "";
+        inputs[`player_loc_${i}`] = p.location || "";
+        inputs[`player_token_${i}`] = p.tokenCode || "";
+        inputs[`player_sel_${i}`] = p.checked || false;
+    }
 
     // NPCs
     const npcs = structured.npcs || [];
-    for (let i = 1; i <= 6; i++) {
+    const domNpcRows = typeof document !== 'undefined' ? document.querySelectorAll(".npc-row").length : 0;
+    const totalNpcRows = Math.max(domNpcRows, npcs.length, 4);
+    for (let i = 1; i <= totalNpcRows; i++) {
         const n = npcs[i - 1] || {};
         inputs[`npc_name_${i}`] = n.shortName || "";
         inputs[`npc_full_${i}`] = n.fullName || "";
@@ -176,10 +198,12 @@ function transformToFlat(structured) {
 
     // Monsters
     const monsters = structured.monsters || [];
-    for (let i = 1; i <= 10; i++) {
+    const domMonsterRows = typeof document !== 'undefined' ? document.querySelectorAll(".monster-row").length : 0;
+    const totalMonsterRows = Math.max(domMonsterRows, monsters.length, 4);
+    for (let i = 1; i <= totalMonsterRows; i++) {
         const m = monsters[i - 1] || {};
         inputs[`monster_name_${i}`] = m.shortName || "";
-        inputs[`monster_full_${i}`] = m.qty || "1";
+        inputs[`monster_full_${i}`] = m.fullName || m.qty || "";
         inputs[`monster_loc_${i}`] = m.location || "";
         inputs[`monster_sel_${i}`] = m.checked || false;
         if (m.ac !== undefined) inputs[`monster_extra_${i}`] = m.ac;
@@ -331,6 +355,19 @@ async function loadSession(sessionId) {
 
         if (error) throw error;
 
+        // Ensure we have enough rows for players, NPCs, and monsters before transforming and deserializing
+        if (window.ensureRows) {
+            if (row.players?.length) {
+                window.ensureRows('player', row.players.length);
+            }
+            if (row.npcs?.length) {
+                window.ensureRows('npc', row.npcs.length);
+            }
+            if (row.monsters?.length) {
+                window.ensureRows('monster', row.monsters.length);
+            }
+        }
+
         // Transform structured data back to flat format
         const flatInputs = transformToFlat({
             map_config: row.map_config,
@@ -338,11 +375,6 @@ async function loadSession(sessionId) {
             npcs: row.npcs,
             monsters: row.monsters
         });
-
-        // Ensure we have enough player rows for the loaded session
-        if (row.players?.length && window.ensureRows) {
-            window.ensureRows('player', row.players.length);
-        }
 
         // Deserialize into state
         state.setSessionId(row.id);
