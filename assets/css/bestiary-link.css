@@ -1,0 +1,349 @@
+/**
+ * @file bestiary-link.css
+ * @description Dedicated styling for the Bestiary Link (5e.tools to CritterDB Converter) tool.
+ * Adheres to Coconut Codex design tokens, CSS variables, and dark/light themes.
+ */
+
+.bestiary-link-app {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 3rem 1rem;
+    font-family: inherit;
+    color: var(--color-text);
+}
+
+.bestiary-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.bestiary-header-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.bestiary-header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: var(--color-primary);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.bestiary-badge {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--color-bg-controls);
+    color: var(--color-secondary);
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+    border: 1px solid var(--color-border);
+    font-weight: 600;
+}
+
+.bestiary-subtitle {
+    margin: 0.35rem 0 0 0;
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+}
+
+/* --- Layout Panes --- */
+.bestiary-panes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 960px) {
+    .bestiary-panes {
+        grid-template-columns: 1fr;
+    }
+}
+
+.bestiary-pane {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius, 8px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.pane-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--color-bg-controls);
+    border-bottom: 1px solid var(--color-border);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.pane-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.pane-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+/* --- Buttons --- */
+.bestiary-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-card);
+    color: var(--color-text);
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+.bestiary-btn:hover {
+    background: var(--color-bg-controls);
+    border-color: var(--palette-brand-accent);
+}
+
+.bestiary-btn-primary {
+    background: var(--palette-brand-accent);
+    color: var(--palette-white);
+    border-color: var(--palette-brand-accent);
+}
+
+.bestiary-btn-primary:hover {
+    background: var(--palette-brand-main);
+    color: var(--palette-brand-highlight);
+    border-color: var(--palette-brand-main);
+}
+
+.bestiary-btn-subtle {
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    padding: 0.35rem 0.6rem;
+}
+
+.bestiary-btn-subtle:hover {
+    background: var(--color-bg-controls);
+    color: var(--color-text);
+}
+
+/* --- Textarea Editor --- */
+.editor-container {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.bestiary-textarea {
+    width: 100%;
+    height: 480px;
+    box-sizing: border-box;
+    padding: 1rem;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, Consolas, Monaco, monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--color-text);
+    background: var(--color-input-bg);
+    border: none;
+    outline: none;
+    resize: vertical;
+    tab-size: 2;
+}
+
+.bestiary-textarea:focus {
+    box-shadow: inset 0 0 0 2px var(--palette-brand-accent);
+}
+
+/* --- Status & Alerts --- */
+.pane-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: var(--color-bg-controls);
+    border-top: 1px solid var(--color-border);
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+.error-message {
+    padding: 0.6rem 1rem;
+    background: rgba(239, 68, 68, 0.1);
+    border-bottom: 1px solid var(--palette-danger);
+    color: var(--palette-danger);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.copy-toast {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--palette-success);
+    font-weight: 600;
+}
+
+/* --- Settings Bar --- */
+.options-bar {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius, 8px);
+    flex-wrap: wrap;
+}
+
+.option-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+}
+
+.option-group input[type="text"] {
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--color-input-bg);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: 0.85rem;
+    width: 220px;
+}
+
+.option-group input[type="text"]:focus {
+    outline: 2px solid var(--palette-brand-accent);
+}
+
+/* --- Statblock Preview Section --- */
+.preview-section {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius, 8px);
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.preview-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 0.5rem;
+}
+
+.preview-section-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--color-primary);
+}
+
+.statblock-card {
+    background: var(--color-bg-controls);
+    border: 2px solid var(--palette-border-dark);
+    border-radius: 6px;
+    padding: 1.25rem;
+    max-width: 700px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .statblock-card {
+    border-color: var(--palette-border-dark);
+    background: #191310;
+}
+
+.statblock-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--palette-brand-main);
+}
+
+[data-theme="dark"] .statblock-name {
+    color: var(--palette-brand-highlight);
+}
+
+.statblock-meta {
+    font-style: italic;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    margin: 0.2rem 0 0.75rem 0;
+}
+
+.statblock-divider {
+    height: 3px;
+    background: var(--palette-brand-accent);
+    margin: 0.6rem 0;
+    border: none;
+}
+
+.statblock-line {
+    margin: 0.25rem 0;
+    font-size: 0.9rem;
+}
+
+.statblock-line strong {
+    color: var(--color-primary);
+}
+
+.statblock-abilities-table {
+    width: 100%;
+    margin: 0.75rem 0;
+    border-collapse: collapse;
+    text-align: center;
+}
+
+.statblock-abilities-table th {
+    color: var(--color-primary);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    padding: 0.25rem;
+}
+
+.statblock-abilities-table td {
+    padding: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.statblock-entry {
+    margin: 0.6rem 0;
+    font-size: 0.9rem;
+    line-height: 1.45;
+}
+
+.statblock-entry-name {
+    font-weight: 700;
+    font-style: italic;
+    color: var(--color-primary);
+}

@@ -1,0 +1,114 @@
+---
+layout: default
+title: Bestiary Link
+permalink: /bestiary-link/
+extra_css: ["/assets/css/bestiary-link.css"]
+---
+
+<div class="bestiary-link-app">
+    <div class="bestiary-header">
+        <div>
+            <div class="bestiary-header-title">
+                <h1>Bestiary Link</h1>
+                <span class="bestiary-badge">5e.tools → CritterDB</span>
+            </div>
+            <p class="bestiary-subtitle">
+                Paste 5e.tools creature or bestiary JSON to instantly convert it into CritterDB-compatible monster JSON.
+            </p>
+        </div>
+    </div>
+
+    <!-- Options & Settings Bar -->
+    <div class="options-bar">
+        <div class="option-group">
+            <label for="bestiary-id-input"><strong>Bestiary ID:</strong></label>
+            <input type="text" id="bestiary-id-input" placeholder="Auto-generated or custom hex..." />
+        </div>
+        <div class="option-group">
+            <label>
+                <input type="checkbox" id="compact-toggle" />
+                Minify / Compact JSON
+            </label>
+        </div>
+        <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+            <button id="convert-btn" class="bestiary-btn bestiary-btn-primary">
+                ⚡ Convert Now
+            </button>
+        </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div id="error-banner" class="error-message" style="display: none;"></div>
+
+    <!-- Dual Editor Panes -->
+    <div class="bestiary-panes">
+        <!-- Input Pane (5e.tools format) -->
+        <div class="bestiary-pane">
+            <div class="pane-topbar">
+                <span class="pane-title">📥 5e.tools Monster JSON</span>
+                <div class="pane-actions">
+                    <button id="sample-btn" class="bestiary-btn" title="Load sample Adult Black Dragon">
+                        🐉 Load Sample
+                    </button>
+                    <button id="paste-btn" class="bestiary-btn" title="Paste from clipboard">
+                        📋 Paste
+                    </button>
+                    <button id="clear-btn" class="bestiary-btn bestiary-btn-subtle" title="Clear input">
+                        ✕ Clear
+                    </button>
+                </div>
+            </div>
+            <div class="editor-container">
+                <textarea 
+                    id="input-json" 
+                    class="bestiary-textarea" 
+                    placeholder="Paste 5e.tools JSON here, drag-and-drop a .json file, or click 'Load Sample' to test..."
+                    spellcheck="false"
+                ></textarea>
+            </div>
+            <div class="pane-footer">
+                <span id="input-status">Ready</span>
+                <span>Supports single creature, array, or { monster: [...] }</span>
+            </div>
+        </div>
+
+        <!-- Output Pane (CritterDB format) -->
+        <div class="bestiary-pane">
+            <div class="pane-topbar">
+                <span class="pane-title">📤 CritterDB Format</span>
+                <div class="pane-actions">
+                    <button id="copy-btn" class="bestiary-btn bestiary-btn-primary" title="Copy to clipboard">
+                        📋 Copy JSON
+                    </button>
+                    <button id="download-btn" class="bestiary-btn" title="Download .JSON file">
+                        💾 Download
+                    </button>
+                </div>
+            </div>
+            <div class="editor-container">
+                <textarea 
+                    id="output-json" 
+                    class="bestiary-textarea" 
+                    placeholder="CritterDB JSON will appear here automatically upon pasting or typing valid 5e.tools data..." 
+                    readonly 
+                    spellcheck="false"
+                ></textarea>
+            </div>
+            <div class="pane-footer">
+                <span id="output-status">Waiting for input</span>
+                <span>Ready for CritterDB Import</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statblock Preview Section -->
+    <div id="preview-section" class="preview-section" style="display: none;">
+        <div class="preview-section-header">
+            <h2>Statblock Preview</h2>
+            <span style="font-size: 0.85rem; color: var(--color-text-muted);">Visual verification of converted creature</span>
+        </div>
+        <div id="statblock-container"></div>
+    </div>
+</div>
+
+<script type="module" src="{{ site.baseurl }}/assets/js/bestiary-link.js?v={{ site.time | date: '%s' }}"></script>

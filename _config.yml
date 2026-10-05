@@ -32,6 +32,8 @@ navigation:
         url: "/battlemaps/token"
       - title: "Avrae Combat Manager"
         url: "/avrae-manager"
+      - title: "Bestiary Link"
+        url: "/bestiary-link"
   - title: "My Games"
     url: "/session-assets/"
 
