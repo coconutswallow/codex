@@ -4,7 +4,9 @@ title: Battle Map Admin
 ---
 
 {% include auth-header.html %}
+{% include dm-tools-gate.html %}
 
+<div class="dm-tool-content" style="display: none;" data-display="block">
 <section class="hero-block">
   <h1>Battle Map Admin</h1>
   <p>Review and approve pending map submissions.</p>
@@ -94,6 +96,7 @@ title: Battle Map Admin
     <tbody id="table-body">
       </tbody>
   </table>
+</div>
 </div>
 
 <script type="module">

@@ -1,0 +1,140 @@
+/**
+ * @file dm-tools-gate.css
+ * @description Styling for the DM Tools access restriction gate.
+ */
+
+.dm-tools-gate-container {
+    max-width: 680px;
+    margin: 3rem auto;
+    padding: 2.5rem 2rem;
+    background: var(--color-bg-card, #FFFFFF);
+    border: 1px solid var(--color-border, #D7CCC8);
+    border-radius: var(--border-radius, 10px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    color: var(--color-text, #3E2723);
+    font-family: inherit;
+}
+
+.dm-gate-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    width: 100%;
+}
+
+.dm-gate-icon {
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.dm-gate-title {
+    margin: 0;
+    font-size: 1.6rem;
+    color: var(--color-primary, #4A332A);
+    font-weight: 700;
+}
+
+.dm-gate-desc {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--color-text-muted, #6D4C41);
+    max-width: 540px;
+}
+
+.dm-gate-discord-box {
+    background: var(--color-bg-controls, #EBE5DE);
+    border: 1px solid var(--color-border, #D7CCC8);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    font-size: 0.9rem;
+    width: 100%;
+    max-width: 520px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.dm-gate-user-badge {
+    padding: 0.5rem 0.75rem;
+    background: rgba(0, 0, 0, 0.04);
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.dm-gate-user-badge code {
+    font-family: Consolas, monospace;
+    font-size: 0.8rem;
+    word-break: break-all;
+}
+
+.dm-gate-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 0.5rem;
+}
+
+.dm-gate-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+}
+
+.dm-gate-btn-discord {
+    background: #5865F2;
+    color: #ffffff;
+}
+
+.dm-gate-btn-discord:hover {
+    background: #4752C4;
+}
+
+.dm-gate-btn-primary {
+    background: var(--color-secondary, #6B8E23);
+    color: #ffffff;
+}
+
+.dm-gate-btn-primary:hover {
+    background: var(--palette-brand-main, #4A332A);
+}
+
+.dm-gate-btn-secondary {
+    background: var(--color-bg-controls, #EBE5DE);
+    color: var(--color-text, #3E2723);
+    border-color: var(--color-border, #D7CCC8);
+}
+
+.dm-gate-btn-secondary:hover {
+    background: var(--color-border, #D7CCC8);
+}
+
+/* Spinner */
+.dm-gate-spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 3px solid rgba(107, 142, 35, 0.2);
+    border-radius: 50%;
+    border-top-color: var(--color-secondary, #6B8E23);
+    animation: dmGateSpin 0.8s linear infinite;
+}
+
+@keyframes dmGateSpin {
+    to { transform: rotate(360deg); }
+}

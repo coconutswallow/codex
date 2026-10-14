@@ -166,48 +166,44 @@ window.handlePageAuth = async (user) => {
     const authGate = document.getElementById('auth-gate');
     const adminBtn = document.getElementById('admin-monster-mgr');
 
-    if (user) {
-        console.log(`[battle-manager] User authenticated: ${user.id}`);
-        // User is logged in - show the app
-        if (mainContent) mainContent.style.display = 'flex';
-        if (authGate) authGate.style.display = 'none';
-
-        // Check for admin status to show extra menu items
-        try {
-            const { data, error } = await supabase
-                .from('CCS_discord_users')
-                .select('roles')
-                .eq('user_id', user.id)
-                .single();
-
-            if (error) {
-                console.warn(`[battle-manager] Admin check error:`, error);
-            } else {
-                const isAdmin = data?.roles && Array.isArray(data.roles) && data.roles.includes('Admin');
-                console.log(`[battle-manager] Admin status (Admin role):`, isAdmin);
-                if (isAdmin && adminBtn) {
-                    console.log(`[battle-manager] Showing admin menu button`);
-                    adminBtn.style.display = 'block';
-                }
-            }
-        } catch (e) {
-            console.error(`[battle-manager] Admin check failed:`, e);
-        }
-
-        // Initial data load if we haven't already
-        if (!window.battleManagerInitialized) {
-            window.battleManagerInitialized = true;
-            await refreshTokensFromSupabase();
-            updateMapSummary(); // Initial summary update
-        }
-    } else {
-        // User is logged out - show the gate
+    if (!user) {
         if (mainContent) mainContent.style.display = 'none';
         if (authGate) authGate.style.display = 'flex';
         if (adminBtn) adminBtn.style.display = 'none';
         window.battleManagerInitialized = false;
+        return;
+    }
+
+    // Check for admin status to show extra menu items
+    try {
+        const { data, error } = await supabase
+            .from('CCS_discord_users')
+            .select('approved, roles')
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+        if (error) {
+            console.warn(`[battle-manager] Admin check error:`, error);
+        } else {
+            const isAdmin = data?.roles && Array.isArray(data.roles) && data.roles.includes('Admin');
+            if (isAdmin && adminBtn) {
+                adminBtn.style.display = 'block';
+            }
+        }
+    } catch (e) {
+        console.error(`[battle-manager] Admin check failed:`, e);
     }
 };
+
+window.addEventListener('dmToolsAccessGranted', async () => {
+    const mainContent = document.querySelector('.main-content');
+    if (mainContent) mainContent.style.display = 'flex';
+    if (!window.battleManagerInitialized) {
+        window.battleManagerInitialized = true;
+        await refreshTokensFromSupabase();
+        updateMapSummary();
+    }
+});
 
 /**
  * Application bootstrap

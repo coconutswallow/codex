@@ -4,7 +4,9 @@ title: Battle Maps
 ---
 
 {% include auth-header.html %}
+{% include dm-tools-gate.html %}
 
+<div class="dm-tool-content" style="display: none;" data-display="block">
 <section class="hero-block">
   <h1>Curated Battle Maps</h1>
   <p align="left">Curated battlemaps. All maps uploaded were made free to use by the original creator, and each image is credited to the creator with links to the creator's page.</p>  
@@ -136,6 +138,7 @@ title: Battle Maps
 >
   Load More
 </button>
+</div>
 
 <script type="module">
   // FIXED IMPORT: Use absolute path to avoid 404
@@ -148,6 +151,7 @@ title: Battle Maps
   let loading = false;
   let reachedEnd = false;
   let currentUser = null;
+  let galleryInitialized = false;
 
   const gallery = document.getElementById("gallery-container");
   const countDisplay = document.getElementById("map-count-display");
@@ -162,9 +166,12 @@ title: Battle Maps
   }
 
   /* -----------------------------
-     INITIAL LOAD
+     INITIAL LOAD (AUTHORIZED ONLY)
   ----------------------------- */
-  document.addEventListener("DOMContentLoaded", async () => {
+  async function startGallery() {
+    if (galleryInitialized) return;
+    galleryInitialized = true;
+
     await getCurrentUser();
 
     const searchInput = document.getElementById("mapSearchInput");
@@ -188,7 +195,9 @@ title: Battle Maps
     });
 
     loadMoreBtn.onclick = fetchMaps;
-  });
+  }
+
+  window.addEventListener("dmToolsAccessGranted", startGallery);
 
   /* -----------------------------
      DATA FETCHING

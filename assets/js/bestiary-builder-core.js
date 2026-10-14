@@ -7,6 +7,58 @@
 import { convertSingleMonster, generateObjectId } from './bestiary-converter.js';
 
 /**
+ * Designated authorized user ID for the Custom Bestiary Builder (CCS_discord_users.user_id).
+ * @type {string}
+ */
+export const ALLOWED_USER_ID = 'c565b7c8-5bdb-4bf4-a56e-663c1f50fa13';
+
+/**
+ * Validates whether the given user ID is authorized to access DM Tools.
+ * Requires user to have approved === true in CCS_discord_users.
+ * 
+ * @param {string|null|undefined} userId - User UUID to check.
+ * @param {object|null} [client=null] - Supabase client.
+ * @returns {Promise<{ authorized: boolean, reason?: string, user?: object }>}
+ */
+export async function verifyUserAuthorization(userId, client = null) {
+    if (!userId) {
+        return { authorized: false, reason: 'not_logged_in' };
+    }
+
+    if (!client) {
+        // Fallback for offline/mock tests: owner is approved by default
+        const isOwner = userId === ALLOWED_USER_ID;
+        return {
+            authorized: isOwner,
+            reason: isOwner ? undefined : 'unauthorized_id'
+        };
+    }
+
+    try {
+        const query = client
+            .from('CCS_discord_users')
+            .select('user_id, display_name, discord_id, approved, roles')
+            .eq('user_id', userId);
+
+        const { data, error } = typeof query.maybeSingle === 'function'
+            ? await query.maybeSingle()
+            : await query.single();
+
+        if (error || !data) {
+            return { authorized: false, reason: 'db_record_not_found', error };
+        }
+
+        if (data.approved === true || data.user_id === ALLOWED_USER_ID) {
+            return { authorized: true, user: data };
+        }
+
+        return { authorized: false, reason: 'unapproved', user: data };
+    } catch (err) {
+        return { authorized: false, error: err.message };
+    }
+}
+
+/**
  * Calculates a fuzzy match score for a given search query against a monster entry.
  * Higher scores indicate better relevance.
  * 
@@ -17,9 +69,11 @@ import { convertSingleMonster, generateObjectId } from './bestiary-converter.js'
 export function scoreMonsterMatch(query, monster) {
     if (!query || !monster) return 0;
 
-    const name = (monster.name || '').toLowerCase();
-    const type = (monster.type || '').toLowerCase();
-    const source = (monster.source || '').toLowerCase();
+    const name = String(monster.name || '').toLowerCase();
+    const type = typeof monster.type === 'string'
+        ? monster.type.toLowerCase()
+        : (monster.type ? String(monster.type).toLowerCase() : '');
+    const source = String(monster.source || '').toLowerCase();
 
     // 1. Exact match on name
     if (name === query) return 1000;

@@ -4,6 +4,7 @@ title: Token Library | Battlemaps
 ---
 
 {% include auth-header.html %}
+{% include dm-tools-gate.html %}
 
 <link rel="stylesheet" href="/codex/assets/css/style.css">
 <style>
@@ -100,7 +101,17 @@ title: Token Library | Battlemaps
         flex-shrink: 0; 
     }
     .token-info { flex: 1; overflow: hidden; }
-    .token-name { font-weight: bold; font-size: 1.2em; margin-bottom: 8px; color: #fff; }
+    .token-name-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; min-height: 28px; }
+    .token-name { font-weight: bold; font-size: 1.15em; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .edit-name-btn { background: transparent; border: none; color: rgba(255, 255, 255, 0.4); cursor: pointer; padding: 4px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; transition: all 0.15s ease; flex-shrink: 0; }
+    .edit-name-btn:hover { color: var(--palette-brand-highlight); background: rgba(255, 255, 255, 0.1); }
+    .name-edit-form { display: flex; align-items: center; gap: 6px; width: 100%; }
+    .name-edit-input { background: #000; border: 1px solid var(--palette-brand-highlight); border-radius: 4px; color: #fff; padding: 4px 8px; font-size: 1em; font-family: inherit; flex: 1; outline: none; width: 100%; min-width: 0; }
+    .name-edit-input:focus { border-color: var(--palette-brand-accent-pop); }
+    .name-save-btn { background: var(--palette-brand-accent); border: none; color: #fff; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 0.9em; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+    .name-save-btn:hover { filter: brightness(1.2); }
+    .name-cancel-btn { background: #333; border: none; color: #bbb; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 0.9em; display: flex; align-items: center; justify-content: center; }
+    .name-cancel-btn:hover { background: #555; color: #fff; }
     
     .code-wrapper { display: flex; align-items: stretch; border-radius: 4px; overflow: hidden; border: 1px solid #333; height: 40px; }
     .token-code { background: #111; color: var(--palette-brand-accent-pop); font-family: monospace; padding: 10px; font-size: 1.4em; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 20px;}
@@ -137,7 +148,7 @@ title: Token Library | Battlemaps
     }
 </style>
 
-<main class="container page-padding">
+<main class="container page-padding dm-tool-content" style="display: none;" data-display="block">
     <div class="add-token-container">
         <h1>Token Library</h1>
         <button class="save-btn" id="add-token-btn" style="display:none;" onclick="openTokenModal()">+ New Token</button>
@@ -227,14 +238,17 @@ title: Token Library | Battlemaps
     let searchTerm = '';
 
     window.handlePageAuth = (user) => {
-        if (user) {
-            addBtn.style.display = 'block';
-            document.getElementById('filter-bar').style.display = 'flex';
-            fetchTokens();
-        } else {
+        // Access authorization handled by dm-tools-gate
+        if (!user) {
             document.getElementById('loading-status').innerHTML = "Please login to view tokens.";
         }
     };
+
+    window.addEventListener('dmToolsAccessGranted', () => {
+        addBtn.style.display = 'block';
+        document.getElementById('filter-bar').style.display = 'flex';
+        fetchTokens();
+    });
 
     async function fetchTokens() {
         // Fetch tokens, filtering out NULL or Empty image_urls
@@ -312,10 +326,18 @@ title: Token Library | Battlemaps
                 }
 
                 return `
-                <div class="token-card">
+                <div class="token-card" id="token-card-${t.id}">
                     <img src="${t.safeImg}" class="token-thumb" onerror="this.src='https://placehold.co/100x100?text=Error'">
                     <div class="token-info">
-                        <div class="token-name">${t.name}</div>
+                        <div class="token-name-row" id="name-container-${t.id}">
+                            <div class="token-name" title="${escapeHtml(t.name)}">${escapeHtml(t.name)}</div>
+                            <button class="edit-name-btn" onclick="startEditTokenName('${t.id}')" title="Edit token name" aria-label="Edit token name">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+                        </div>
                         <div class="code-wrapper">
                             ${codeHtml}
                             <button class="delete-btn" onclick="deleteToken('${t.id}')">
@@ -483,6 +505,91 @@ title: Token Library | Battlemaps
         if (val) {
             await supabase.from('CCS_tokens').update({ token_code: val }).eq('id', id);
             fetchTokens();
+        }
+    };
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    window.startEditTokenName = (id) => {
+        const container = document.getElementById(`name-container-${id}`);
+        if (!container) return;
+        const token = allTokensData.find(t => String(t.id) === String(id));
+        if (!token) return;
+
+        container.innerHTML = `
+            <div class="name-edit-form">
+                <input type="text" id="name-input-${id}" class="name-edit-input" value="${escapeHtml(token.name)}" />
+                <button class="name-save-btn" onclick="saveTokenName('${id}')" title="Save name">✓</button>
+                <button class="name-cancel-btn" onclick="cancelEditTokenName('${id}')" title="Cancel">✕</button>
+            </div>
+        `;
+
+        const input = document.getElementById(`name-input-${id}`);
+        if (input) {
+            input.focus();
+            input.select();
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveTokenName(id);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cancelEditTokenName(id);
+                }
+            });
+        }
+    };
+
+    window.cancelEditTokenName = (id) => {
+        const container = document.getElementById(`name-container-${id}`);
+        if (!container) return;
+        const token = allTokensData.find(t => String(t.id) === String(id));
+        if (!token) return;
+
+        container.innerHTML = `
+            <div class="token-name" title="${escapeHtml(token.name)}">${escapeHtml(token.name)}</div>
+            <button class="edit-name-btn" onclick="startEditTokenName('${token.id}')" title="Edit token name" aria-label="Edit token name">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+            </button>
+        `;
+    };
+
+    window.saveTokenName = async (id) => {
+        const input = document.getElementById(`name-input-${id}`);
+        if (!input) return;
+        const newName = input.value.trim();
+        if (!newName) {
+            alert("Token name cannot be empty.");
+            return;
+        }
+
+        input.disabled = true;
+        try {
+            const { error } = await supabase
+                .from('CCS_tokens')
+                .update({ name: newName })
+                .eq('id', id);
+
+            if (error) throw error;
+
+            const token = allTokensData.find(t => String(t.id) === String(id));
+            if (token) token.name = newName;
+            cancelEditTokenName(id);
+        } catch (err) {
+            alert("Failed to update token name: " + err.message);
+            input.disabled = false;
+            input.focus();
         }
     };
     

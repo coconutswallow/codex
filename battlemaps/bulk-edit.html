@@ -4,7 +4,9 @@ title: Bulk Submit Battle Maps
 ---
 
 {% include auth-header.html %}
+{% include dm-tools-gate.html %}
 
+<div class="dm-tool-content" style="display: none;" data-display="block">
 <section class="hero-block">
   <h1>Bulk Submit Battle Maps</h1>
   <p>Upload multiple maps at once with shared creator information.</p>
@@ -253,6 +255,7 @@ title: Bulk Submit Battle Maps
   </div>
 
 </div>
+</div>
 
 <script type="module">
   // FIXED IMPORT: Use absolute path
@@ -286,15 +289,17 @@ title: Bulk Submit Battle Maps
   }
   currentUser = user;
 
-  // UPDATED: Check for Admin or Contributor roles instead of simple boolean
+  // Check for approved status or Admin/Contributor roles
   const { data: profile } = await supabase
     .from("CCS_discord_users")
-    .select("roles")
+    .select("approved, roles")
     .eq("user_id", currentUser.id)
     .single();
 
-  if (profile && profile.roles && Array.isArray(profile.roles)) {
-    if (profile.roles.includes("Admin") || profile.roles.includes("Contributor")) {
+  if (profile) {
+    if (profile.approved === true) {
+      isApprovedSubmitter = true;
+    } else if (profile.roles && Array.isArray(profile.roles) && (profile.roles.includes("Admin") || profile.roles.includes("Contributor"))) {
       isApprovedSubmitter = true;
     }
   }

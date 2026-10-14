@@ -1,0 +1,54 @@
+<link rel="stylesheet" href="{{ site.baseurl }}/assets/css/dm-tools-gate.css">
+<script type="module" src="{{ site.baseurl }}/assets/js/dm-tools-gate.js"></script>
+
+<!-- DM Tools Protection Gate (Managed by dm-tools-gate.js) -->
+<div id="dm-tools-gate" class="dm-tools-gate-container" style="display: flex;">
+    <!-- State 1: Checking Authentication & Approval -->
+    <div id="dm-gate-loading" class="dm-gate-state" style="display: flex;">
+        <div class="dm-gate-spinner"></div>
+        <p class="dm-gate-desc">Verifying DM tools authorization...</p>
+    </div>
+
+    <!-- State 2: Not Logged In -->
+    <div id="dm-gate-unauth" class="dm-gate-state" style="display: none;">
+        <span class="dm-gate-icon">🔒</span>
+        <h2 class="dm-gate-title">DM Tools Access Restricted</h2>
+        <p class="dm-gate-desc">
+            This tool is part of <strong>My DM Tools</strong> and requires you to log in with your Discord account to continue.
+        </p>
+        <div class="dm-gate-actions">
+            <button id="dm-gate-login-btn" class="dm-gate-btn dm-gate-btn-discord">
+                <svg width="20" height="20" viewBox="0 0 127.14 96.36" fill="currentColor" aria-hidden="true">
+                    <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0A105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.11,77.11,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1A105.89,105.89,0,0,0,126.6,80.22c2.36-24.44-2.54-47.89-18.9-72.15ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.25,60,73.25,53s5.18-12.74,11.44-12.74S96.23,46,96.12,53,91.08,65.69,84.69,65.69Z" />
+                </svg>
+                Log In with Discord
+            </button>
+        </div>
+    </div>
+
+    <!-- State 3: Logged In, but approved is false -->
+    <div id="dm-gate-unapproved" class="dm-gate-state" style="display: none;">
+        <span class="dm-gate-icon">🛡️</span>
+        <h2 class="dm-gate-title">Authorization Required</h2>
+        <p class="dm-gate-desc">
+            You are signed in, but your account has not been approved for DM Tools access.
+        </p>
+
+        <div class="dm-gate-discord-box">
+            <p style="margin: 0;">
+                💬 <strong>How to request access:</strong><br>
+                Please message <strong>coconutswallow</strong> (<code>coconutswallow#0</code>) on Discord to request access to DM Tools.
+            </p>
+            <div id="dm-gate-user-info"></div>
+        </div>
+
+        <div class="dm-gate-actions">
+            <button id="dm-gate-copy-details" class="dm-gate-btn dm-gate-btn-primary">
+                📋 Copy Request Message
+            </button>
+            <button id="dm-gate-logout-btn" class="dm-gate-btn dm-gate-btn-secondary">
+                Sign Out / Switch Account
+            </button>
+        </div>
+    </div>
+</div>

@@ -16,107 +16,116 @@ extra_css: ["/assets/css/bestiary-builder.css"]
                 Fuzzy search monsters stored in the 5e bestiary, build your custom monster encounter list, and generate a CritterDB-compatible bestiary JSON with dot-prefixed names (e.g. <code>.Skeleton</code>).
             </p>
         </div>
+        <div style="display: flex; align-items: center; gap: 15px;">
+            {% include auth-header.html %}
+        </div>
     </div>
 
-    <!-- Main Builder Grid -->
-    <div class="builder-grid">
-        <!-- Left Panel: Monster Discovery & Fuzzy Search -->
-        <div class="builder-card">
-            <div class="card-topbar">
-                <span class="card-title">🔍 Monster Search</span>
-                <span id="results-count" style="font-size: 0.85rem; color: var(--color-text-muted);">Ready</span>
+    <!-- Access Restricted / Auth Gate (Centralized DM Tools Gate) -->
+    {% include dm-tools-gate.html %}
+
+    <!-- Main Builder Application (Hidden until authorized) -->
+    <div id="builder-app-panel" class="dm-tool-content" style="display: none;" data-display="block">
+        <!-- Main Builder Grid -->
+        <div class="builder-grid">
+            <!-- Left Panel: Monster Discovery & Fuzzy Search -->
+            <div class="builder-card">
+                <div class="card-topbar">
+                    <span class="card-title">🔍 Monster Search</span>
+                    <span id="results-count" style="font-size: 0.85rem; color: var(--color-text-muted);">Ready</span>
+                </div>
+                <div class="card-body">
+                    <!-- Search Box -->
+                    <div class="search-input-wrapper">
+                        <input 
+                            type="text" 
+                            id="search-input" 
+                            class="search-input" 
+                            placeholder="Fuzzy search by name, type, source... (e.g. 'skeleton', 'dragon', 'undead')"
+                            autocomplete="off"
+                            spellcheck="false"
+                        />
+                        <button id="clear-search-btn" class="search-clear-btn" title="Clear search">✕</button>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="filter-row">
+                        <select id="source-filter" class="filter-select" aria-label="Filter by Source">
+                            <option value="">All Sources</option>
+                        </select>
+                        <select id="cr-filter" class="filter-select" aria-label="Filter by CR">
+                            <option value="">All CRs</option>
+                        </select>
+                    </div>
+
+                    <!-- Results List -->
+                    <div id="results-container" class="results-container">
+                        <div class="empty-state">
+                            <span class="empty-state-icon">⏳</span>
+                            <p>Loading monster index...</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <!-- Search Box -->
-                <div class="search-input-wrapper">
-                    <input 
-                        type="text" 
-                        id="search-input" 
-                        class="search-input" 
-                        placeholder="Fuzzy search by name, type, source... (e.g. 'skeleton', 'dragon', 'undead')"
-                        autocomplete="off"
-                        spellcheck="false"
-                    />
-                    <button id="clear-search-btn" class="search-clear-btn" title="Clear search">✕</button>
-                </div>
 
-                <!-- Filters -->
-                <div class="filter-row">
-                    <select id="source-filter" class="filter-select" aria-label="Filter by Source">
-                        <option value="">All Sources</option>
-                    </select>
-                    <select id="cr-filter" class="filter-select" aria-label="Filter by CR">
-                        <option value="">All CRs</option>
-                    </select>
+            <!-- Right Panel: Selected Monsters & Custom Bestiary Assembly -->
+            <div class="builder-card">
+                <div class="card-topbar">
+                    <span class="card-title">
+                        ⚔️ Custom Bestiary 
+                        <span id="selected-count-badge" class="count-badge">0</span>
+                    </span>
+                    <button id="clear-selected-btn" class="builder-btn builder-btn-sm builder-btn-danger" title="Clear all selected monsters">
+                        Clear List
+                    </button>
                 </div>
+                <div class="card-body">
+                    <!-- Bestiary Settings -->
+                    <div class="bestiary-meta-form">
+                        <div class="form-group">
+                            <label for="bestiary-name-input">Bestiary Name</label>
+                            <input type="text" id="bestiary-name-input" class="form-input" value="Custom Bestiary" placeholder="e.g. Sunken Crypt Encounter" />
+                        </div>
+                        <div class="form-group">
+                            <label for="bestiary-desc-input">Description (optional)</label>
+                            <input type="text" id="bestiary-desc-input" class="form-input" placeholder="e.g. Undead encounter for level 3 party" />
+                        </div>
+                    </div>
 
-                <!-- Results List -->
-                <div id="results-container" class="results-container">
-                    <div class="empty-state">
-                        <span class="empty-state-icon">⏳</span>
-                        <p>Loading monster index...</p>
+                    <!-- Selected Monsters Container -->
+                    <div id="selected-container" class="selected-container">
+                        <!-- Populated dynamically -->
+                    </div>
+
+                    <!-- Build Action -->
+                    <div>
+                        <button id="create-bestiary-btn" class="builder-btn builder-btn-primary" style="width: 100%; padding: 0.75rem;" disabled>
+                            ⚡ Create Custom Bestiary
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Panel: Selected Monsters & Custom Bestiary Assembly -->
-        <div class="builder-card">
+        <!-- Generated CritterDB Output Section -->
+        <div id="output-section" class="builder-card output-section" style="display: none;">
             <div class="card-topbar">
-                <span class="card-title">
-                    ⚔️ Custom Bestiary 
-                    <span id="selected-count-badge" class="count-badge">0</span>
-                </span>
-                <button id="clear-selected-btn" class="builder-btn builder-btn-sm builder-btn-danger" title="Clear all selected monsters">
-                    Clear List
-                </button>
-            </div>
-            <div class="card-body">
-                <!-- Bestiary Settings -->
-                <div class="bestiary-meta-form">
-                    <div class="form-group">
-                        <label for="bestiary-name-input">Bestiary Name</label>
-                        <input type="text" id="bestiary-name-input" class="form-input" value="Custom Bestiary" placeholder="e.g. Sunken Crypt Encounter" />
-                    </div>
-                    <div class="form-group">
-                        <label for="bestiary-desc-input">Description (optional)</label>
-                        <input type="text" id="bestiary-desc-input" class="form-input" placeholder="e.g. Undead encounter for level 3 party" />
-                    </div>
-                </div>
-
-                <!-- Selected Monsters Container -->
-                <div id="selected-container" class="selected-container">
-                    <!-- Populated dynamically -->
-                </div>
-
-                <!-- Build Action -->
-                <div>
-                    <button id="create-bestiary-btn" class="builder-btn builder-btn-primary" style="width: 100%; padding: 0.75rem;" disabled>
-                        ⚡ Create Custom Bestiary
+                <span class="card-title">📦 CritterDB Bestiary JSON (Dot-Prefixed Monsters)</span>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button id="copy-btn" class="builder-btn" title="Copy JSON to clipboard">
+                        📋 Copy JSON
+                    </button>
+                    <button id="download-btn" class="builder-btn builder-btn-primary" title="Download .json file">
+                        💾 Download JSON
                     </button>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Generated CritterDB Output Section -->
-    <div id="output-section" class="builder-card output-section" style="display: none;">
-        <div class="card-topbar">
-            <span class="card-title">📦 CritterDB Bestiary JSON (Dot-Prefixed Monsters)</span>
-            <div style="display: flex; gap: 0.5rem;">
-                <button id="copy-btn" class="builder-btn" title="Copy JSON to clipboard">
-                    📋 Copy JSON
-                </button>
-                <button id="download-btn" class="builder-btn builder-btn-primary" title="Download .json file">
-                    💾 Download JSON
-                </button>
+            <div class="card-body">
+                <p style="margin: 0; font-size: 0.85rem; color: var(--color-text-muted);">
+                    Ready for import! In CritterDB, open your bestiary, click <strong>Import Creatures</strong> &rarr; <strong>CritterDB Bestiary</strong>, and paste this JSON.
+                </p>
+                <textarea id="output-textarea" class="output-textarea" readonly spellcheck="false"></textarea>
             </div>
-        </div>
-        <div class="card-body">
-            <p style="margin: 0; font-size: 0.85rem; color: var(--color-text-muted);">
-                Ready for import! In CritterDB, open your bestiary, click <strong>Import Creatures</strong> &rarr; <strong>CritterDB Bestiary</strong>, and paste this JSON.
-            </p>
-            <textarea id="output-textarea" class="output-textarea" readonly spellcheck="false"></textarea>
         </div>
     </div>
 

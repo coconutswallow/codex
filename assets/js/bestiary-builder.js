@@ -9,8 +9,11 @@ import {
     fuzzySearchMonsters,
     prependMonsterName,
     buildCritterDBBestiary,
-    downloadJsonFile
+    downloadJsonFile,
+    verifyUserAuthorization,
+    ALLOWED_USER_ID
 } from './bestiary-builder-core.js';
+import { supabase } from './supabaseClient.js';
 
 // Application state
 const state = {
@@ -22,6 +25,10 @@ const state = {
 };
 
 // UI Elements
+let authGatePanel;
+let builderAppPanel;
+let gateMessage;
+let gateLoginBtn;
 let searchInput;
 let clearSearchBtn;
 let sourceFilter;
@@ -218,11 +225,7 @@ function renderSearchResults() {
 
         const subInfo = document.createElement('div');
         subInfo.className = 'monster-stats-sub';
-        const statsParts = [];
-        if (monster.size) statsParts.push(monster.size);
-        if (monster.ac) statsParts.push(`${monster.ac} AC`);
-        if (monster.hp) statsParts.push(`${monster.hp} HP`);
-        subInfo.textContent = statsParts.join(' • ');
+        subInfo.textContent = monster.file ? `File: ${monster.file}` : '';
         infoEl.appendChild(subInfo);
 
         const addBtn = document.createElement('button');
@@ -519,12 +522,82 @@ function debounce(fn, delay) {
 }
 
 /**
+ * Verifies Supabase Discord authentication and restricts access to ALLOWED_USER_ID.
+ */
+function initAuth() {
+    window.addEventListener('dmToolsAccessGranted', () => {
+        if (!state.index.length) {
+            loadMonsterIndex();
+        }
+    });
+
+    // If centralized DM tools gate is present, it manages the gate UI
+    if (document.getElementById('dm-tools-gate')) {
+        return;
+    }
+
+    let pollCount = 0;
+    const MAX_POLLS = 50;
+
+    const checkAuth = async () => {
+        if (window.authManager) {
+            window.authManager.init(async (user) => {
+                if (!user) {
+                    if (authGatePanel) authGatePanel.style.display = 'flex';
+                    if (builderAppPanel) builderAppPanel.style.display = 'none';
+                    if (gateMessage) gateMessage.textContent = 'Please log in with Discord to access the Custom Bestiary Builder.';
+                    if (gateLoginBtn) gateLoginBtn.style.display = 'inline-flex';
+                    return;
+                }
+
+                if (gateMessage) gateMessage.textContent = 'Verifying permissions...';
+                if (gateLoginBtn) gateLoginBtn.style.display = 'none';
+
+                const authResult = await verifyUserAuthorization(user.id, supabase);
+
+                if (!authResult.authorized) {
+                    if (authGatePanel) authGatePanel.style.display = 'flex';
+                    if (builderAppPanel) builderAppPanel.style.display = 'none';
+                    if (gateMessage) {
+                        gateMessage.innerHTML = '⛔ <strong>Access Denied:</strong> This page is restricted to authorized DM accounts.';
+                    }
+                    if (gateLoginBtn) gateLoginBtn.style.display = 'none';
+                    return;
+                }
+
+                // Authorized successfully!
+                if (authGatePanel) authGatePanel.style.display = 'none';
+                if (builderAppPanel) builderAppPanel.style.display = 'block';
+
+                if (!state.index.length) {
+                    loadMonsterIndex();
+                }
+            });
+        } else {
+            pollCount++;
+            if (pollCount > MAX_POLLS) {
+                if (gateMessage) gateMessage.textContent = 'Authentication service unavailable. Please refresh.';
+                return;
+            }
+            setTimeout(checkAuth, 100);
+        }
+    };
+
+    checkAuth();
+}
+
+/**
  * Main DOM setup and event bindings.
  */
 document.addEventListener('DOMContentLoaded', () => {
     initBaseUrl();
 
     // Bind DOM elements
+    authGatePanel = document.getElementById('auth-gate-panel');
+    builderAppPanel = document.getElementById('builder-app-panel');
+    gateMessage = document.getElementById('gate-message');
+    gateLoginBtn = document.getElementById('gate-login-btn');
+
     searchInput = document.getElementById('search-input');
     clearSearchBtn = document.getElementById('clear-search-btn');
     sourceFilter = document.getElementById('source-filter');
@@ -544,6 +617,12 @@ document.addEventListener('DOMContentLoaded', () => {
     toastEl = document.getElementById('builder-toast');
 
     // Attach listeners
+    if (gateLoginBtn) {
+        gateLoginBtn.addEventListener('click', () => {
+            window.authManager?.login();
+        });
+    }
+
     searchInput.addEventListener('input', debounce(renderSearchResults, 120));
     clearSearchBtn.addEventListener('click', () => {
         searchInput.value = '';
@@ -559,7 +638,7 @@ document.addEventListener('DOMContentLoaded', () => {
     downloadBtn.addEventListener('click', handleDownload);
     copyBtn.addEventListener('click', handleCopy);
 
-    // Initial render & data load
+    // Initial render & auth check
     renderSelectedList();
-    loadMonsterIndex();
+    initAuth();
 });

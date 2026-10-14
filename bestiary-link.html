@@ -4,8 +4,13 @@ title: Bestiary Link
 permalink: /bestiary-link/
 extra_css: ["/assets/css/bestiary-link.css"]
 ---
+<div style="display: flex; justify-content: flex-end; padding: 10px 0; margin-bottom: 10px;">
+    {% include auth-header.html %}
+</div>
 
-<div class="bestiary-link-app">
+{% include dm-tools-gate.html %}
+
+<div class="bestiary-link-app dm-tool-content" style="display: none;" data-display="block">
     <div class="bestiary-header">
         <div>
             <div class="bestiary-header-title">
