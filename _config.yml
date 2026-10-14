@@ -34,6 +34,8 @@ navigation:
         url: "/avrae-manager"
       - title: "Bestiary Link"
         url: "/bestiary-link"
+      - title: "Custom Bestiary Builder"
+        url: "/bestiary-builder"
   - title: "My Games"
     url: "/session-assets/"
 
