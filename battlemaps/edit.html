@@ -171,11 +171,23 @@ title: Submit / Edit Battle Map
 
   let isApprovedSubmitter = false;
   // Check for approved status or Admin/Contributor roles
-  const { data: profile } = await supabase
+  let profile = null;
+  const { data: profileWithApproved, error: profileErr } = await supabase
     .from("CCS_discord_users")
     .select("approved, roles")
     .eq("user_id", currentUser.id)
-    .single();
+    .maybeSingle();
+
+  if (!profileErr && profileWithApproved) {
+    profile = profileWithApproved;
+  } else {
+    const { data: profileRoles } = await supabase
+      .from("CCS_discord_users")
+      .select("roles")
+      .eq("user_id", currentUser.id)
+      .maybeSingle();
+    profile = profileRoles;
+  }
 
   if (profile) {
     if (profile.approved === true) {

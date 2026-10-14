@@ -21,15 +21,57 @@ export async function verifyDmToolsAccess(user, client = supabase) {
     }
 
     try {
-        const { data, error } = await client
+        let { data, error } = await client
             .from('CCS_discord_users')
             .select('user_id, display_name, discord_id, approved, roles')
             .eq('user_id', user.id)
             .maybeSingle();
 
+        // Graceful fallback if the database migration hasn't been executed yet (approved column missing)
+        if (error && (error.message?.includes('approved') || error.code === '42703' || error.code === 'PGRST204')) {
+            try {
+                // Try legacy approved_map_submitter column first
+                const legacyRes = await client
+                    .from('CCS_discord_users')
+                    .select('user_id, display_name, discord_id, approved_map_submitter, roles')
+                    .eq('user_id', user.id)
+                    .maybeSingle();
+
+                if (!legacyRes.error && legacyRes.data) {
+                    data = {
+                        ...legacyRes.data,
+                        approved: legacyRes.data.approved_map_submitter === true
+                    };
+                    error = null;
+                } else {
+                    // Fall back to basic user record and role check
+                    const basicRes = await client
+                        .from('CCS_discord_users')
+                        .select('user_id, display_name, discord_id, roles')
+                        .eq('user_id', user.id)
+                        .maybeSingle();
+
+                    if (!basicRes.error && basicRes.data) {
+                        const roles = Array.isArray(basicRes.data.roles) ? basicRes.data.roles : [];
+                        data = {
+                            ...basicRes.data,
+                            approved: roles.includes('Admin') || roles.includes('Contributor')
+                        };
+                        error = null;
+                    }
+                }
+            } catch (fallbackErr) {
+                console.warn('Fallback authorization check failed:', fallbackErr);
+            }
+        }
+
         if (error) {
             console.error('Error fetching user approval status:', error);
-            return { status: 'error', message: error.message };
+            const isMissingColumn = error.message?.includes('approved') || error.code === '42703';
+            const errorMsg = isMissingColumn
+                ? 'Database migration required: Column "approved" does not exist on table "CCS_discord_users". Please run migrations/20261014-rename-approved-map-submitter-to-approved.sql in Supabase.'
+                : error.message;
+            return { status: 'error', message: errorMsg };
         }
 
         if (!data) {

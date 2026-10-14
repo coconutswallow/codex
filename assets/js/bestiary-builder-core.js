@@ -40,9 +40,31 @@ export async function verifyUserAuthorization(userId, client = null) {
             .select('user_id, display_name, discord_id, approved, roles')
             .eq('user_id', userId);
 
-        const { data, error } = typeof query.maybeSingle === 'function'
+        let { data, error } = typeof query.maybeSingle === 'function'
             ? await query.maybeSingle()
             : await query.single();
+
+        // Fallback for pending migration where approved column does not exist yet
+        if (error && (error.message?.includes('approved') || error.code === '42703' || error.code === 'PGRST204')) {
+            try {
+                const fallbackQuery = client
+                    .from('CCS_discord_users')
+                    .select('user_id, display_name, discord_id, roles')
+                    .eq('user_id', userId);
+                const fallbackRes = typeof fallbackQuery.maybeSingle === 'function'
+                    ? await fallbackQuery.maybeSingle()
+                    : await fallbackQuery.single();
+
+                if (!fallbackRes.error && fallbackRes.data) {
+                    const roles = Array.isArray(fallbackRes.data.roles) ? fallbackRes.data.roles : [];
+                    data = {
+                        ...fallbackRes.data,
+                        approved: roles.includes('Admin') || roles.includes('Contributor')
+                    };
+                    error = null;
+                }
+            } catch (_) {}
+        }
 
         if (error || !data) {
             return { authorized: false, reason: 'db_record_not_found', error };
