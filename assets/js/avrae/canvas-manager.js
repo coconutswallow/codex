@@ -312,17 +312,24 @@ function drawCombatantMarkers(ctx, cell) {
         let color = "#5865f2"; // Player (Blurple)
         if (c.type === "npc") color = "#fee75c"; // NPC (Yellow)
         if (c.type === "monster") color = "#ed4245"; // Monster (Red)
+        if (c.dead) color = "#80848e"; // Dead (Grey)
 
-        ctx.globalAlpha = 0.9;
+        ctx.globalAlpha = c.dead ? 0.65 : 0.9;
         ctx.fillStyle = color;
 
         ctx.beginPath();
         ctx.arc(cx, cy, Math.max(6, cell * 0.4), 0, Math.PI * 2);
         ctx.fill();
 
+        if (c.dead) {
+            ctx.strokeStyle = "#ffffff";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
+
         if (c.name) {
             ctx.fillStyle = "#000"; // Contrast text for NPC (Yellow)
-            if (c.type !== "npc") ctx.fillStyle = "#fff";
+            if (c.type !== "npc" || c.dead) ctx.fillStyle = "#fff";
 
             ctx.font = `bold ${Math.max(9, cell * 0.4)}px sans-serif`;
             ctx.textAlign = "center";
@@ -356,6 +363,7 @@ export function getCombatantEntities() {
         const fullName = $(`${type}_full_${idx}`)?.value?.trim();
         const locStr = $(`${type}_loc_${idx}`)?.value?.trim();
         const note = $(`${type}_note_${idx}`)?.value?.trim() || "";
+        const dead = $(`${type}_dead_${idx}`)?.checked || false;
 
         if (!locStr) return;
 
@@ -364,6 +372,7 @@ export function getCombatantEntities() {
         const loc = parseXY(locStr);
         if (loc) {
             const entity = { name, loc, type };
+            if (dead) entity.dead = true;
             if (note) entity.note = note;
             list.push(entity);
         }
@@ -427,6 +436,9 @@ export function initCanvasInteractions() {
                 const col = getExcelColName(match.loc.x);
                 const row = match.loc.y + 1;
                 let title = `${displayName} [${col}${row}]`;
+                if (match.dead) {
+                    title += ` [DEAD]`;
+                }
                 if (match.note) {
                     title += ` — Note: ${match.note}`;
                 }

@@ -81,6 +81,20 @@ function setupEventListeners() {
             drawMap();
         }
     });
+
+    document.addEventListener("change", (e) => {
+        const id = e.target?.id || "";
+        if (id.includes("_dead_")) {
+            const row = e.target.closest(".grid-row");
+            if (row) {
+                row.classList.toggle("combatant-dead", e.target.checked);
+            }
+            drawMap();
+            if (id.startsWith("npc_")) {
+                updateNpcMapOutput();
+            }
+        }
+    });
 }
 
 /**

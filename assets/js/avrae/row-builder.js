@@ -91,6 +91,12 @@ export function makeRow({ type, index, onLocationJump }) {
         row.appendChild(hpHidden);
     }
 
+    // Dead field for NPCs and monsters
+    let deadWrap = null;
+    if (type === "npc" || type === "monster") {
+        deadWrap = createDeadField(type, index);
+    }
+
     // Action button (Move/Copy for player, Jump for others)
     const btnWrap = createActionButton(type, index, onLocationJump);
 
@@ -104,6 +110,7 @@ export function makeRow({ type, index, onLocationJump }) {
         row.appendChild(btnWrap);
     } else if (type === "npc" || type === "monster") {
         row.appendChild(locWrap);
+        if (deadWrap) row.appendChild(deadWrap);
         row.appendChild(btnWrap);
     } else {
         // Fallback or future types
@@ -302,9 +309,11 @@ function createActionButton(type, index, onLocationJump) {
                 let target = (type === "player") ? fullName : shortName;
                 if (!target) return alert(`Missing ${type === "player" ? "Full Name" : "Short Name"}`);
 
+                const isDead = $(`${type}_dead_${index}`)?.checked || false;
+
                 let color = "c";
-                if (type === "npc") color = "y";
-                if (type === "monster") color = "r";
+                if (type === "npc") color = isDead ? "gy" : "y";
+                if (type === "monster") color = isDead ? "gy" : "r";
 
                 const cmd = `!map -t ${target} -move ${loc} -color ${color}`;
                 navigator.clipboard.writeText(cmd);
@@ -329,4 +338,34 @@ function createActionButton(type, index, onLocationJump) {
     btnWrap.appendChild(actionBtn);
     btnWrap.appendChild(spellBtn);
     return btnWrap;
+}
+
+/**
+ * Helper: Create dead status checkbox field for NPCs and monsters
+ */
+function createDeadField(type, index) {
+    const wrap = document.createElement("div");
+    wrap.className = "combatant-dead-wrap";
+
+    const lbl = document.createElement("label");
+    lbl.innerText = "Dead";
+    lbl.title = "Mark as Dead";
+    lbl.htmlFor = `${type}_dead_${index}`;
+
+    const chk = document.createElement("input");
+    chk.type = "checkbox";
+    chk.id = `${type}_dead_${index}`;
+    chk.className = "dead-checkbox";
+    chk.title = "Mark as Dead (changes color to grey)";
+
+    chk.onchange = () => {
+        const row = chk.closest(".grid-row");
+        if (row) {
+            row.classList.toggle("combatant-dead", chk.checked);
+        }
+    };
+
+    wrap.appendChild(lbl);
+    wrap.appendChild(chk);
+    return wrap;
 }

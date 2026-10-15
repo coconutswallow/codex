@@ -219,7 +219,9 @@ export function openNpcTokenModal() {
 
             const locPart = lVal ? ` -move ${lVal}` : "";
             const tokenPart = tVal ? ` -token ${tVal}` : "";
-            const cmd = `!map -t ${sName}${tokenPart} -size ${fullSize} -color y${locPart}`;
+            const isDead = $(`npc_dead_${idx}`)?.checked || false;
+            const color = isDead ? "gy" : "y";
+            const cmd = `!map -t ${sName}${tokenPart} -size ${fullSize} -color ${color}${locPart}`;
             navigator.clipboard.writeText(cmd);
             import('./ui-helpers.js').then(({ uiFlash }) => uiFlash(copyBtn, true));
         };
@@ -343,8 +345,10 @@ export function openMonsterTokenModal() {
 
             const locPart = lVal ? ` -move ${lVal}` : "";
             const tokenPart = tVal ? ` -token ${tVal}` : "";
+            const isDead = $(`monster_dead_${idx}`)?.checked || false;
+            const color = isDead ? "gy" : "r";
 
-            const cmd = `!map -t ${sName}${tokenPart} -size ${fullSize} -color r${locPart}`;
+            const cmd = `!map -t ${sName}${tokenPart} -size ${fullSize} -color ${color}${locPart}`;
 
             navigator.clipboard.writeText(cmd);
             import('./ui-helpers.js').then(({ uiFlash }) => uiFlash(copyBtn, true));

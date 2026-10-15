@@ -284,7 +284,7 @@
 
 .npc-row,
 .monster-row {
-    grid-template-columns: 25px 1fr 1.5fr 1fr 0.6fr 90px;
+    grid-template-columns: 25px 1fr 1.5fr 0.8fr 45px 90px;
 }
 
 .player-row {
@@ -298,6 +298,46 @@
 
 .monster-row {
     border-left-color: var(--danger);
+}
+
+/* Dead Combatant Flag & Styling */
+.combatant-dead-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.combatant-dead-wrap label {
+    font-size: 0.55em;
+    color: var(--blur);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.dead-checkbox {
+    cursor: pointer;
+    accent-color: #72767d;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+}
+
+.combatant-dead {
+    opacity: 0.65;
+    border-left-color: #80848e !important;
+    background: #25272b !important;
+}
+
+.combatant-dead input[type="text"] {
+    color: #8e9297;
+}
+
+.combatant-dead .dead-checkbox {
+    accent-color: #80848e;
 }
 
 /* Combatant Notes Field */

@@ -116,9 +116,10 @@ export function transformToStructured(inputs) {
         const tokenCode = inputs[`npc_token_${i}`] || "";
         const checked = inputs[`npc_sel_${i}`] || false;
         const note = inputs[`npc_note_${i}`] || "";
+        const dead = inputs[`npc_dead_${i}`] || false;
 
-        if (shortName || fullName || location || tokenCode || note) {
-            npcs.push({ shortName, fullName, location, ac, hp, tokenCode, checked, note });
+        if (shortName || fullName || location || tokenCode || note || dead) {
+            npcs.push({ shortName, fullName, location, ac, hp, tokenCode, checked, note, dead });
         }
     }
 
@@ -134,9 +135,10 @@ export function transformToStructured(inputs) {
         const tokenCode = inputs[`monster_token_${i}`] || "";
         const checked = inputs[`monster_sel_${i}`] || false;
         const note = inputs[`monster_note_${i}`] || "";
+        const dead = inputs[`monster_dead_${i}`] || false;
 
-        if (shortName || fullName || location || tokenCode || note) {
-            monsters.push({ shortName, fullName, qty: fullName, location, ac, tokenCode, checked, note });
+        if (shortName || fullName || location || tokenCode || note || dead) {
+            monsters.push({ shortName, fullName, qty: fullName, location, ac, tokenCode, checked, note, dead });
         }
     }
 
@@ -196,6 +198,7 @@ export function transformToFlat(structured) {
         inputs[`npc_loc_${i}`] = n.location || "";
         inputs[`npc_sel_${i}`] = n.checked || false;
         inputs[`npc_note_${i}`] = n.note || "";
+        inputs[`npc_dead_${i}`] = n.dead || false;
         if (n.ac !== undefined) inputs[`npc_extra_${i}`] = n.ac;
         if (n.hp !== undefined) inputs[`npc_hp_${i}`] = n.hp;
         if (n.tokenCode !== undefined) inputs[`npc_token_${i}`] = n.tokenCode;
@@ -212,6 +215,7 @@ export function transformToFlat(structured) {
         inputs[`monster_loc_${i}`] = m.location || "";
         inputs[`monster_sel_${i}`] = m.checked || false;
         inputs[`monster_note_${i}`] = m.note || "";
+        inputs[`monster_dead_${i}`] = m.dead || false;
         if (m.ac !== undefined) inputs[`monster_extra_${i}`] = m.ac;
         if (m.tokenCode !== undefined) inputs[`monster_token_${i}`] = m.tokenCode;
     }

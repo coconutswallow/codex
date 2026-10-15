@@ -330,8 +330,10 @@ export function generateNpcTokenCmds() {
             tokenPart = ` -token ${tokenInfo.token}`;
         }
 
+        const isDead = !!n.dead;
+        const color = isDead ? "gy" : "y";
         const locPart = n.loc ? ` -move ${n.loc}` : "";
-        lines.push(`!map -t ${n.short}${tokenPart} -size medium -color y${locPart}`);
+        lines.push(`!map -t ${n.short}${tokenPart} -size medium -color ${color}${locPart}`);
     }
 
     $("npcModal").style.display = "none";
@@ -367,9 +369,10 @@ function readNpcModalRows() {
             const ac = $(`npc_extra_${idx}`)?.value?.trim();
             const hp = $(`npc_hp_${idx}`)?.value?.trim() || "11";
             const loc = $(`npc_loc_${idx}`)?.value?.trim();
+            const dead = $(`npc_dead_${idx}`)?.checked || false;
 
             if (!short || !name) continue;
-            out.push({ short, name, ac, hp, loc });
+            out.push({ short, name, ac, hp, loc, dead });
         }
     }
 
@@ -417,7 +420,8 @@ export function generateNpcMapCommand(npcs) {
         if (!target || !loc) continue;
 
         const size = normalizeOtfbmSize(n.size);
-        const color = (n.color || "y").trim();
+        const isDead = !!n.dead;
+        const color = isDead ? "gy" : (n.color || "y").trim();
 
         const optionStr = `${target}|${loc}|${size}|${color}`;
         const tokenArg = target.includes(" ") ? `-t "${optionStr}"` : `-t ${optionStr}`;
@@ -444,7 +448,7 @@ export function generateNpcMapCommand(npcs) {
 /**
  * Read the entire active NPC roster from the DOM inputs
  *
- * @returns {Array<Object>} List of NPC objects { short, name, loc, note, ac, hp, token }
+ * @returns {Array<Object>} List of NPC objects { short, name, loc, note, ac, hp, token, dead }
  */
 export function getActiveNpcRoster() {
     const out = [];
@@ -459,9 +463,10 @@ export function getActiveNpcRoster() {
         const ac = $(`npc_extra_${i}`)?.value?.trim() || "";
         const hp = $(`npc_hp_${i}`)?.value?.trim() || "";
         const token = $(`npc_token_${i}`)?.value?.trim() || "";
+        const dead = $(`npc_dead_${i}`)?.checked || false;
 
-        if (short || name || loc || note) {
-            out.push({ short, name, loc, note, ac, hp, token });
+        if (short || name || loc || note || dead) {
+            out.push({ short, name, loc, note, ac, hp, token, dead });
         }
     }
     return out;
@@ -584,7 +589,10 @@ export function batchCmd(type, action) {
             const tokenInfo = state.getTokenData()[name.toLowerCase()] || state.getTokenData()[short.toLowerCase()];
             const token = tokenInfo?.token || "";
             const tokenPart = token ? ` -token ${token}` : "";
-            lines.push(`!map -t ${short}${tokenPart} -size medium -color r -move ${loc || ''}`);
+            const isDead = $(`${type}_dead_${idx}`)?.checked || false;
+            let defaultColor = type === "npc" ? "y" : "r";
+            const color = isDead ? "gy" : defaultColor;
+            lines.push(`!map -t ${short}${tokenPart} -size medium -color ${color} -move ${loc || ''}`);
         }
     }
 

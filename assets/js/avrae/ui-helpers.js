@@ -72,6 +72,7 @@ export function clearChecked(type, updateCallback) {
             `${type}_loc_${idx}`,
             `${type}_extra_${idx}`,
             `${type}_note_${idx}`,
+            `${type}_dead_${idx}`,
         ];
 
         ids.forEach((id) => {
@@ -84,6 +85,11 @@ export function clearChecked(type, updateCallback) {
                 }
             }
         });
+
+        const row = chk.closest(".grid-row");
+        if (row) {
+            row.classList.remove("combatant-dead");
+        }
 
         chk.checked = false;
     });

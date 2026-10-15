@@ -140,6 +140,9 @@ class StateManager {
             if (!el) return;
             if (el.type === "checkbox") {
                 el.checked = !!inputs[id];
+                if (id.includes("_dead_")) {
+                    el.closest(".grid-row")?.classList.toggle("combatant-dead", el.checked);
+                }
             } else {
                 el.value = inputs[id];
             }
