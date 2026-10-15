@@ -14,12 +14,18 @@ import {
     selectAll,
     clearChecked,
     setupMenuClickHandler,
-    setMapTab
+    setMapTab,
+    toggleDrawer,
+    openDrawer,
+    closeDrawer,
+    isDrawerOpen,
+    setDrawerState,
+    initDrawer
 } from './ui-helpers.js';
 
 import { initLists, addRow, ensureRows } from './row-builder.js';
 import { centerOn, drawMap, loadImage, initCanvasInteractions, resetFog } from './canvas-manager.js';
-import { updateFowOutputs, batchCmd, generateTokenCommands, generateNpcTokenCmds, parseXY } from './command-generator.js';
+import { updateFowOutputs, batchCmd, generateTokenCommands, generateNpcTokenCmds, parseXY, generateNpcMapCommand, batchAddNpcRosterToMap, updateNpcMapOutput } from './command-generator.js';
 import { openTokenModal, openNpcModal, openNpcTokenModal, openMonsterModal, openMonsterTokenModal } from './modal-manager.js';
 import { refreshTokensFromSupabase, saveSessionToSupabase, loadSessionPrompt, searchBattlemaps } from './data-manager.js';
 
@@ -69,6 +75,9 @@ function setupEventListeners() {
             if (id.startsWith("player_") || id.startsWith("map") || id === "visRange") {
                 updateFowOutputs();
             }
+            if (id.startsWith("npc_")) {
+                updateNpcMapOutput();
+            }
             drawMap();
         }
     });
@@ -83,10 +92,12 @@ function init() {
     initCanvasInteractions();
     setupMenuClickHandler();
     setupEventListeners();
+    initDrawer();
 
     // Initial draw
     drawMap();
     updateFowOutputs();
+    updateNpcMapOutput();
     updateMapSummary();
 
     // Fail-safe check for admin status in case handlePageAuth was called before battle-manager.js loaded
@@ -108,6 +119,12 @@ window.openTab = openTab;
 window.selectAll = selectAll;
 window.clearChecked = (type) => clearChecked(type, updateFowOutputs);
 window.setMapTab = setMapTab;
+window.toggleDrawer = toggleDrawer;
+window.openDrawer = openDrawer;
+window.closeDrawer = closeDrawer;
+window.isDrawerOpen = isDrawerOpen;
+window.setDrawerState = setDrawerState;
+window.initDrawer = initDrawer;
 
 // Map Setup
 window.toggleVisionField = toggleVisionField;
@@ -131,6 +148,9 @@ window.batchCmd = batchCmd;
 window.generateTokenCommands = generateTokenCommands;
 window.generateNpcTokenCmds = generateNpcTokenCmds;
 window.updateFowOutputs = updateFowOutputs;
+window.generateNpcMapCommand = generateNpcMapCommand;
+window.batchAddNpcRosterToMap = batchAddNpcRosterToMap;
+window.updateNpcMapOutput = updateNpcMapOutput;
 
 // Modals
 window.openTokenModal = openTokenModal;

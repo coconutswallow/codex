@@ -59,6 +59,17 @@ export function makeRow({ type, index, onLocationJump }) {
         inputType: "text"
     });
 
+    // Notes field for tracking conditions, status, HP, spells, etc.
+    const noteWrap = createField({
+        type,
+        index,
+        field: "note",
+        label: "Notes",
+        placeholder: "Conditions, status, HP, spells...",
+        inputType: "text"
+    });
+    noteWrap.className = "combatant-note-wrap";
+
     // Extra field (Vis/AC/HP)
     const extraWrap = createExtraField(type, index);
 
@@ -100,6 +111,8 @@ export function makeRow({ type, index, onLocationJump }) {
         row.appendChild(extraWrap);
         row.appendChild(btnWrap);
     }
+
+    row.appendChild(noteWrap);
 
     return row;
 }

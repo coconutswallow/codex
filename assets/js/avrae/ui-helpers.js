@@ -71,6 +71,7 @@ export function clearChecked(type, updateCallback) {
             `${type}_full_${idx}`,
             `${type}_loc_${idx}`,
             `${type}_extra_${idx}`,
+            `${type}_note_${idx}`,
         ];
 
         ids.forEach((id) => {
@@ -135,4 +136,136 @@ export function setMapTab(type) {
         if (btnManual) btnManual.classList.remove('active');
         if (btnSearch) btnSearch.classList.add('active');
     }
+}
+
+export const DRAWER_STORAGE_KEY = 'avrae_drawer_collapsed';
+
+/**
+ * Check if the controls drawer is currently open
+ * @returns {boolean} True if open, false if collapsed
+ */
+export function isDrawerOpen() {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return false;
+    return !sidebar.classList.contains('collapsed');
+}
+
+/**
+ * Open the controls drawer
+ * @param {boolean} [persist=true] - Whether to save preference to localStorage
+ */
+export function openDrawer(persist = true) {
+    setDrawerState(true, persist);
+}
+
+/**
+ * Close / hide the controls drawer
+ * @param {boolean} [persist=true] - Whether to save preference to localStorage
+ */
+export function closeDrawer(persist = true) {
+    setDrawerState(false, persist);
+}
+
+/**
+ * Toggle the controls drawer between open and collapsed
+ * @param {boolean} [persist=true] - Whether to save preference to localStorage
+ */
+export function toggleDrawer(persist = true) {
+    setDrawerState(!isDrawerOpen(), persist);
+}
+
+/**
+ * Set drawer open/collapsed state and update corresponding UI elements
+ * @param {boolean} open - True to open drawer, false to collapse
+ * @param {boolean} [persist=true] - Whether to persist state to localStorage
+ */
+export function setDrawerState(open, persist = true) {
+    const sidebar = document.querySelector('.sidebar');
+    const toggleBtn = $('drawerToggleBtn');
+    const toggleIcon = $('drawerToggleIcon');
+    const toggleText = $('drawerToggleText');
+    const floatingBtn = $('floatingDrawerOpenBtn');
+    const backdrop = $('drawerBackdrop');
+
+    if (!sidebar) return;
+
+    if (open) {
+        sidebar.classList.remove('collapsed');
+        if (toggleBtn) {
+            toggleBtn.setAttribute('aria-expanded', 'true');
+            toggleBtn.setAttribute('title', 'Hide Controls Drawer');
+        }
+        if (toggleIcon) toggleIcon.innerText = '◀';
+        if (toggleText) toggleText.innerText = 'Controls';
+        if (floatingBtn) floatingBtn.style.display = 'none';
+        if (backdrop) backdrop.classList.remove('hidden');
+    } else {
+        sidebar.classList.add('collapsed');
+        if (toggleBtn) {
+            toggleBtn.setAttribute('aria-expanded', 'false');
+            toggleBtn.setAttribute('title', 'Show Controls Drawer');
+        }
+        if (toggleIcon) toggleIcon.innerText = '▶';
+        if (toggleText) toggleText.innerText = 'Controls';
+        if (floatingBtn) floatingBtn.style.display = 'inline-flex';
+        if (backdrop) backdrop.classList.add('hidden');
+    }
+
+    if (persist) {
+        try {
+            localStorage.setItem(DRAWER_STORAGE_KEY, open ? 'open' : 'collapsed');
+        } catch (_) { }
+    }
+
+    // Trigger canvas redraw after layout changes so the map scales to container width
+    if (typeof window !== 'undefined' && window.drawMap) {
+        window.drawMap();
+        setTimeout(() => {
+            if (typeof window !== 'undefined' && window.drawMap) window.drawMap();
+        }, 320);
+    }
+}
+
+/**
+ * Initialize drawer state based on screen size or stored user preference
+ */
+export function initDrawer() {
+    const sidebar = document.querySelector('.sidebar');
+    if (!sidebar) return;
+
+    // Check localStorage preference
+    let storedState = null;
+    try {
+        storedState = localStorage.getItem(DRAWER_STORAGE_KEY);
+    } catch (_) { }
+
+    let shouldBeOpen = true;
+    if (storedState === 'open') {
+        shouldBeOpen = true;
+    } else if (storedState === 'collapsed') {
+        shouldBeOpen = false;
+    } else {
+        // If no preference saved, on mobile/tablet (<= 768px), default to collapsed so map is visible
+        // On desktop (> 768px), default to open
+        shouldBeOpen = typeof window !== 'undefined' ? window.innerWidth > 768 : true;
+    }
+
+    setDrawerState(shouldBeOpen, false);
+
+    // Close drawer when ESC is pressed (if open and no modal is active)
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && isDrawerOpen()) {
+            const anyModalOpen = document.querySelector('.modal.active, .modal[style*="display: block"], .modal[style*="display: flex"]');
+            if (!anyModalOpen) {
+                closeDrawer();
+            }
+        }
+    });
+
+    // Also handle transitionend on sidebar to ensure map redraw
+    sidebar.addEventListener('transitionend', (e) => {
+        if (e.propertyName === 'margin-left' || e.propertyName === 'transform') {
+            if (typeof window !== 'undefined' && window.drawMap) window.drawMap();
+        }
+    });
 }

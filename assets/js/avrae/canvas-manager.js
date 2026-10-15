@@ -355,6 +355,7 @@ export function getCombatantEntities() {
         const shortName = nameInput.value?.trim();
         const fullName = $(`${type}_full_${idx}`)?.value?.trim();
         const locStr = $(`${type}_loc_${idx}`)?.value?.trim();
+        const note = $(`${type}_note_${idx}`)?.value?.trim() || "";
 
         if (!locStr) return;
 
@@ -362,7 +363,9 @@ export function getCombatantEntities() {
 
         const loc = parseXY(locStr);
         if (loc) {
-            list.push({ name, loc, type });
+            const entity = { name, loc, type };
+            if (note) entity.note = note;
+            list.push(entity);
         }
     });
 
@@ -396,6 +399,43 @@ function parseXY(str) {
  */
 export function initCanvasInteractions() {
     window.addEventListener('resize', () => drawMap());
+
+    const canvas = $("mapCanvas");
+    if (canvas) {
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            if (!rect.width || !rect.height) return;
+
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const px = (e.clientX - rect.left) * scaleX;
+            const py = (e.clientY - rect.top) * scaleY;
+
+            const cell = getCurrentCellSize();
+            const gridX = Math.floor((px - GUTTER_W) / cell);
+            const gridY = Math.floor((py - GUTTER_H) / cell);
+
+            if (gridX < 0 || gridY < 0) {
+                canvas.title = "";
+                return;
+            }
+
+            const entities = getCombatantEntities();
+            const match = entities.find(ent => ent.loc.x === gridX && ent.loc.y === gridY);
+            if (match) {
+                const displayName = match.name;
+                const col = getExcelColName(match.loc.x);
+                const row = match.loc.y + 1;
+                let title = `${displayName} [${col}${row}]`;
+                if (match.note) {
+                    title += ` — Note: ${match.note}`;
+                }
+                canvas.title = title;
+            } else {
+                canvas.title = "";
+            }
+        });
+    }
 }
 
 /**

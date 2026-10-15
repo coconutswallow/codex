@@ -76,7 +76,7 @@ export function transformToStructured(inputs) {
 
     const getMaxInputIndex = (prefix) => {
         let max = 0;
-        const regex = new RegExp(`^${prefix}_(?:name|full|loc)_(\\d+)$`);
+        const regex = new RegExp(`^${prefix}_(?:name|full|loc|note)_(\\d+)$`);
         for (const key of Object.keys(inputs || {})) {
             const match = key.match(regex);
             if (match) {
@@ -97,8 +97,9 @@ export function transformToStructured(inputs) {
         const location = inputs[`player_loc_${i}`] || "";
         const tokenCode = inputs[`player_token_${i}`] || "";
         const checked = inputs[`player_sel_${i}`] || false;
-        if (shortName || fullName || location || tokenCode) {
-            players.push({ shortName, fullName, location, tokenCode, checked });
+        const note = inputs[`player_note_${i}`] || "";
+        if (shortName || fullName || location || tokenCode || note) {
+            players.push({ shortName, fullName, location, tokenCode, checked, note });
         }
     }
 
@@ -114,9 +115,10 @@ export function transformToStructured(inputs) {
         const hp = inputs[`npc_hp_${i}`];
         const tokenCode = inputs[`npc_token_${i}`] || "";
         const checked = inputs[`npc_sel_${i}`] || false;
+        const note = inputs[`npc_note_${i}`] || "";
 
-        if (shortName || fullName || location || tokenCode) {
-            npcs.push({ shortName, fullName, location, ac, hp, tokenCode, checked });
+        if (shortName || fullName || location || tokenCode || note) {
+            npcs.push({ shortName, fullName, location, ac, hp, tokenCode, checked, note });
         }
     }
 
@@ -131,9 +133,10 @@ export function transformToStructured(inputs) {
         const ac = inputs[`monster_extra_${i}`];
         const tokenCode = inputs[`monster_token_${i}`] || "";
         const checked = inputs[`monster_sel_${i}`] || false;
+        const note = inputs[`monster_note_${i}`] || "";
 
-        if (shortName || fullName || location || tokenCode) {
-            monsters.push({ shortName, fullName, qty: fullName, location, ac, tokenCode, checked });
+        if (shortName || fullName || location || tokenCode || note) {
+            monsters.push({ shortName, fullName, qty: fullName, location, ac, tokenCode, checked, note });
         }
     }
 
@@ -179,6 +182,7 @@ export function transformToFlat(structured) {
         inputs[`player_loc_${i}`] = p.location || "";
         inputs[`player_token_${i}`] = p.tokenCode || "";
         inputs[`player_sel_${i}`] = p.checked || false;
+        inputs[`player_note_${i}`] = p.note || "";
     }
 
     // NPCs
@@ -191,6 +195,7 @@ export function transformToFlat(structured) {
         inputs[`npc_full_${i}`] = n.fullName || "";
         inputs[`npc_loc_${i}`] = n.location || "";
         inputs[`npc_sel_${i}`] = n.checked || false;
+        inputs[`npc_note_${i}`] = n.note || "";
         if (n.ac !== undefined) inputs[`npc_extra_${i}`] = n.ac;
         if (n.hp !== undefined) inputs[`npc_hp_${i}`] = n.hp;
         if (n.tokenCode !== undefined) inputs[`npc_token_${i}`] = n.tokenCode;
@@ -206,6 +211,7 @@ export function transformToFlat(structured) {
         inputs[`monster_full_${i}`] = m.fullName || m.qty || "";
         inputs[`monster_loc_${i}`] = m.location || "";
         inputs[`monster_sel_${i}`] = m.checked || false;
+        inputs[`monster_note_${i}`] = m.note || "";
         if (m.ac !== undefined) inputs[`monster_extra_${i}`] = m.ac;
         if (m.tokenCode !== undefined) inputs[`monster_token_${i}`] = m.tokenCode;
     }

@@ -7,12 +7,18 @@ extra_css: ["/assets/css/avrae-manager.css"]
 
 <div class="avrae-manager-app">
     <div class="header">
-        <h3>Avrae Battle Manager</h3>
+        <div class="header-left">
+            <button id="drawerToggleBtn" class="drawer-toggle-btn" onclick="toggleDrawer()" title="Toggle Controls Drawer" aria-label="Toggle Controls Drawer" aria-expanded="true">
+                <span id="drawerToggleIcon" class="drawer-toggle-icon">◀</span>
+                <span id="drawerToggleText" class="drawer-toggle-text">Controls</span>
+            </button>
+            <h3>Avrae Battle Manager</h3>
+        </div>
         <div style="display:flex; align-items:center; gap:15px;">
             <span id="fileStatus" style="font-size:0.7em; color:var(--blur);">Session: Unsaved</span>
             {% include auth-header.html %}
             <div class="menu-container">
-                <div class="hamburger" onclick="toggleMenu()">☰</div>
+                <div class="hamburger" onclick="toggleMenu()" title="Session Menu" aria-label="Session Menu">☰</div>
                 <div id="navMenu" class="menu-dropdown">
                     <!-- Supabase-backed -->
                     <button onclick="saveSessionToSupabase()">Save Session</button>
@@ -27,12 +33,22 @@ extra_css: ["/assets/css/avrae-manager.css"]
     {% include dm-tools-gate.html %}
 
     <div class="main-content dm-tool-content" style="display:none;" data-display="flex">
+        <!-- Floating toggle button to reveal drawer when collapsed -->
+        <button id="floatingDrawerOpenBtn" class="floating-drawer-toggle" onclick="openDrawer()" title="Show Controls (Players, NPCs, Monsters, Config)" aria-label="Open Controls Drawer" style="display:none;">
+            <span class="floating-drawer-icon">▶</span>
+            <span class="floating-drawer-text">Controls</span>
+        </button>
+
+        <!-- Mobile/Tablet Drawer Backdrop -->
+        <div id="drawerBackdrop" class="drawer-backdrop hidden" onclick="closeDrawer()" aria-hidden="true"></div>
+
         <div class="sidebar">
             <div class="tab-bar">
                 <div class="tab active" onclick="openTab(event, 'tab-players')">Players</div>
                 <div class="tab" onclick="openTab(event, 'tab-npcs')">NPCs</div>
                 <div class="tab" onclick="openTab(event, 'tab-monsters')">Monsters</div>
                 <div class="tab" onclick="openTab(event, 'tab-config')">Map Config</div>
+                <button class="drawer-close-btn" onclick="closeDrawer()" title="Hide Controls Drawer" aria-label="Hide Controls Drawer">◀</button>
             </div>
 
             <div id="tab-players" class="tab-content active">
@@ -78,9 +94,10 @@ extra_css: ["/assets/css/avrae-manager.css"]
                         <p><strong>1:</strong> Add NPCs below. Similar to players, use short names for map display.</p>
                         <p><strong>2:</strong> Use "Add NPC to Avrae" to generate combat initiative commands.</p>
                         <p><strong>3:</strong> Setup tokens to apply images to the battlemap.</p>
-                        <p><strong>4: </strong> Now all you need to do is update the new location in the grid, click on
+                        <p><strong>4:</strong> Use "Add Roster to Map" to place all NPCs on the map in one command using OTFBM pipe syntax without token images.</p>
+                        <p><strong>5:</strong> Now all you need to do is update the new location in the grid, click on
                             the ➡️ button, and it will generate the !move command for you.</p>
-                        <p><strong>5: </strong> The ✨ button will generate a !effect command for you. You can use this
+                        <p><strong>6:</strong> The ✨ button will generate a !effect command for you. You can use this
                             to apply effects (auras, fireball circles, breath cones, etc.)</p>
                     </div>
                 </details>
@@ -89,10 +106,14 @@ extra_css: ["/assets/css/avrae-manager.css"]
                         onclick="selectAll('npc', this.checked)">
                     <button onclick="openNpcModal()">Add NPC to Avrae</button>
                     <button onclick="openNpcTokenModal()">Setup NPC Token</button>
+                    <button id="btn-add-npc-roster-map" onclick="batchAddNpcRosterToMap(this)" title="Add entire NPC roster to map using OTFBM pipe syntax without token images">Add Roster to Map</button>
                 </div>
                 <div id="npc-list"></div>
                 <button class="action-btn" style="width: 100%; margin: 10px 0;" onclick="addRow('npc')">Add Another
                     NPC</button>
+
+                <label style="margin-top:10px;">NPC Map Command (Roster)</label>
+                <div class="output-box" id="npc-map-out" onclick="uiFlash(this)">!map -t ...</div>
             </div>
 
             <div id="tab-monsters" class="tab-content">

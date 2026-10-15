@@ -377,6 +377,147 @@ function readNpcModalRows() {
 }
 
 /**
+ * Helper to normalize size strings to OTFBM single-letter codes
+ * (T = Tiny, S = Small, M = Medium, L = Large, H = Huge, G = Gargantuan).
+ * Defaults to 'M'.
+ *
+ * @param {string} [size] - Input size string (e.g., 'Medium', 'L', 'huge')
+ * @returns {string} Single-letter OTFBM size code
+ */
+export function normalizeOtfbmSize(size) {
+    if (!size) return "M";
+    const s = size.trim().toUpperCase();
+    const sizeMap = {
+        "TINY": "T",
+        "SMALL": "S",
+        "MEDIUM": "M",
+        "LARGE": "L",
+        "HUGE": "H",
+        "GARGANTUAN": "G"
+    };
+    if (sizeMap[s]) return sizeMap[s];
+    if (["T", "S", "M", "L", "H", "G"].includes(s[0])) return s[0];
+    return "M";
+}
+
+/**
+ * Generate OTFBM !map command to add the entire NPC roster to the map without token images.
+ * Uses the OTFBM pipe syntax: -t <target>|<location>|<size>|<color>
+ *
+ * @param {Array<Object>} npcs - List of NPC data objects
+ * @returns {string} The formatted !map command(s)
+ */
+export function generateNpcMapCommand(npcs) {
+    if (!npcs || !npcs.length) return "";
+    const tokenParts = [];
+
+    for (const n of npcs) {
+        const target = (n.short || n.shortName || n.name || n.fullName || "").trim();
+        const loc = (n.loc || n.location || "").trim().toUpperCase();
+        if (!target || !loc) continue;
+
+        const size = normalizeOtfbmSize(n.size);
+        const color = (n.color || "y").trim();
+
+        const optionStr = `${target}|${loc}|${size}|${color}`;
+        const tokenArg = target.includes(" ") ? `-t "${optionStr}"` : `-t ${optionStr}`;
+        tokenParts.push(tokenArg);
+    }
+
+    if (!tokenParts.length) return "";
+
+    // Split across lines if nearing Discord 2000-character limit
+    const lines = [];
+    let currentLine = "!map";
+    for (const part of tokenParts) {
+        if ((currentLine + " " + part).length > 1900) {
+            lines.push(currentLine);
+            currentLine = `!map ${part}`;
+        } else {
+            currentLine += ` ${part}`;
+        }
+    }
+    lines.push(currentLine);
+    return lines.join("\n");
+}
+
+/**
+ * Read the entire active NPC roster from the DOM inputs
+ *
+ * @returns {Array<Object>} List of NPC objects { short, name, loc, note, ac, hp, token }
+ */
+export function getActiveNpcRoster() {
+    const out = [];
+    const domRows = typeof document !== 'undefined' ? document.querySelectorAll(".npc-row").length : 0;
+    const maxIdx = Math.max(domRows, 4);
+
+    for (let i = 1; i <= maxIdx; i++) {
+        const short = $(`npc_name_${i}`)?.value?.trim() || "";
+        const name = $(`npc_full_${i}`)?.value?.trim() || "";
+        const loc = $(`npc_loc_${i}`)?.value?.trim() || "";
+        const note = $(`npc_note_${i}`)?.value?.trim() || "";
+        const ac = $(`npc_extra_${i}`)?.value?.trim() || "";
+        const hp = $(`npc_hp_${i}`)?.value?.trim() || "";
+        const token = $(`npc_token_${i}`)?.value?.trim() || "";
+
+        if (short || name || loc || note) {
+            out.push({ short, name, loc, note, ac, hp, token });
+        }
+    }
+    return out;
+}
+
+/**
+ * Update the NPC map output box in the UI
+ */
+export function updateNpcMapOutput() {
+    const out = $("npc-map-out");
+    if (!out) return;
+
+    const npcs = getActiveNpcRoster();
+    const cmd = generateNpcMapCommand(npcs);
+    out.innerText = cmd || "!map -t ...";
+}
+
+/**
+ * Batch command: Add the entire NPC roster to the map using OTFBM pipe syntax without token images.
+ * Copies the command to the clipboard and triggers visual feedback.
+ *
+ * @param {HTMLElement} [btn] - The button element triggering this action
+ * @param {Array<Object>} [customRoster] - Optional custom roster of NPCs
+ * @returns {string} The generated command
+ */
+export function batchAddNpcRosterToMap(btn, customRoster = null) {
+    const npcs = customRoster || getActiveNpcRoster();
+    const cmd = generateNpcMapCommand(npcs);
+
+    if (!cmd) {
+        alert("Please enter a location for at least one NPC before adding to the map.");
+        return "";
+    }
+
+    const out = $("npc-map-out");
+    if (out) {
+        out.innerText = cmd;
+        import('./ui-helpers.js').then(({ uiFlash }) => uiFlash(out, true));
+    }
+
+    if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(cmd).catch(() => {});
+    }
+
+    if (btn) {
+        import('./ui-helpers.js').then(({ uiFlash }) => uiFlash(btn, true));
+    }
+
+    console.log("=== NPC ROSTER MAP COMMAND ===");
+    console.log(cmd);
+    console.log("==============================");
+
+    return cmd;
+}
+
+/**
  * Generate OTFBM effect command
  */
 export function generateEffectCommand(effect) {
