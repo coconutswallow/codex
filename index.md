@@ -15,7 +15,6 @@ permalink: /
 ## Combat
 
 - **No silvery barbs**
-- **Flanking Rules:**  +2 to attack rolls from flanking.  Flanking only works if you are in melee and two party members are on opposite sides of each other.
 - **Nat 1s or multiple misses**:  these are opportunities for creative role-play.  It doesn't need to be just "miss" it could an epic battle of parries, etc.  Creative role-play of misses can result in awards like DM inspiration.
 - **Familiars** roll their own initiatives (automated by Avrae)
 
@@ -28,10 +27,23 @@ permalink: /
 
     - **Influence Action**:  use an attack action to try to influence a combatant's behavior (e.g. calm down, or focus attention on another combatant, etc.).  CHA check vs [15, or 10+ CR of the enemy, whichever is greater].  The action cannot force a creature to act against its nature, and depending on the intent and context, multiple passes may be required for influence to be successful. 
 
+## Loot and Gold Rewards
+- Max Loot and Gold rewards __are not guaranteed__ in my games.  I may have mechanics (such as needing to find the loot) to earn your rewards
+- Please do not ask for specific loot for this session.  We can have a discussion outside of a game for a special mission to earn a specific character-based reward, but asking for specific rewards is bad practice for the server. 
+
 ## PBP Specific Rules
 
 - Role play is important.  This is what PBP is about.
 - Must post at least once every 24 hours - so that the DM knows we can move on
 - Unless otherwise stated in the game listing  characters soft-locked.  This means I will write down your stats when we start.  You can play in other games while this PBP is going on, but any XP, items, etc. from outside of the game won't be brought into this game during this PBP
 - If I @you, it means we need your participation to move on BUT it does not mean we need your participation immediately  Please do not feel pressure to respond immediately if you're not able to (unless rule #2 is broken)
-- I will be using Avrae for battle maps and initiative tracking, but learning avrae commands is completely optional.  Manual rolling is completely fine.
+- I will be using Avrae for initiative tracking, but learning avrae commands is completely optional.  Manual rolling is completely fine.
+
+## Live Synchronous Text Specific Rules
+- You must be at your computer during the game duration.  Ask for a break if you need to step away
+- We will be using a single channel for both in-character (IC) and out-of-character (OOC) messages.  use the > to create a block text for OOC
+
+> Example OOC text here.
+
+- Use the ‼️emoji to pause play if you want my attention
+- 
